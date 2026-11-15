@@ -19,7 +19,8 @@ export default function PostDetailModal({
   onAddComment,
   onToggleLike,
   onQuickAsk,
-  onDeletePost
+  onDeletePost,
+  onDeleteComment
 }) {
   const [commentText, setCommentText] = useState('');
   const [isAnonymousComment, setIsAnonymousComment] = useState(true);
@@ -29,7 +30,7 @@ export default function PostDetailModal({
 
   // 게시글 삭제 핸들러 (확인 팝업 포함)
   const handleDelete = () => {
-    if (window.confirm('정말 이 게시물을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.')) {
+    if (window.confirm('정말 내가 작성한 이 게시물을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.')) {
       if (onDeletePost) {
         onDeletePost(post.id);
       }
@@ -51,7 +52,8 @@ export default function PostDetailModal({
       },
       content: commentText.trim(),
       createdAt: '방금 전',
-      likes: 0
+      likes: 0,
+      isMine: true // 내가 직접 작성한 댓글
     };
 
     onAddComment(post.id, newComment);
@@ -74,16 +76,23 @@ export default function PostDetailModal({
               {post.majorName}
             </span>
             <span className="text-xs text-slate-400 font-semibold">#{post.tag}</span>
+            {post.author.isMine && (
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200">
+                내 글
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1">
-            {/* 게시글 삭제 버튼 */}
-            <button
-              onClick={handleDelete}
-              className="p-1.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition"
-              title="게시물 삭제하기"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* 오직 사용자가 작성한 게시글(isMine)에만 삭제 버튼 노출 */}
+            {post.author.isMine && (
+              <button
+                onClick={handleDelete}
+                className="p-1.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition"
+                title="내 게시물 삭제하기"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition"
@@ -187,8 +196,29 @@ export default function PostDetailModal({
                       <span className="text-[10px] text-slate-400 font-normal">
                         ({c.author.school} · {c.author.grade})
                       </span>
+                      {c.isMine && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200">
+                          내 댓글
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[10px] text-slate-400">{c.createdAt}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400">{c.createdAt}</span>
+                      {/* 오직 사용자가 작성한 댓글(c.isMine)에만 삭제 버튼 노출 */}
+                      {c.isMine && onDeleteComment && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('정말 내가 작성한 이 댓글을 삭제하시겠습니까?')) {
+                              onDeleteComment(post.id, c.id);
+                            }
+                          }}
+                          className="text-slate-400 hover:text-red-500 transition p-0.5"
+                          title="내 댓글 삭제"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-slate-700 leading-relaxed">{c.content}</p>
                 </div>

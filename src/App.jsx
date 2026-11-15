@@ -27,16 +27,37 @@ export default function App() {
   // 2. 활성 탭 상태 ('major' | 'school' | 'counseling' | 'schoolLife' | 'chat')
   const [activeTab, setActiveTab] = useState('major');
 
-  // 3. 전국 전공 게시판 글 목록 상태
+  // 3. 전국 전공 게시판 글 목록 상태 (로컬스토리지 연동 및 작성자 식별)
   const [majorPosts, setMajorPosts] = useState(() => {
     const saved = localStorage.getItem('hightime_major_posts');
-    return saved ? JSON.parse(saved) : INITIAL_MAJOR_POSTS;
+    if (!saved) return INITIAL_MAJOR_POSTS;
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed.map((p) => {
+        if (p.id === 'post-1') {
+          return {
+            ...p,
+            author: { ...p.author, isMine: true },
+            comments: (p.comments || []).map((c) => c.id === 'c-2' ? { ...c, isMine: true } : c)
+          };
+        }
+        return p;
+      });
+    } catch {
+      return INITIAL_MAJOR_POSTS;
+    }
   });
 
   // 4. 우리 학교 전용 게시판 글 목록 상태
   const [schoolPosts, setSchoolPosts] = useState(() => {
     const saved = localStorage.getItem('hightime_school_posts');
-    return saved ? JSON.parse(saved) : INITIAL_SCHOOL_POSTS;
+    if (!saved) return INITIAL_SCHOOL_POSTS;
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed.map((p) => (p.id === 'sp-1' ? { ...p, isMine: true } : p));
+    } catch {
+      return INITIAL_SCHOOL_POSTS;
+    }
   });
 
   // 5. 1:1 질문 및 입시 상담 데이터 상태
@@ -136,6 +157,34 @@ export default function App() {
     if (selectedPost && selectedPost.id === postId) {
       setSelectedPost((prev) => {
         const updated = [...(prev.comments || []), newComment];
+        return {
+          ...prev,
+          comments: updated,
+          commentCount: updated.length
+        };
+      });
+    }
+  };
+
+  // 댓글 삭제 핸들러 (사용자가 작성한 댓글 삭제)
+  const handleDeleteComment = (postId, commentId) => {
+    setMajorPosts((prev) =>
+      prev.map((post) => {
+        if (post.id === postId) {
+          const updatedComments = (post.comments || []).filter((c) => c.id !== commentId);
+          return {
+            ...post,
+            comments: updatedComments,
+            commentCount: updatedComments.length
+          };
+        }
+        return post;
+      })
+    );
+
+    if (selectedPost && selectedPost.id === postId) {
+      setSelectedPost((prev) => {
+        const updated = (prev.comments || []).filter((c) => c.id !== commentId);
         return {
           ...prev,
           comments: updated,
@@ -264,6 +313,7 @@ export default function App() {
             onToggleLike={handleToggleLike}
             onQuickAsk={handleQuickAsk}
             onDeletePost={handleDeleteMajorPost}
+            onDeleteComment={handleDeleteComment}
           />
         )}
 

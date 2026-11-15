@@ -32,7 +32,8 @@ export default function WritePostModal({
         school: currentSchool.name,
         grade: '고2',
         isAnonymous,
-        avatarColor: 'bg-red-500'
+        avatarColor: 'bg-red-500',
+        isMine: true // 내가 쓴 글 표시
       },
       likes: 1,
       commentCount: 0,

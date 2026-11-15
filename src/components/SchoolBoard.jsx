@@ -32,6 +32,7 @@ export default function SchoolBoard({
       author: isAnonymous ? '익명' : '나(학생)',
       grade: '고2',
       isAnonymous,
+      isMine: true, // 내가 작성한 교내 글
       likes: 0,
       commentCount: 0,
       createdAt: '방금 전'
@@ -108,20 +109,28 @@ export default function SchoolBoard({
             className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm hover:border-slate-300 transition"
           >
             <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
-                {post.category}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                  {post.category}
+                </span>
+                {post.isMine && (
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200">
+                    내 글
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-slate-400">{post.createdAt}</span>
-                {onDeleteSchoolPost && (
+                {/* 오직 사용자가 작성한 글(isMine)에만 삭제 버튼 노출 */}
+                {post.isMine && onDeleteSchoolPost && (
                   <button
                     onClick={() => {
-                      if (window.confirm('정말 이 게시물을 삭제하시겠습니까?')) {
+                      if (window.confirm('정말 내가 작성한 이 게시물을 삭제하시겠습니까?')) {
                         onDeleteSchoolPost(post.id);
                       }
                     }}
-                    className="text-slate-300 hover:text-red-500 transition p-0.5"
-                    title="게시물 삭제"
+                    className="text-slate-400 hover:text-red-500 transition p-0.5"
+                    title="내 게시물 삭제"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

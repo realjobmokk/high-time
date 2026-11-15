@@ -51,6 +51,7 @@ export const INITIAL_MAJOR_POSTS = [
       grade: '고2',
       isAnonymous: false,
       avatarColor: 'bg-blue-500',
+      isMine: true, // 사용자가 직접 작성한 게시물 예시
     },
     likes: 42,
     commentCount: 9,
@@ -62,14 +63,16 @@ export const INITIAL_MAJOR_POSTS = [
         author: { nickname: '알고리즘깎는노인', school: '선린인터넷고', grade: '고3', isAnonymous: false },
         content: '수학과 연계해서 벡터 내적과 코사인 법칙 수식까지 증명 보고서에 넣으면 수학 세특까지 융합 가능해요! 저도 작년에 그렇게 해서 평가원 세특 칭찬받았어요.',
         createdAt: '18분 전',
-        likes: 12
+        likes: 12,
+        isMine: false
       },
       {
         id: 'c-2',
-        author: { nickname: '익명1', school: '한민고등학교', grade: '고2', isAnonymous: true },
+        author: { nickname: '나(학생)', school: '하나고등학교', grade: '고2', isAnonymous: false },
         content: '혹시 쓰신 파이썬 라이브러리 뭐뭐 쓰셨는지 1:1 질문 드려도 될까요?',
         createdAt: '10분 전',
-        likes: 3
+        likes: 3,
+        isMine: true // 사용자가 직접 작성한 댓글 예시
       }
     ]
   },
@@ -86,6 +89,7 @@ export const INITIAL_MAJOR_POSTS = [
       grade: '고3',
       isAnonymous: false,
       avatarColor: 'bg-rose-500',
+      isMine: false, // 다른 사용자가 작성한 글
     },
     likes: 88,
     commentCount: 15,
@@ -173,6 +177,7 @@ export const INITIAL_SCHOOL_POSTS = [
     author: '급식헌터',
     grade: '고2',
     isAnonymous: true,
+    isMine: true, // 사용자가 작성한 교내 게시물 예시
     likes: 54,
     commentCount: 12,
     createdAt: '15분 전'
@@ -185,6 +190,7 @@ export const INITIAL_SCHOOL_POSTS = [
     author: '전교1등꿈나무',
     grade: '고1',
     isAnonymous: false,
+    isMine: false,
     likes: 72,
     commentCount: 18,
     createdAt: '1시간 전'
@@ -197,6 +203,7 @@ export const INITIAL_SCHOOL_POSTS = [
     author: '댄싱머신',
     grade: '고3',
     isAnonymous: false,
+    isMine: false,
     likes: 23,
     commentCount: 4,
     createdAt: '3시간 전'
@@ -209,6 +216,7 @@ export const INITIAL_SCHOOL_POSTS = [
     author: '눈물의주인',
     grade: '고2',
     isAnonymous: true,
+    isMine: false,
     likes: 15,
     commentCount: 5,
     createdAt: '4시간 전'

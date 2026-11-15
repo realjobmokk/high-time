@@ -190,25 +190,31 @@ export default function MajorBoard({
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-red-50 text-red-600 border border-red-100">
                     #{post.tag}
                   </span>
+                  {post.author.isMine && (
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200">
+                      내 글
+                    </span>
+                  )}
                 </div>
                 
-                {/* 작성자 학교 및 학년 뱃지 + 게시글 삭제 버튼 */}
+                {/* 작성자 학교 및 학년 뱃지 + (내 글일 때만) 게시글 삭제 버튼 */}
                 <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 text-[11px] text-slate-600 font-medium">
                     <span className="font-semibold text-slate-800">{post.author.school}</span>
                     <span className="text-slate-400">·</span>
                     <span className="text-red-500 font-bold">{post.author.grade}</span>
                   </div>
-                  {onDeletePost && (
+                  {/* 오직 사용자가 작성한 게시글(isMine)에만 삭제 버튼 노출 */}
+                  {post.author.isMine && onDeletePost && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm('정말 이 게시물을 삭제하시겠습니까?')) {
+                        if (window.confirm('정말 내가 작성한 이 게시물을 삭제하시겠습니까?')) {
                           onDeletePost(post.id);
                         }
                       }}
-                      className="p-1 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition"
-                      title="게시물 삭제"
+                      className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition"
+                      title="내 게시물 삭제"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
