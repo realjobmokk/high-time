@@ -9,6 +9,7 @@ import DirectChat from './components/DirectChat';
 import PostDetailModal from './components/PostDetailModal';
 import WritePostModal from './components/WritePostModal';
 import NotificationModal from './components/NotificationModal';
+import AuthModal from './components/AuthModal';
 
 import { 
   SAMPLE_SCHOOLS, 
@@ -18,11 +19,27 @@ import {
 } from './data/mockData';
 
 export default function App() {
-  // 1. 소속 학교 상태 (기본: 하나고등학교)
+  // 1. 로그인된 학생 사용자 정보 (PASS 및 재학증명서 인증 상태)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('hightime_current_user');
+    return saved ? JSON.parse(saved) : {
+      name: '김민준',
+      grade: '고2',
+      isVerified: true,
+      passVerified: true,
+      certVerified: true,
+      verifiedAt: '2026. 11. 15'
+    };
+  });
+
+  // 2. 인증 완료된 소속 학교 상태 (기본: 하나고등학교)
   const [currentSchool, setCurrentSchool] = useState(() => {
     const saved = localStorage.getItem('hightime_current_school');
     return saved ? JSON.parse(saved) : SAMPLE_SCHOOLS[1];
   });
+
+  // 3. 인증 모달 오픈 여부
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // 2. 활성 탭 상태 ('major' | 'school' | 'counseling' | 'schoolLife' | 'chat')
   const [activeTab, setActiveTab] = useState('major');
@@ -75,6 +92,10 @@ export default function App() {
 
   // 로컬스토리지 영구 저장 동기화
   useEffect(() => {
+    localStorage.setItem('hightime_current_user', JSON.stringify(currentUser));
+  }, [currentUser]);
+
+  useEffect(() => {
     localStorage.setItem('hightime_current_school', JSON.stringify(currentSchool));
   }, [currentSchool]);
 
@@ -89,6 +110,19 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('hightime_counseling_data', JSON.stringify(counselingData));
   }, [counselingData]);
+
+  // 학교 및 학생 인증 완료 핸들러
+  const handleCompleteAuth = (authData) => {
+    setCurrentUser({
+      name: authData.name,
+      grade: authData.grade,
+      isVerified: true,
+      passVerified: authData.passVerified,
+      certVerified: authData.certVerified,
+      verifiedAt: authData.verifiedAt
+    });
+    setCurrentSchool(authData.school);
+  };
 
   // 전공 게시글 좋아요 토글 핸들러
   const handleToggleLike = (postId) => {
@@ -247,14 +281,15 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. 상단 헤더 */}
+        {/* 1. 상단 헤더 (공식 인증된 내 고등학교 고정 및 학생증 카드/재인증 모달) */}
         <Header
+          currentUser={currentUser}
           currentSchool={currentSchool}
-          setCurrentSchool={setCurrentSchool}
           isMobileFrame={isMobileFrame}
           setIsMobileFrame={setIsMobileFrame}
           unreadNotifications={unreadNotiCount}
           onOpenNotifications={() => setIsNotiModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
         />
 
         {/* 2. 본문 화면 (활성 탭에 따른 라우팅 렌더링) */}
@@ -332,6 +367,14 @@ export default function App() {
             onReadNotifications={() => setUnreadNotiCount(0)}
           />
         )}
+
+        {/* 5. 고등학교 인증 및 로그인 모달 (소셜 -> PASS -> 재학증명서 검증) */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onCompleteAuth={handleCompleteAuth}
+          initialUser={currentUser}
+        />
       </div>
     </div>
   );
