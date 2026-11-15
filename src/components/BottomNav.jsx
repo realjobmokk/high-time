@@ -1,7 +1,8 @@
 import React from 'react';
-import { Layers, School, MessageSquareHeart, UtensilsCrossed, MessageCircle } from 'lucide-react';
+import { Layers, School, Home, MessageSquareHeart, MessageCircle } from 'lucide-react';
 
 // 하단 내비게이션 바 컴포넌트
+// 사용자 피드백 반영: 가운데 탭을 종합 '홈'으로 개편하고, 4번째 탭을 '입시·1:1질문'으로 재배치
 export default function BottomNav({ activeTab, setActiveTab, unreadChatCount }) {
   const tabs = [
     {
@@ -17,16 +18,16 @@ export default function BottomNav({ activeTab, setActiveTab, unreadChatCount }) 
       icon: School,
     },
     {
+      id: 'home',
+      label: '홈',
+      sublabel: '급식·시간표·HOT',
+      icon: Home,
+    },
+    {
       id: 'counseling',
       label: '입시·1:1질문',
       sublabel: '멘토링',
       icon: MessageSquareHeart,
-    },
-    {
-      id: 'schoolLife',
-      label: '급식·시간표',
-      sublabel: 'D-day',
-      icon: UtensilsCrossed,
     },
     {
       id: 'chat',

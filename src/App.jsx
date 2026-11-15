@@ -10,6 +10,7 @@ import PostDetailModal from './components/PostDetailModal';
 import WritePostModal from './components/WritePostModal';
 import NotificationModal from './components/NotificationModal';
 import AuthModal from './components/AuthModal';
+import HomeDashboard from './components/HomeDashboard';
 
 import { 
   SAMPLE_SCHOOLS, 
@@ -41,8 +42,8 @@ export default function App() {
   // 3. 인증 모달 오픈 여부
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // 2. 활성 탭 상태 ('major' | 'school' | 'counseling' | 'schoolLife' | 'chat')
-  const [activeTab, setActiveTab] = useState('major');
+  // 4. 활성 탭 상태 ('home' | 'major' | 'school' | 'counseling' | 'chat')
+  const [activeTab, setActiveTab] = useState('home');
 
   // 3. 전국 전공 게시판 글 목록 상태 (로컬스토리지 연동 및 작성자 식별)
   const [majorPosts, setMajorPosts] = useState(() => {
@@ -294,6 +295,19 @@ export default function App() {
 
         {/* 2. 본문 화면 (활성 탭에 따른 라우팅 렌더링) */}
         <main className="flex-1 overflow-y-auto">
+          {/* 홈 탭 (종합 대시보드: 급식, 시간표, D-Day, 실시간 핫글, 추천 세특) */}
+          {activeTab === 'home' && (
+            <HomeDashboard
+              currentUser={currentUser}
+              currentSchool={currentSchool}
+              majorPosts={majorPosts}
+              schoolPosts={schoolPosts}
+              onSelectPost={(post) => setSelectedPost(post)}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenWriteModal={() => setIsWriteModalOpen(true)}
+            />
+          )}
+
           {activeTab === 'major' && (
             <MajorBoard
               posts={majorPosts}
@@ -314,6 +328,7 @@ export default function App() {
             />
           )}
 
+          {/* 입시·1:1질문 탭 (기존 중간에서 4번째 탭으로 이동) */}
           {activeTab === 'counseling' && (
             <CounselingAndQA
               counselingData={counselingData}
@@ -321,10 +336,6 @@ export default function App() {
               onAddConsult={handleAddConsult}
               onNavigateToChat={() => setActiveTab('chat')}
             />
-          )}
-
-          {activeTab === 'schoolLife' && (
-            <SchoolLife currentSchool={currentSchool} />
           )}
 
           {activeTab === 'chat' && (
