@@ -142,7 +142,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       ? `현재 ${currentTimeStr} · 다음 수업 [${nextBlock.subject}] (${nextBlock.startHour}:00 시작)`
       : todayBlocks.length > 0
         ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}요일) 등록된 수업 종료`
-        : `현재 ${currentTimeStr} · [오늘 시간표]에서 직접 내 시간표를 추가해 보세요!`;
+        : customTimetable.length > 0
+          ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}요일) 수업 없음 (총 ${customTimetable.length}개 등록됨)`
+          : `현재 ${currentTimeStr} · [오늘 시간표]에서 직접 내 시간표를 추가해 보세요!`;
 
   // 수능 D-Day 자동 계산 (매년 11월 셋째 주 목요일 기준)
   const getSuneungDate = (year: number) => {

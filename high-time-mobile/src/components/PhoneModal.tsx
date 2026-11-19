@@ -5,7 +5,7 @@
 // =============================================================================
 
 import React from 'react';
-import { Modal, ModalProps, Platform, Text, View } from 'react-native';
+import { Modal, ModalProps, Platform, View } from 'react-native';
 
 export const PhoneModal: React.FC<ModalProps> = ({ children, ...props }) => {
   if (Platform.OS !== 'web') {
@@ -17,32 +17,19 @@ export const PhoneModal: React.FC<ModalProps> = ({ children, ...props }) => {
       <View
         style={{
           flex: 1,
+          width: '100%',
+          minHeight: '100dvh' as any,
           alignItems: 'center',
           justifyContent: 'center',
           paddingVertical: 16,
           paddingHorizontal: 12,
         }}
       >
-        {/* App.tsx의 webTopHint와 동일한 높이를 차지해 폰 프레임 위치를 픽셀 단위로 일치 */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginBottom: 8,
-            opacity: 0,
-          }}
-        >
-          <Text style={{ fontSize: 12, fontWeight: '600' }}>
-            HighTime 앱스토어 출시용 모바일 앱 (8081)
-          </Text>
-        </View>
-
         <View
           style={{
             width: '100%',
             maxWidth: 430,
-            height: '90vh' as any,
+            height: '90dvh' as any,
             maxHeight: 860,
             borderRadius: 36,
             borderWidth: 6,

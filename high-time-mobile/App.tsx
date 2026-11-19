@@ -1308,7 +1308,7 @@ const styles = StyleSheet.create({
   webPhoneFrame: {
     width: '100%',
     maxWidth: 430,
-    height: '90vh' as any,
+    height: '90dvh' as any,
     maxHeight: 860,
     backgroundColor: '#ffffff',
     borderRadius: 36,

@@ -188,6 +188,8 @@ export default function HomeDashboard({
     ? `현재 ${currentTimeStr} · 다음 수업 [${nextBlock.subject}] (${nextBlock.startHour}:00 시작)`
     : todayBlocks.length > 0
     ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}) 등록된 수업 종료`
+    : customTimetable.length > 0
+    ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}요일) 수업 없음 (총 ${customTimetable.length}개 등록됨)`
     : `현재 ${currentTimeStr} · [오늘 시간표]에서 직접 내 시간표를 추가해 보세요!`;
 
   const handleOpenAddForm = (day = '월', hour = 9) => {
@@ -486,9 +488,13 @@ export default function HomeDashboard({
         </div>
       </div>
 
-      {/* 에브리타임 스타일 다크 주간 시간표 그리드 모달 (웹 버전) */}
+      {/* 에브리타임 스타일 다크 주간 시간표 그리드 모달 (오른쪽에서 왼쪽으로 슬라이드 인) */}
       {isTimetableModalOpen && (
-        <div className="fixed inset-0 z-50 bg-[#121212] text-white flex flex-col max-w-md mx-auto">
+        <div
+          className="fixed inset-0 z-50 bg-[#121212] text-white flex flex-col max-w-md mx-auto"
+          style={{ animation: 'hightimeTimetableSlideIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
+        >
+          <style>{`@keyframes hightimeTimetableSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <div>
               <div className="text-xs text-zinc-400 font-semibold">2026년 2학기</div>

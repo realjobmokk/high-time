@@ -6,7 +6,7 @@
 // - 기존 수업 블록 탭 시: 수정 또는 삭제 지원
 // =============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,6 +17,8 @@ import {
   TextInput,
   Alert,
   SafeAreaView,
+  Animated,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PhoneModal } from '../components/PhoneModal';
@@ -147,8 +149,26 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
     setIsFormOpen(false);
   };
 
+  const slideAnim = useRef(new Animated.Value(400)).current;
+
+  useEffect(() => {
+    if (visible) {
+      slideAnim.setValue(380);
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 240,
+        useNativeDriver: Platform.OS !== 'web',
+      }).start(() => {
+        slideAnim.setValue(0);
+      });
+    } else {
+      slideAnim.setValue(380);
+    }
+  }, [visible]);
+
   return (
-    <PhoneModal visible={visible} animationType="slide" transparent={false}>
+    <PhoneModal visible={visible} animationType="none" transparent>
+      <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
       <SafeAreaView style={styles.safeArea}>
         {/* 상단 다크 헤더 (스크린샷과 동일한 디자인) */}
         <View style={styles.topHeader}>
@@ -400,6 +420,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
           </View>
         </PhoneModal>
       </SafeAreaView>
+      </Animated.View>
     </PhoneModal>
   );
 };
