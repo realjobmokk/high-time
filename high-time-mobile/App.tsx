@@ -91,6 +91,16 @@ export default function App() {
   // =========================================================
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // 웹/모바일 브라우저에서 바깥 어두운 배경이 화면 끝까지 꽉 차도록 body/html 배경 동기화
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.documentElement.style.backgroundColor = '#0f172a';
+      document.body.style.backgroundColor = '#0f172a';
+      document.body.style.margin = '0';
+      document.body.style.minHeight = '100dvh';
+    }
+  }, []);
+
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
     socialProvider: 'kakao',
     email: '',
@@ -1229,7 +1239,8 @@ export default function App() {
 const styles = StyleSheet.create({
   webRoot: {
     flex: 1,
-    minHeight: '100vh' as any,
+    width: '100%',
+    minHeight: '100dvh' as any,
     backgroundColor: '#0f172a',
     alignItems: 'center',
     justifyContent: 'center',

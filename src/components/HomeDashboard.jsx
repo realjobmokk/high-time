@@ -260,11 +260,11 @@ export default function HomeDashboard({
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[15px] font-black tracking-tight leading-snug truncate">
-            {currentUser?.name || '서정윤'} 학생, 오늘도 열공하세요! 🔥
-          </h2>
-          <span className="shrink-0 text-[15px] font-black text-white whitespace-nowrap">
+        <h2 className="text-base font-black tracking-tight leading-snug truncate">
+          {currentUser?.name || '서정윤'} 학생, 오늘도 열공하세요! 🔥
+        </h2>
+        <div className="flex justify-end my-0.5">
+          <span className="text-[15px] font-black text-white whitespace-nowrap">
             🎓 {(() => {
               const getSuneungDate = (y) => {
                 const nov1 = new Date(y, 10, 1);

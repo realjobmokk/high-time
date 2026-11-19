@@ -186,15 +186,15 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           </Text>
         </View>
 
-        <View style={styles.welcomeTitleRow}>
-          <Text
-            style={styles.welcomeTitle}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
-          >
-            {currentUser.name} 학생, 오늘도 열공하세요! 🔥
-          </Text>
+        <Text
+          style={styles.welcomeTitle}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+        >
+          {currentUser.name} 학생, 오늘도 열공하세요! 🔥
+        </Text>
+        <View style={styles.suneungMidRow}>
           <Text style={styles.suneungBadgeText}>🎓 {suneungDDayLabel}</Text>
         </View>
         <Text style={styles.welcomeSub}>
@@ -567,24 +567,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
-  welcomeTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 4,
-  },
   welcomeTitle: {
-    flex: 1,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '900',
+    marginBottom: 2,
+  },
+  suneungMidRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 4,
   },
   suneungBadgeText: {
     color: '#ffffff',
     fontSize: 15,
     fontWeight: '900',
-    flexShrink: 0,
   },
   welcomeSub: {
     color: '#fecaca',
