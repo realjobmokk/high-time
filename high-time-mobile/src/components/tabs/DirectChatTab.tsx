@@ -69,14 +69,16 @@ export const DirectChatTab: React.FC<DirectChatTabProps> = ({
     const isOpen = Boolean(openRoomId && activeRoom);
     onRoomOpenChange?.(isOpen);
     if (isOpen) {
-      slideAnim.setValue(400);
+      slideAnim.setValue(360);
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 240,
-        useNativeDriver: true,
-      }).start();
+        duration: 220,
+        useNativeDriver: Platform.OS !== 'web',
+      }).start(() => {
+        slideAnim.setValue(0);
+      });
     } else {
-      slideAnim.setValue(400);
+      slideAnim.setValue(0);
     }
   }, [openRoomId, Boolean(activeRoom)]);
 

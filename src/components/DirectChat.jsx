@@ -145,13 +145,14 @@ export default function DirectChat({
       );
       if (roomRes.ok) {
         const roomRows = await roomRes.json();
+        const norm = (s) => String(s || '').replace(/\s+/g, '').toLowerCase();
         const myRooms = (Array.isArray(roomRows) ? roomRows : []).filter((r) => {
           const isUserA =
-            r.user_a_key === myKey ||
-            (r.user_a_name === myName && r.user_a_school === mySchool);
+            norm(r.user_a_key) === norm(myKey) ||
+            (norm(r.user_a_name) === norm(myName) && norm(r.user_a_school) === norm(mySchool));
           const isUserB =
-            r.user_b_key === myKey ||
-            (r.user_b_name === myName && r.user_b_school === mySchool);
+            norm(r.user_b_key) === norm(myKey) ||
+            (norm(r.user_b_name) === norm(myName) && norm(r.user_b_school) === norm(mySchool));
           return isUserA || isUserB;
         });
 

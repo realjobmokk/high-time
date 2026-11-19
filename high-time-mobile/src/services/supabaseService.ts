@@ -430,13 +430,18 @@ export async function fetchChatRoomsFromDb(
 
   if (roomErr || !Array.isArray(roomRows)) return null;
 
+  const norm = (s: any) => String(s || '').replace(/\s+/g, '').toLowerCase();
+  const cleanMyName = norm(myName);
+  const cleanMySchool = norm(mySchool);
+  const cleanMyKey = norm(myKey);
+
   const myRoomRows = roomRows.filter((r: any) => {
     const isUserA =
-      r.user_a_key === myKey ||
-      (r.user_a_name === myName && r.user_a_school === mySchool);
+      norm(r.user_a_key) === cleanMyKey ||
+      (norm(r.user_a_name) === cleanMyName && norm(r.user_a_school) === cleanMySchool);
     const isUserB =
-      r.user_b_key === myKey ||
-      (r.user_b_name === myName && r.user_b_school === mySchool);
+      norm(r.user_b_key) === cleanMyKey ||
+      (norm(r.user_b_name) === cleanMyName && norm(r.user_b_school) === cleanMySchool);
     return isUserA || isUserB;
   });
 
@@ -458,10 +463,14 @@ export async function fetchChatRoomsFromDb(
 
   return myRoomRows.map((r: any) => {
     const isUserA =
-      r.user_a_key === myKey ||
-      (r.user_a_name === myName && r.user_a_school === mySchool);
-    const peerName = (isUserA ? r.user_b_name : r.user_a_name) || '학생';
-    const peerSchool = (isUserA ? r.user_b_school : r.user_a_school) || '';
+      norm(r.user_a_key) === cleanMyKey ||
+      (norm(r.user_a_name) === cleanMyName && norm(r.user_a_school) === cleanMySchool);
+    const peerName = String((isUserA ? r.user_b_name : r.user_a_name) || '학생')
+      .replace(/[\r\n]+/g, '')
+      .trim();
+    const peerSchool = String((isUserA ? r.user_b_school : r.user_a_school) || '')
+      .replace(/[\r\n]+/g, '')
+      .trim();
     const peerKey = isUserA ? r.user_b_key : r.user_a_key;
     const rawMsgs = msgsByRoom.get(r.id) || [];
     const lastRaw = rawMsgs[rawMsgs.length - 1];

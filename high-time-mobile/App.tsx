@@ -1006,7 +1006,10 @@ export default function App() {
             onMarkRoomRead={handleMarkRoomRead}
             onStartPeerChat={handleStartPeerChat}
             initialOpenRoomId={activeChatRoomId}
-            onRoomOpenChange={setIsChatRoomFullOpen}
+            onRoomOpenChange={(isOpen) => {
+              setIsChatRoomFullOpen(isOpen);
+              if (!isOpen) setActiveChatRoomId(null);
+            }}
           />
         );
       case 'profile':
