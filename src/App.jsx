@@ -520,6 +520,51 @@ export default function App() {
     }));
   };
 
+  // 입시 질문 댓글(답변) 등록
+  const handleAddQuestionComment = (questionId, content) => {
+    const newComment = {
+      id: `qc-${Date.now()}`,
+      author: currentUser?.name || '학생',
+      grade: currentUser?.grade || '고2',
+      content,
+      createdAt: '방금 전'
+    };
+    setCounselingData((prev) => ({
+      ...prev,
+      directQuestions: prev.directQuestions.map((q) => {
+        if (q.id !== questionId) return q;
+        let existing = [];
+        if (q.answer) {
+          try {
+            const parsed = JSON.parse(q.answer);
+            existing = Array.isArray(parsed)
+              ? parsed
+              : [{ id: 'legacy-answer', author: '멘토의 답변', content: q.answer, createdAt: q.answeredAt || '방금 전' }];
+          } catch {
+            existing = [{ id: 'legacy-answer', author: '멘토의 답변', content: q.answer, createdAt: q.answeredAt || '방금 전' }];
+          }
+        }
+        const nextAnswer = JSON.stringify([...existing, newComment]);
+        fetch(
+          `https://sghkaxetnfkmjminjekk.supabase.co/rest/v1/direct_questions?id=eq.${encodeURIComponent(questionId)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              apikey: 'sb_publishable_v6Ttgv7298aUSbGZDDjbbQ_uz1yY7_x',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              answer: nextAnswer,
+              status: '답변완료',
+              answered_at_label: '방금 전'
+            })
+          }
+        ).catch(() => {});
+        return { ...q, answer: nextAnswer, status: '답변완료', answeredAt: '방금 전' };
+      })
+    }));
+  };
+
   // 새 입시 상담 등록 (전용 테이블 admission_consults 우선 저장)
   const handleAddConsult = async (newConsult) => {
     setCounselingData((prev) => ({
@@ -664,6 +709,7 @@ export default function App() {
             <CounselingAndQA
               counselingData={counselingData}
               onAddQuestion={handleAddQuestion}
+              onAddQuestionComment={handleAddQuestionComment}
               onAddConsult={handleAddConsult}
               onNavigateToChat={() => setActiveTab('chat')}
               externalWriteTrigger={counselingWriteTrigger}

@@ -73,6 +73,7 @@ import {
   updateSchoolPostInteractionInDb,
   fetchDirectQuestionsFromDb,
   insertDirectQuestionToDb,
+  updateDirectQuestionAnswerInDb,
   fetchAdmissionConsultsFromDb,
   insertAdmissionConsultToDb,
   saveVerifiedUserToDb,
@@ -441,9 +442,11 @@ export default function App() {
       () => syncMajorRef.current(),
       () => refreshSchoolPosts()
     );
-    const poll = setInterval(() => {
+    const poll = setInterval(async () => {
       syncMajorRef.current();
       refreshSchoolPosts();
+      const dbQuestions = await fetchDirectQuestionsFromDb();
+      if (dbQuestions) setDirectQuestions(dbQuestions);
     }, 3500);
     return () => {
       unsubscribePosts();
@@ -873,6 +876,42 @@ export default function App() {
     insertDirectQuestionToDb(question);
   };
 
+  /** 입시 질문 댓글(답변) 등록 */
+  const handleAddQuestionComment = (questionId: string, content: string) => {
+    const newComment = {
+      id: `qc-${Date.now()}`,
+      author: currentUser.name || '학생',
+      grade: currentUser.grade || '고2',
+      content,
+      createdAt: '방금 전',
+    };
+    setDirectQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id !== questionId) return q;
+        let existing: any[] = [];
+        if (q.answer) {
+          try {
+            const parsed = JSON.parse(q.answer);
+            existing = Array.isArray(parsed)
+              ? parsed
+              : [{ id: 'legacy-answer', author: '선배 답변', content: q.answer, createdAt: q.answeredAt || '방금 전' }];
+          } catch {
+            existing = [{ id: 'legacy-answer', author: '선배 답변', content: q.answer, createdAt: q.answeredAt || '방금 전' }];
+          }
+        }
+        const nextComments = [...existing, newComment];
+        const nextAnswerJson = JSON.stringify(nextComments);
+        updateDirectQuestionAnswerInDb(questionId, nextAnswerJson, '답변완료', '방금 전');
+        return {
+          ...q,
+          answer: nextAnswerJson,
+          status: '답변완료',
+          answeredAt: '방금 전',
+        };
+      })
+    );
+  };
+
   /** 입시 상담 등록 */
   const handleSubmitConsult = (consult: AdmissionConsult) => {
     setAdmissionConsults((prev) => [consult, ...prev]);
@@ -1009,6 +1048,7 @@ export default function App() {
             admissionConsults={admissionConsults}
             onOpenAskDirect={() => handleOpenAskModal('direct')}
             onOpenAskAdmission={() => handleOpenAskModal('admission')}
+            onAddQuestionComment={handleAddQuestionComment}
           />
         );
       case 'chat':

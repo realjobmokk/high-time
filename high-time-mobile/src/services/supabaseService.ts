@@ -345,8 +345,25 @@ export async function insertDirectQuestionToDb(q: DirectQuestion): Promise<boole
   return !error;
 }
 
-// =============================================================================
-// 3-A-2. 입시 컨설팅 상담 내역 DB 조회 / 저장
+export async function updateDirectQuestionAnswerInDb(
+  questionId: string,
+  answer: string,
+  status: '답변완료' | '답변대기중',
+  answeredAt: string
+): Promise<boolean> {
+  if (!supabase) return false;
+
+  const { error } = await supabase
+    .from('direct_questions')
+    .update({
+      answer,
+      status,
+      answered_at_label: answeredAt,
+    })
+    .eq('id', questionId);
+
+  return !error;
+}
 // =============================================================================
 
 export async function fetchAdmissionConsultsFromDb(): Promise<AdmissionConsult[] | null> {
