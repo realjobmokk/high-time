@@ -5,11 +5,24 @@
 // =============================================================================
 
 import React from 'react';
-import { Modal, ModalProps, Platform, View } from 'react-native';
+import { Modal, ModalProps, Platform, View, useWindowDimensions } from 'react-native';
 
 export const PhoneModal: React.FC<ModalProps> = ({ children, ...props }) => {
+  const { width } = useWindowDimensions();
+
   if (Platform.OS !== 'web') {
     return <Modal {...props}>{children}</Modal>;
+  }
+
+  // 실제 모바일 브라우저(<=520px)에서는 가짜 프레임 없이 전체 화면 끝까지 모달 배경을 꽉 채움
+  if (width <= 520) {
+    return (
+      <Modal {...props} transparent>
+        <View style={{ flex: 1, width: '100%', minHeight: '100dvh' as any }}>
+          {children}
+        </View>
+      </Modal>
+    );
   }
 
   return (
@@ -32,12 +45,13 @@ export const PhoneModal: React.FC<ModalProps> = ({ children, ...props }) => {
             height: '90dvh' as any,
             maxHeight: 860,
             borderRadius: 36,
-            borderWidth: 6,
-            borderColor: 'transparent',
+            padding: 6,
             overflow: 'hidden',
           }}
         >
-          {children}
+          <View style={{ flex: 1, borderRadius: 30, overflow: 'hidden' }}>
+            {children}
+          </View>
         </View>
       </View>
     </Modal>

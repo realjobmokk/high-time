@@ -12,6 +12,7 @@ import {
   StatusBar,
   Alert,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 
 // 타입 정의
@@ -93,16 +94,19 @@ export default function App() {
   //  1. 로그인 여부 & 사용자 · 소속 학교 상태
   // =========================================================
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { width: windowWidth } = useWindowDimensions();
+  const isSmallMobileWeb = Platform.OS === 'web' && windowWidth <= 520;
 
-  // 웹/모바일 브라우저에서 바깥 어두운 배경이 화면 끝까지 꽉 차도록 body/html 배경 동기화
+  // 웹/모바일 브라우저에서 바깥 배경 동기화
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      document.documentElement.style.backgroundColor = '#0f172a';
-      document.body.style.backgroundColor = '#0f172a';
+      const bg = isSmallMobileWeb ? '#ffffff' : '#0f172a';
+      document.documentElement.style.backgroundColor = bg;
+      document.body.style.backgroundColor = bg;
       document.body.style.margin = '0';
       document.body.style.minHeight = '100dvh';
     }
-  }, []);
+  }, [isSmallMobileWeb]);
 
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
     socialProvider: 'kakao',
@@ -1109,6 +1113,14 @@ export default function App() {
   // (실제 iOS/Android 앱에서는 전체 화면 그대로 동작)
   const renderWithWebPhoneFrame = (content: React.ReactNode) => {
     if (Platform.OS !== 'web') return <>{content}</>;
+    // 실제 모바일 브라우저(<=520px)로 접속한 경우 가짜 폰 프레임 없이 화면 전체를 100% 채움
+    if (isSmallMobileWeb) {
+      return (
+        <View style={{ flex: 1, width: '100%', minHeight: '100dvh' as any, backgroundColor: '#ffffff' }}>
+          {content}
+        </View>
+      );
+    }
     return (
       <View style={styles.webRoot}>
         <View style={styles.webPhoneFrame}>

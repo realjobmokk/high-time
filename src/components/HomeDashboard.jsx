@@ -485,31 +485,31 @@ export default function HomeDashboard({
         </div>
       </div>
 
-      {/* 에브리타임 스타일 다크 주간 시간표 그리드 모달 (오른쪽에서 왼쪽으로 슬라이드 인) */}
+      {/* HighTime 화이트 주간 시간표 그리드 모달 (오른쪽에서 왼쪽으로 슬라이드 인) */}
       {isTimetableModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[#121212] text-white flex flex-col max-w-md mx-auto"
+          className="fixed inset-0 z-50 bg-white text-slate-900 flex flex-col max-w-md mx-auto"
           style={{ animation: 'hightimeTimetableSlideIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
         >
           <style>{`@keyframes hightimeTimetableSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <div>
-              <div className="text-xs text-zinc-400 font-semibold">2026년 2학기</div>
-              <div className="text-xl font-black flex items-center gap-1">
+              <div className="text-xs text-slate-500 font-semibold">2026년 2학기</div>
+              <div className="text-xl font-black text-slate-900 flex items-center gap-1">
                 <span>시간표</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => handleOpenAddForm('월', 9)}
-                className="p-1.5 rounded-lg hover:bg-zinc-800"
+                className="p-1.5 rounded-lg hover:bg-slate-100"
                 title="수업 추가"
               >
-                <Plus className="w-6 h-6 text-white" />
+                <Plus className="w-6 h-6 text-slate-900" />
               </button>
               <button
                 onClick={() => setIsTimetableModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400"
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
               >
                 <X className="w-6 h-6" />
               </button>

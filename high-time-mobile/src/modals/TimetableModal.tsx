@@ -170,13 +170,13 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
     <PhoneModal visible={visible} animationType="none" transparent>
       <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
       <SafeAreaView style={styles.safeArea}>
-        {/* 상단 다크 헤더 (스크린샷과 동일한 디자인) */}
+        {/* 상단 화이트 헤더 */}
         <View style={styles.topHeader}>
           <View>
             <Text style={styles.semesterText}>2026년 2학기</Text>
             <View style={styles.titleRow}>
               <Text style={styles.mainTitle}>시간표</Text>
-              <Ionicons name="chevron-down" size={18} color="#ffffff" />
+              <Ionicons name="chevron-down" size={18} color="#0f172a" />
             </View>
           </View>
 
@@ -187,7 +187,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
               onPress={() => handleOpenNewForm('월', 9)}
               activeOpacity={0.7}
             >
-              <Ionicons name="add" size={26} color="#ffffff" />
+              <Ionicons name="add" size={26} color="#0f172a" />
             </TouchableOpacity>
 
             {/* 닫기 버튼 */}
@@ -196,7 +196,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
               onPress={onClose}
               activeOpacity={0.7}
             >
-              <Ionicons name="close" size={24} color="#a1a1aa" />
+              <Ionicons name="close" size={24} color="#64748b" />
             </TouchableOpacity>
           </View>
         </View>
@@ -428,7 +428,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#ffffff',
   },
   topHeader: {
     flexDirection: 'row',
@@ -437,10 +437,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 12,
     paddingBottom: 8,
+    backgroundColor: '#ffffff',
   },
   semesterText: {
     fontSize: 12,
-    color: '#a1a1aa',
+    color: '#64748b',
     fontWeight: '600',
     marginBottom: 2,
   },
@@ -452,7 +453,7 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#0f172a',
   },
   headerIcons: {
     flexDirection: 'row',
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
   },
   helperSubText: {
     fontSize: 11,
-    color: '#a1a1aa',
+    color: '#64748b',
     paddingHorizontal: 18,
     marginBottom: 10,
   },
@@ -474,16 +475,17 @@ const styles = StyleSheet.create({
   },
   gridWrapper: {
     borderWidth: 1,
-    borderColor: '#27272a',
+    borderColor: '#e2e8f0',
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#18181b',
+    backgroundColor: '#ffffff',
     marginBottom: 28,
   },
   dayHeaderRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
     height: 32,
     alignItems: 'center',
   },
@@ -491,20 +493,20 @@ const styles = StyleSheet.create({
     width: 34,
     height: '100%',
     borderRightWidth: 1,
-    borderRightColor: '#27272a',
+    borderRightColor: '#e2e8f0',
   },
   dayHeaderCell: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#27272a',
+    borderRightColor: '#e2e8f0',
     height: '100%',
   },
   dayHeaderText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#a1a1aa',
+    color: '#475569',
   },
   gridBody: {
     flexDirection: 'row',
@@ -512,29 +514,30 @@ const styles = StyleSheet.create({
   timeAxisColumn: {
     width: 34,
     borderRightWidth: 1,
-    borderRightColor: '#27272a',
+    borderRightColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
   },
   timeAxisCell: {
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#e2e8f0',
     paddingTop: 4,
     paddingRight: 5,
     alignItems: 'flex-end',
   },
   timeAxisText: {
     fontSize: 11,
-    color: '#71717a',
+    color: '#64748b',
     fontWeight: '600',
   },
   dayColumn: {
     flex: 1,
     position: 'relative',
     borderRightWidth: 1,
-    borderRightColor: '#27272a',
+    borderRightColor: '#e2e8f0',
   },
   emptyGridCell: {
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#f1f5f9',
   },
   classBlock: {
     position: 'absolute',
@@ -553,16 +556,16 @@ const styles = StyleSheet.create({
   classBlockRoom: {
     fontSize: 10,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.9)',
     marginTop: 2,
   },
   formOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'flex-end',
   },
   formSheet: {
-    backgroundColor: '#1e1e24',
+    backgroundColor: '#ffffff',
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     padding: 18,
@@ -577,24 +580,24 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#0f172a',
   },
   inputLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#d4d4d8',
+    color: '#334155',
     marginTop: 10,
     marginBottom: 6,
   },
   textInput: {
-    backgroundColor: '#27272a',
+    backgroundColor: '#f8fafc',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 13,
-    color: '#ffffff',
+    color: '#0f172a',
     borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderColor: '#cbd5e1',
   },
   daySelectRow: {
     flexDirection: 'row',
@@ -605,9 +608,9 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     alignItems: 'center',
     borderRadius: 9,
-    backgroundColor: '#27272a',
+    backgroundColor: '#f1f5f9',
     borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderColor: '#e2e8f0',
   },
   daySelectChipActive: {
     backgroundColor: '#dc2626',
@@ -616,7 +619,7 @@ const styles = StyleSheet.create({
   daySelectChipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#a1a1aa',
+    color: '#475569',
   },
   daySelectChipTextActive: {
     color: '#ffffff',
@@ -626,7 +629,7 @@ const styles = StyleSheet.create({
   },
   timeSubLabel: {
     fontSize: 11,
-    color: '#a1a1aa',
+    color: '#64748b',
     marginBottom: 5,
   },
   hourChipScroll: {
@@ -636,10 +639,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: '#27272a',
+    backgroundColor: '#f1f5f9',
     marginRight: 6,
     borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderColor: '#e2e8f0',
   },
   hourChipActive: {
     backgroundColor: '#dc2626',
@@ -648,7 +651,7 @@ const styles = StyleSheet.create({
   hourChipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#a1a1aa',
+    color: '#475569',
   },
   hourChipTextActive: {
     color: '#ffffff',
@@ -667,7 +670,7 @@ const styles = StyleSheet.create({
   },
   colorCircleSelected: {
     borderWidth: 2.5,
-    borderColor: '#ffffff',
+    borderColor: '#0f172a',
   },
   formActionRow: {
     flexDirection: 'row',
