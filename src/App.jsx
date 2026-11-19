@@ -621,12 +621,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-start p-0 sm:py-6 selection:bg-red-500 selection:text-white">
-      {/* 데스크톱 상단 프레젠테이션 안내 바 */}
-      <div className="hidden sm:flex items-center justify-between w-full max-w-md px-2 pb-2 text-slate-400 text-xs">
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>HighTime 고교타임 모바일 프로토타입</span>
-        </div>
+      {/* 데스크톱 상단 프레임 전환 바 */}
+      <div className="hidden sm:flex items-center justify-end w-full max-w-md px-2 pb-2 text-slate-400 text-xs">
         <button
           onClick={() => setIsMobileFrame(!isMobileFrame)}
           className="text-[11px] hover:text-white underline"

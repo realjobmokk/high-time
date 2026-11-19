@@ -62,7 +62,9 @@ export async function fetchMajorPostsFromDb(): Promise<MajorPost[] | null> {
       return (
         !id.startsWith('chatroom_') &&
         !id.startsWith('school_comments_') &&
-        !id.startsWith('consult_')
+        !id.startsWith('consult_') &&
+        row.topic !== '우리학교 댓글' &&
+        row.status !== '동기화'
       );
     })
     .map((row: any) => ({
@@ -271,21 +273,6 @@ export async function updateSchoolPostInteractionInDb(
       .eq('id', postId);
   }
 
-  // 모든 기기에서 댓글 내용이 즉시 공유되도록 direct_questions 보조 저장소에도 함께 동기화
-  if (comments) {
-    await supabase.from('direct_questions').upsert({
-      id: `school_comments_${postId}`,
-      target_author: postId,
-      topic: '우리학교 댓글',
-      question: `댓글 ${comments.length}개`,
-      answer: JSON.stringify(comments),
-      status: '동기화',
-      created_at_label: '방금 전',
-      answered_at_label: '방금 전',
-      is_public: false,
-    } as any);
-  }
-
   return true;
 }
 
@@ -311,7 +298,9 @@ export async function fetchDirectQuestionsFromDb(): Promise<DirectQuestion[] | n
       return (
         !id.startsWith('chatroom_') &&
         !id.startsWith('school_comments_') &&
-        !id.startsWith('consult_')
+        !id.startsWith('consult_') &&
+        row.topic !== '우리학교 댓글' &&
+        row.status !== '동기화'
       );
     })
     .map((row: any) => ({

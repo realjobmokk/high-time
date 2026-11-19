@@ -1105,10 +1105,6 @@ export default function App() {
     if (Platform.OS !== 'web') return <>{content}</>;
     return (
       <View style={styles.webRoot}>
-        <View style={styles.webTopHint}>
-          <View style={styles.webDot} />
-          <Text style={styles.webTopHintText}>HighTime 앱스토어 출시용 모바일 앱 (8081)</Text>
-        </View>
         <View style={styles.webPhoneFrame}>
           <View style={styles.webNotchWrap}>
             <View style={styles.webNotch} />
