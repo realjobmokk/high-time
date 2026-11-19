@@ -521,7 +521,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {/* 상단 브랜드 로고 영역 */}
         <View style={styles.brandSection}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>H</Text>
+            <Ionicons name="school" size={24} color="#ffffff" />
+            <Text style={styles.logoText}>HT</Text>
           </View>
           <View style={styles.brandTitleRow}>
             <Text style={styles.brandTitle}>HighTime</Text>
@@ -1204,9 +1205,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 58,
+    height: 58,
+    borderRadius: 18,
     backgroundColor: '#dc2626',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1214,8 +1215,10 @@ const styles = StyleSheet.create({
   },
   logoText: {
     color: '#ffffff',
-    fontSize: 26,
+    fontSize: 15,
+    lineHeight: 16,
     fontWeight: '900',
+    letterSpacing: -0.3,
   },
   brandTitleRow: {
     flexDirection: 'row',

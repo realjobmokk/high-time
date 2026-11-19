@@ -24,7 +24,8 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 로고 영역 */}
       <View style={styles.headerLeft}>
         <View style={styles.logoBadge}>
-          <Text style={styles.logoBadgeText}>H</Text>
+          <Ionicons name="school" size={13} color="#ffffff" />
+          <Text style={styles.logoBadgeText}>HT</Text>
         </View>
         <View>
           <View style={styles.logoRow}>
@@ -74,17 +75,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     backgroundColor: '#dc2626',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 0,
   },
   logoBadgeText: {
     color: '#ffffff',
     fontWeight: '900',
-    fontSize: 16,
+    fontSize: 10,
+    lineHeight: 11,
+    letterSpacing: -0.3,
   },
   logoRow: {
     flexDirection: 'row',

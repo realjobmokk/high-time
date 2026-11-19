@@ -9,7 +9,8 @@ import {
   Lock, 
   FileCheck, 
   RefreshCw,
-  X
+  X,
+  GraduationCap
 } from 'lucide-react';
 
 // 상단 헤더 컴포넌트 (공식 인증된 내 고등학교 고정 표시 및 학생증 인증 카드 팝업)
@@ -30,8 +31,9 @@ export default function Header({
         <div className="flex items-center justify-between">
           {/* 로고 및 브랜딩 */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-red-500 to-amber-500 flex items-center justify-center text-white font-extrabold shadow-sm shadow-red-200">
-              H
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-red-500 to-amber-500 flex flex-col items-center justify-center text-white font-black shadow-sm shadow-red-200 leading-none">
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span className="text-[9px] tracking-tight -mt-0.5">HT</span>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
