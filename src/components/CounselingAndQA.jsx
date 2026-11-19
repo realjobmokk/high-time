@@ -224,61 +224,8 @@ export default function CounselingAndQA({
 
                     <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
                       <span>💬 댓글 {comments.length}개</span>
-                      <span className="text-red-500">{isExpanded ? '접기 ▲' : '터치해서 댓글 쓰기 ▼'}</span>
+                      <span className="text-red-500">눌러서 상세 · 댓글 보기 &gt;</span>
                     </div>
-
-                    {isExpanded && (
-                      <div
-                        className="mt-3 pt-3 border-t border-slate-100 space-y-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {comments.length === 0 ? (
-                          <p className="text-[11px] text-slate-400">
-                            아직 답변이 없습니다. 첫 댓글을 남겨보세요!
-                          </p>
-                        ) : (
-                          comments.map((c) => (
-                            <div
-                              key={c.id}
-                              className="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-2.5 text-xs"
-                            >
-                              <div className="text-[11px] text-emerald-800 font-bold mb-0.5">
-                                {c.author}
-                                {c.grade ? ` (${c.grade})` : ''} · {c.createdAt}
-                              </div>
-                              <p className="text-slate-700 leading-relaxed">{c.content}</p>
-                            </div>
-                          ))
-                        )}
-
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            const trimmed = draft.trim();
-                            if (!trimmed) return;
-                            onAddQuestionComment?.(q.id, trimmed);
-                            setQCommentInputs((prev) => ({ ...prev, [q.id]: '' }));
-                          }}
-                          className="flex items-center gap-1.5 pt-1"
-                        >
-                          <input
-                            type="text"
-                            value={draft}
-                            onChange={(e) =>
-                              setQCommentInputs((prev) => ({ ...prev, [q.id]: e.target.value }))
-                            }
-                            placeholder="답변이나 댓글을 입력하세요..."
-                            className="flex-1 bg-slate-100 rounded-full px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-400"
-                          />
-                          <button
-                            type="submit"
-                            className="px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold shrink-0"
-                          >
-                            등록
-                          </button>
-                        </form>
-                      </div>
-                    )}
                   </div>
                   );
                 })
@@ -352,6 +299,95 @@ export default function CounselingAndQA({
           </div>
         </div>
       )}
+
+      {/* 입시 질문 상세 & 댓글 모달 (전공게시판 PostDetailModal 스타일) */}
+      {(() => {
+        const selectedQ = counselingData.directQuestions.find((q) => q.id === expandedQId);
+        if (!selectedQ) return null;
+        const comments = parseQComments(selectedQ.answer, selectedQ.answeredAt);
+        const draft = qCommentInputs[selectedQ.id] || '';
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs p-0 sm:p-4">
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <h3 className="text-sm font-black text-slate-900">입시 질문 · {selectedQ.targetAuthor}</h3>
+                <button
+                  type="button"
+                  onClick={() => setExpandedQId(null)}
+                  className="px-2 py-1 rounded-lg hover:bg-slate-100 text-xs font-bold text-slate-500"
+                >
+                  닫기
+                </button>
+              </div>
+              <div className="p-4 overflow-y-auto space-y-3 flex-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      selectedQ.status === '답변완료'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}
+                  >
+                    {selectedQ.status}
+                  </span>
+                  <span className="text-[11px] text-slate-400">{selectedQ.createdAt}</span>
+                </div>
+                <h4 className="text-base font-black text-slate-900">{selectedQ.topic}</h4>
+                <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {selectedQ.question}
+                </p>
+                <div className="border-t border-slate-100 pt-3 space-y-2">
+                  <div className="text-xs font-extrabold text-slate-800">댓글 {comments.length}개</div>
+                  {comments.length === 0 ? (
+                    <p className="text-center text-xs text-slate-400 py-6">
+                      아직 답변이 없습니다. 첫 댓글을 남겨보세요!
+                    </p>
+                  ) : (
+                    comments.map((c) => (
+                      <div key={c.id} className="bg-slate-50 rounded-xl p-2.5 border border-slate-200 text-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-slate-800">
+                            {c.author}
+                            {c.grade ? ` · ${c.grade}` : ''}
+                          </span>
+                          <span className="text-[10px] text-slate-400">{c.createdAt}</span>
+                        </div>
+                        <p className="text-slate-700 leading-snug">{c.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = draft.trim();
+                  if (!trimmed) return;
+                  onAddQuestionComment?.(selectedQ.id, trimmed);
+                  setQCommentInputs((prev) => ({ ...prev, [selectedQ.id]: '' }));
+                }}
+                className="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0"
+              >
+                <input
+                  type="text"
+                  value={draft}
+                  onChange={(e) =>
+                    setQCommentInputs((prev) => ({ ...prev, [selectedQ.id]: e.target.value }))
+                  }
+                  placeholder="답변이나 댓글을 입력하세요..."
+                  className="flex-1 bg-slate-100 rounded-full px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+                <button
+                  type="submit"
+                  className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shrink-0"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 입시 질문 게시판 글쓰기 모달 */}
       {isQuestionModalOpen && (

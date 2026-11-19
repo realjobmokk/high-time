@@ -7,9 +7,12 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DirectQuestion, AdmissionConsult } from '../../types';
+import { PhoneModal } from '../PhoneModal';
 
 interface QuestionCommentItem {
   id: string;
@@ -55,7 +58,10 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
   const [subTab, setSubTab] = useState<SubTab>('direct');
   const [selectedCategory, setSelectedCategory] = useState<string>('전체');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  const [modalCommentText, setModalCommentText] = useState('');
+
+  const selectedQuestion = directQuestions.find((q) => q.id === selectedQuestionId) || null;
 
   const ADMISSION_Q_CATEGORIES = ['전체', '수시/학종', '정시/수능', '생기부/세특', '내신/공부법', '대학/학과선택'];
   const filteredQuestions =
@@ -167,8 +173,8 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
               <TouchableOpacity
                 key={item.id}
                 style={styles.qaCard}
-                onPress={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                activeOpacity={0.7}
+                onPress={() => setSelectedQuestionId(item.id)}
+                activeOpacity={0.75}
               >
                 {/* 질문 카드 헤더 */}
                 <View style={styles.qaTop}>
@@ -201,79 +207,15 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
                         <Text style={styles.publicBadgeText}>공개답변</Text>
                       </View>
                     )}
-                    <Ionicons
-                      name={expandedId === item.id ? 'chevron-up' : 'chevron-down'}
-                      size={16}
-                      color="#94a3b8"
-                    />
+                    <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
                   </View>
                 </View>
 
                 {/* 질문 주제 */}
                 <Text style={styles.qaTopic}>{item.topic}</Text>
-                <Text style={styles.qaQuestion} numberOfLines={expandedId === item.id ? undefined : 2}>
+                <Text style={styles.qaQuestion} numberOfLines={2}>
                   Q. {item.question}
                 </Text>
-
-                {/* 확장 시 댓글(답변) 목록 + 댓글 작성 입력창 표시 */}
-                {expandedId === item.id && (() => {
-                  const comments = parseQuestionComments(item.answer, item.answeredAt);
-                  const draft = commentInputs[item.id] || '';
-                  const submitComment = () => {
-                    const trimmed = draft.trim();
-                    if (!trimmed) return;
-                    onAddQuestionComment(item.id, trimmed);
-                    setCommentInputs((prev) => ({ ...prev, [item.id]: '' }));
-                  };
-
-                  return (
-                    <View style={styles.qCommentSection}>
-                      {comments.length === 0 ? (
-                        <Text style={styles.qNoCommentText}>
-                          아직 답변이 없습니다. 첫 댓글을 남겨보세요!
-                        </Text>
-                      ) : (
-                        <View style={{ gap: 6, marginBottom: 8 }}>
-                          {comments.map((c) => (
-                            <View key={c.id} style={styles.answerBox}>
-                              <View style={styles.answerHeader}>
-                                <Ionicons name="chatbubble" size={12} color="#16a34a" />
-                                <Text style={styles.answerHeaderText}>
-                                  {c.author}
-                                  {c.grade ? ` (${c.grade})` : ''} · {c.createdAt}
-                                </Text>
-                              </View>
-                              <Text style={styles.answerText}>{c.content}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-
-                      <View style={styles.qCommentInputRow}>
-                        <TextInput
-                          style={styles.qCommentInput}
-                          value={draft}
-                          onChangeText={(t) =>
-                            setCommentInputs((prev) => ({ ...prev, [item.id]: t }))
-                          }
-                          placeholder="답변이나 댓글을 입력하세요..."
-                          placeholderTextColor="#94a3b8"
-                          returnKeyType="send"
-                          onSubmitEditing={submitComment}
-                        />
-                        <TouchableOpacity
-                          style={[
-                            styles.qCommentSendBtn,
-                            !draft.trim() && { backgroundColor: '#cbd5e1' },
-                          ]}
-                          onPress={submitComment}
-                        >
-                          <Ionicons name="send" size={14} color="#ffffff" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                })()}
 
                 <View style={styles.qaFooterRow}>
                   <Text style={styles.qaTime}>{item.createdAt}</Text>
@@ -374,6 +316,123 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
       >
         <Ionicons name="add" size={24} color="#ffffff" />
       </TouchableOpacity>
+
+      {/* 입시질문 상세 & 댓글 모달 (전공게시판 PostDetailModal 스타일) */}
+      <PhoneModal visible={Boolean(selectedQuestion)} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          style={styles.detailOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.detailContainer}>
+            <View style={styles.detailHeader}>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedQuestionId(null);
+                  setModalCommentText('');
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="arrow-back" size={22} color="#1e293b" />
+              </TouchableOpacity>
+              <Text style={styles.detailHeaderTitle}>
+                입시 질문 · {selectedQuestion?.targetAuthor}
+              </Text>
+              <View style={{ width: 22 }} />
+            </View>
+
+            {selectedQuestion && (() => {
+              const comments = parseQuestionComments(
+                selectedQuestion.answer,
+                selectedQuestion.answeredAt
+              );
+              const submitModalComment = () => {
+                const trimmed = modalCommentText.trim();
+                if (!trimmed) return;
+                onAddQuestionComment(selectedQuestion.id, trimmed);
+                setModalCommentText('');
+              };
+
+              return (
+                <>
+                  <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
+                    <View style={styles.detailMetaRow}>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          selectedQuestion.status === '답변완료'
+                            ? styles.statusDone
+                            : styles.statusPending,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusText,
+                            selectedQuestion.status === '답변완료'
+                              ? styles.statusDoneText
+                              : styles.statusPendingText,
+                          ]}
+                        >
+                          {selectedQuestion.status}
+                        </Text>
+                      </View>
+                      <Text style={styles.qaTime}>{selectedQuestion.createdAt}</Text>
+                    </View>
+
+                    <Text style={styles.detailTitle}>{selectedQuestion.topic}</Text>
+                    <Text style={styles.detailContent}>{selectedQuestion.question}</Text>
+
+                    <View style={styles.detailDivider} />
+
+                    <Text style={styles.detailCommentTitle}>댓글 {comments.length}개</Text>
+
+                    {comments.length === 0 ? (
+                      <Text style={styles.detailEmptyComment}>
+                        아직 등록된 답변이 없습니다. 첫 댓글을 남겨보세요!
+                      </Text>
+                    ) : (
+                      <View style={{ gap: 10, paddingBottom: 16 }}>
+                        {comments.map((c) => (
+                          <View key={c.id} style={styles.detailCommentCard}>
+                            <View style={styles.detailCommentTop}>
+                              <Text style={styles.detailCommentAuthor}>
+                                {c.author}
+                                {c.grade ? ` · ${c.grade}` : ''}
+                              </Text>
+                              <Text style={styles.qaTime}>{c.createdAt}</Text>
+                            </View>
+                            <Text style={styles.detailCommentBody}>{c.content}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </ScrollView>
+
+                  <View style={styles.detailInputBar}>
+                    <TextInput
+                      style={styles.detailInput}
+                      value={modalCommentText}
+                      onChangeText={setModalCommentText}
+                      placeholder="답변이나 댓글을 입력하세요..."
+                      placeholderTextColor="#94a3b8"
+                      returnKeyType="send"
+                      onSubmitEditing={submitModalComment}
+                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.detailSendBtn,
+                        !modalCommentText.trim() && { backgroundColor: '#cbd5e1' },
+                      ]}
+                      onPress={submitModalComment}
+                    >
+                      <Ionicons name="send" size={16} color="#ffffff" />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        </KeyboardAvoidingView>
+      </PhoneModal>
     </View>
   );
 };
@@ -685,6 +744,121 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#64748b',
+  },
+  detailOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  detailContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: '88%',
+    overflow: 'hidden',
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  detailHeaderTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  detailScroll: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+  },
+  detailMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  detailTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#0f172a',
+    marginBottom: 8,
+  },
+  detailContent: {
+    fontSize: 14,
+    color: '#334155',
+    lineHeight: 21,
+  },
+  detailDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginVertical: 16,
+  },
+  detailCommentTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 10,
+  },
+  detailEmptyComment: {
+    fontSize: 12.5,
+    color: '#94a3b8',
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
+  detailCommentCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  detailCommentTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  detailCommentAuthor: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  detailCommentBody: {
+    fontSize: 13,
+    color: '#334155',
+    lineHeight: 19,
+  },
+  detailInputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+  },
+  detailInput: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    fontSize: 13,
+    color: '#0f172a',
+  },
+  detailSendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#dc2626',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
