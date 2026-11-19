@@ -276,9 +276,14 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             <Text style={styles.calText}>{displayCalorie}</Text>
           </View>
 
-          <Text style={styles.subDateText}>
-            {currentSchool.name} · {mealInfo?.date || '오늘의 중식'}
-          </Text>
+          <View style={{ marginBottom: 6 }}>
+            <Text style={[styles.subDateText, { marginBottom: 1 }]} numberOfLines={1}>
+              {currentSchool.name}
+            </Text>
+            <Text style={[styles.subDateText, { marginBottom: 0 }]}>
+              {mealInfo?.date || '오늘의 중식'}
+            </Text>
+          </View>
 
           {isMealLoading ? (
             <View style={styles.mealLoading}>

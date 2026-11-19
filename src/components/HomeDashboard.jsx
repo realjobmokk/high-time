@@ -362,8 +362,9 @@ export default function HomeDashboard({
               </span>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-semibold mb-2">
-              {currentSchool.name} · {mealInfo?.date || '오늘의 중식'}
+            <div className="text-[10px] text-slate-400 font-semibold mb-2 leading-tight">
+              <div className="truncate">{currentSchool.name}</div>
+              <div>{mealInfo?.date || '오늘의 중식'}</div>
             </div>
 
             {isMealLoading ? (
