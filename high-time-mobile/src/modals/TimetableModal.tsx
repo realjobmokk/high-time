@@ -301,17 +301,17 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                 style={styles.textInput}
                 value={subject}
                 onChangeText={setSubject}
-                placeholder="예: 미적분학II, 물리학I, 영어프레젠테이션"
+                placeholder="예: 미적분학, 물리학, 화법과 작문"
                 placeholderTextColor="#71717a"
               />
 
-              {/* 2. 강의실 / 메모 입력 */}
-              <Text style={styles.inputLabel}>강의실 / 교실 위치 (선택)</Text>
+              {/* 2. 교실 위치 입력 */}
+              <Text style={styles.inputLabel}>교실 위치 (선택)</Text>
               <TextInput
                 style={styles.textInput}
                 value={room}
                 onChangeText={setRoom}
-                placeholder="예: 7-613, 2-3교실, 과학실"
+                placeholder="예: 2반, 3반"
                 placeholderTextColor="#71717a"
               />
 

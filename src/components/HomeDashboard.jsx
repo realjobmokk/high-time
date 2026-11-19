@@ -618,19 +618,19 @@ export default function HomeDashboard({
                     type="text"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    placeholder="예: 미적분학II, 물리학I"
+                    placeholder="예: 미적분학, 물리학, 화법과 작문"
                     className="w-full p-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white font-bold"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="text-zinc-300 font-bold block mb-1">강의실 / 교실 (선택)</label>
+                  <label className="text-zinc-300 font-bold block mb-1">교실 위치 (선택)</label>
                   <input
                     type="text"
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
-                    placeholder="예: 7-613, 2-3교실"
+                    placeholder="예: 2반, 3반"
                     className="w-full p-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white"
                   />
                 </div>
