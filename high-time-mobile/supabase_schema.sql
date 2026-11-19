@@ -155,3 +155,29 @@ BEGIN
   ALTER PUBLICATION supabase_realtime ADD TABLE public.school_posts;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+-- 7. 입시 컨설팅 상담 전용 테이블 (admission_consults)
+CREATE TABLE IF NOT EXISTS public.admission_consults (
+  id TEXT PRIMARY KEY,
+  category TEXT NOT NULL DEFAULT '수시/학종',
+  target_major TEXT NOT NULL DEFAULT '',
+  target_school TEXT NOT NULL DEFAULT '',
+  grade_average TEXT NOT NULL DEFAULT '',
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  expert_advice TEXT NOT NULL DEFAULT '',
+  expert_name TEXT NOT NULL DEFAULT 'HighTime 입시연구소',
+  status TEXT NOT NULL DEFAULT '검토중',
+  created_at_label TEXT NOT NULL DEFAULT '방금 전',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.admission_consults ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public access to admission_consults" ON public.admission_consults;
+CREATE POLICY "Allow public access to admission_consults" ON public.admission_consults FOR ALL USING (true) WITH CHECK (true);
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.admission_consults;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

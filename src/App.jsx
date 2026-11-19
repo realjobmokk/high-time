@@ -520,12 +520,39 @@ export default function App() {
     }));
   };
 
-  // 새 입시 상담 등록 (로컬 + Supabase 동기화)
-  const handleAddConsult = (newConsult) => {
+  // 새 입시 상담 등록 (전용 테이블 admission_consults 우선 저장)
+  const handleAddConsult = async (newConsult) => {
     setCounselingData((prev) => ({
       ...prev,
       admissionConsults: [newConsult, ...prev.admissionConsults]
     }));
+    try {
+      const res = await fetch(
+        'https://sghkaxetnfkmjminjekk.supabase.co/rest/v1/admission_consults',
+        {
+          method: 'POST',
+          headers: {
+            apikey: 'sb_publishable_v6Ttgv7298aUSbGZDDjbbQ_uz1yY7_x',
+            'Content-Type': 'application/json',
+            Prefer: 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            id: newConsult.id,
+            category: newConsult.category || '수시/학종',
+            target_major: newConsult.targetMajor || '',
+            target_school: newConsult.targetSchool || '',
+            grade_average: newConsult.gradeAverage || '',
+            title: newConsult.title,
+            content: newConsult.content,
+            expert_advice: newConsult.expertAdvice || '',
+            expert_name: newConsult.expertName || 'HighTime 입시연구소',
+            status: newConsult.status || '검토중',
+            created_at_label: newConsult.createdAt || '방금 전'
+          })
+        }
+      );
+      if (res.ok) return;
+    } catch {}
     fetch('https://sghkaxetnfkmjminjekk.supabase.co/rest/v1/direct_questions', {
       method: 'POST',
       headers: {

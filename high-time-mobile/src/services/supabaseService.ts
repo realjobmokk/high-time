@@ -352,6 +352,29 @@ export async function insertDirectQuestionToDb(q: DirectQuestion): Promise<boole
 export async function fetchAdmissionConsultsFromDb(): Promise<AdmissionConsult[] | null> {
   if (!supabase) return null;
 
+  // 1순위: admission_consults 전용 테이블 조회
+  const { data: dedicatedRows, error: dedicatedErr } = await supabase
+    .from('admission_consults')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (!dedicatedErr && Array.isArray(dedicatedRows)) {
+    return dedicatedRows.map((row: any) => ({
+      id: row.id,
+      category: row.category,
+      targetMajor: row.target_major,
+      targetSchool: row.target_school,
+      gradeAverage: row.grade_average,
+      title: row.title,
+      content: row.content,
+      expertAdvice: row.expert_advice,
+      expertName: row.expert_name,
+      status: row.status,
+      createdAt: row.created_at_label,
+    }));
+  }
+
+  // 폴백: 아직 전용 테이블 미생성 시 direct_questions 조회
   const { data, error } = await supabase
     .from('direct_questions')
     .select('*')
@@ -375,6 +398,24 @@ export async function fetchAdmissionConsultsFromDb(): Promise<AdmissionConsult[]
 export async function insertAdmissionConsultToDb(consult: AdmissionConsult): Promise<boolean> {
   if (!supabase) return false;
 
+  // 1순위: admission_consults 전용 테이블에 저장
+  const { error: dedicatedErr } = await supabase.from('admission_consults').upsert({
+    id: consult.id,
+    category: consult.category,
+    target_major: consult.targetMajor,
+    target_school: consult.targetSchool,
+    grade_average: consult.gradeAverage,
+    title: consult.title,
+    content: consult.content,
+    expert_advice: consult.expertAdvice,
+    expert_name: consult.expertName,
+    status: consult.status,
+    created_at_label: consult.createdAt,
+  } as any);
+
+  if (!dedicatedErr) return true;
+
+  // 폴백: 전용 테이블 미생성 시 direct_questions에 임시 저장
   const dbId = consult.id.startsWith('consult_') ? consult.id : `consult_${consult.id}`;
   const { error } = await supabase.from('direct_questions').upsert({
     id: dbId,
