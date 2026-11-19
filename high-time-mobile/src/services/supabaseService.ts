@@ -3,7 +3,16 @@
 // =============================================================================
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { MajorPost, SchoolPost, DirectQuestion, PostComment, CurrentUser, School, ChatRoom } from '../types';
+import {
+  MajorPost,
+  SchoolPost,
+  DirectQuestion,
+  AdmissionConsult,
+  PostComment,
+  CurrentUser,
+  School,
+  ChatRoom,
+} from '../types';
 
 // -----------------------------------------------------------------------------
 // 🔑 [여기에 발급받은 Supabase Project URL과 Publishable API Key를 입력합니다]
@@ -48,7 +57,14 @@ export async function fetchMajorPostsFromDb(): Promise<MajorPost[] | null> {
   }
 
   return data
-    .filter((row: any) => !String(row.id || '').startsWith('chatroom_'))
+    .filter((row: any) => {
+      const id = String(row.id || '');
+      return (
+        !id.startsWith('chatroom_') &&
+        !id.startsWith('school_comments_') &&
+        !id.startsWith('consult_')
+      );
+    })
     .map((row: any) => ({
     id: row.id,
     majorId: row.major_id,
@@ -290,7 +306,14 @@ export async function fetchDirectQuestionsFromDb(): Promise<DirectQuestion[] | n
   if (error || !data) return null;
 
   return data
-    .filter((row: any) => !String(row.id || '').startsWith('chatroom_'))
+    .filter((row: any) => {
+      const id = String(row.id || '');
+      return (
+        !id.startsWith('chatroom_') &&
+        !id.startsWith('school_comments_') &&
+        !id.startsWith('consult_')
+      );
+    })
     .map((row: any) => ({
     id: row.id,
     targetAuthor: row.target_author,
@@ -318,6 +341,52 @@ export async function insertDirectQuestionToDb(q: DirectQuestion): Promise<boole
     answered_at_label: q.answeredAt,
     is_public: q.isPublic,
   });
+
+  return !error;
+}
+
+// =============================================================================
+// 3-A-2. 입시 컨설팅 상담 내역 DB 조회 / 저장
+// =============================================================================
+
+export async function fetchAdmissionConsultsFromDb(): Promise<AdmissionConsult[] | null> {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('direct_questions')
+    .select('*')
+    .like('id', 'consult_%')
+    .order('created_at', { ascending: false });
+
+  if (error || !data) return null;
+
+  const list: AdmissionConsult[] = [];
+  for (const row of data) {
+    try {
+      const parsed = JSON.parse(row.answer || '{}');
+      if (parsed && parsed.id) {
+        list.push(parsed as AdmissionConsult);
+      }
+    } catch {}
+  }
+  return list;
+}
+
+export async function insertAdmissionConsultToDb(consult: AdmissionConsult): Promise<boolean> {
+  if (!supabase) return false;
+
+  const dbId = consult.id.startsWith('consult_') ? consult.id : `consult_${consult.id}`;
+  const { error } = await supabase.from('direct_questions').upsert({
+    id: dbId,
+    target_author: consult.targetMajor || '입시 컨설팅',
+    topic: consult.category || '입시 컨설팅',
+    question: consult.title,
+    answer: JSON.stringify(consult),
+    status: consult.status,
+    created_at_label: consult.createdAt,
+    answered_at_label: consult.createdAt,
+    is_public: true,
+  } as any);
 
   return !error;
 }

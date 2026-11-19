@@ -520,12 +520,31 @@ export default function App() {
     }));
   };
 
-  // 새 입시 상담 등록
+  // 새 입시 상담 등록 (로컬 + Supabase 동기화)
   const handleAddConsult = (newConsult) => {
     setCounselingData((prev) => ({
       ...prev,
       admissionConsults: [newConsult, ...prev.admissionConsults]
     }));
+    fetch('https://sghkaxetnfkmjminjekk.supabase.co/rest/v1/direct_questions', {
+      method: 'POST',
+      headers: {
+        apikey: 'sb_publishable_v6Ttgv7298aUSbGZDDjbbQ_uz1yY7_x',
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        id: newConsult.id?.startsWith('consult_') ? newConsult.id : `consult_${newConsult.id}`,
+        target_author: newConsult.targetMajor || '입시 컨설팅',
+        topic: newConsult.category || '입시 컨설팅',
+        question: newConsult.title,
+        answer: JSON.stringify(newConsult),
+        status: newConsult.status || '검토중',
+        created_at_label: newConsult.createdAt || '방금 전',
+        answered_at_label: newConsult.createdAt || '방금 전',
+        is_public: true
+      })
+    }).catch(() => {});
   };
 
   return (

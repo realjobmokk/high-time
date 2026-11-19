@@ -73,6 +73,8 @@ import {
   updateSchoolPostInteractionInDb,
   fetchDirectQuestionsFromDb,
   insertDirectQuestionToDb,
+  fetchAdmissionConsultsFromDb,
+  insertAdmissionConsultToDb,
   saveVerifiedUserToDb,
   fetchLatestVerifiedUserFromDb,
   fetchChatRoomsFromDb,
@@ -422,14 +424,16 @@ export default function App() {
     };
 
     (async () => {
-      const [, dbSchool, dbQuestions] = await Promise.all([
+      const [, dbSchool, dbQuestions, dbConsults] = await Promise.all([
         syncMajorRef.current(),
         fetchSchoolPostsFromDb(currentSchool.id),
         fetchDirectQuestionsFromDb(),
+        fetchAdmissionConsultsFromDb(),
       ]);
 
       if (dbSchool) setSchoolPosts(dbSchool);
       if (dbQuestions) setDirectQuestions(dbQuestions);
+      if (dbConsults) setAdmissionConsults(dbConsults);
     })();
 
     if (!isLoggedIn) return;
@@ -872,6 +876,7 @@ export default function App() {
   /** 입시 상담 등록 */
   const handleSubmitConsult = (consult: AdmissionConsult) => {
     setAdmissionConsults((prev) => [consult, ...prev]);
+    insertAdmissionConsultToDb(consult);
   };
 
   /** 채팅방 메시지 전송 및 실시간 DB 저장 */
