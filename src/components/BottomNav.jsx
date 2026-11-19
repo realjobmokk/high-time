@@ -1,10 +1,15 @@
 import React from 'react';
-import { Layers, School, Home, MessageSquareHeart, MessageCircle } from 'lucide-react';
+import { Layers, School, Home, MessageSquareHeart, MessageCircle, UserCircle } from 'lucide-react';
 
-// 하단 내비게이션 바 컴포넌트
-// 사용자 피드백 반영: 가운데 탭을 종합 '홈'으로 개편하고, 4번째 탭을 '입시·1:1질문'으로 재배치
+// 하단 내비게이션 바 컴포넌트 (프로필 배너 추가)
 export default function BottomNav({ activeTab, setActiveTab, unreadChatCount }) {
   const tabs = [
+    {
+      id: 'home',
+      label: '홈',
+      sublabel: '급식·시간표·HOT',
+      icon: Home,
+    },
     {
       id: 'major',
       label: '전공게시판',
@@ -18,29 +23,29 @@ export default function BottomNav({ activeTab, setActiveTab, unreadChatCount }) 
       icon: School,
     },
     {
-      id: 'home',
-      label: '홈',
-      sublabel: '급식·시간표·HOT',
-      icon: Home,
-    },
-    {
       id: 'counseling',
-      label: '입시·1:1질문',
+      label: '입시·질문',
       sublabel: '멘토링',
       icon: MessageSquareHeart,
     },
     {
       id: 'chat',
-      label: '1:1 채팅',
+      label: '1:1채팅',
       sublabel: '대화방',
       icon: MessageCircle,
       badge: unreadChatCount
     },
+    {
+      id: 'profile',
+      label: '프로필',
+      sublabel: '내정보·수정',
+      icon: UserCircle,
+    },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 transition-all">
-      <div className="max-w-md mx-auto grid grid-cols-5 px-2">
+    <nav className="sticky bottom-0 left-0 right-0 w-full z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 transition-all shrink-0">
+      <div className="w-full grid grid-cols-6 px-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -49,22 +54,29 @@ export default function BottomNav({ activeTab, setActiveTab, unreadChatCount }) 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center py-1 transition relative rounded-xl ${
-                isActive ? 'text-red-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'
+              className={`flex flex-col items-center justify-center py-1 transition-all relative rounded-xl ${
+                isActive ? '-mt-3 text-red-600 font-extrabold' : 'text-slate-400 hover:text-slate-600 font-medium'
               }`}
             >
-              <div className="relative">
-                <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 text-red-600' : 'text-slate-500'}`} />
+              <div
+                className={`relative flex items-center justify-center transition-all ${
+                  isActive
+                    ? 'w-9 h-9 rounded-full bg-red-600 text-white shadow-md shadow-red-200'
+                    : ''
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                 {tab.badge && tab.badge > 0 ? (
-                  <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full min-w-[14px] text-center">
+                  <span
+                    className={`absolute bg-red-500 text-white text-[9px] font-bold px-1 rounded-full min-w-[14px] text-center ${
+                      isActive ? '-top-1 -right-1 border border-white' : '-top-1.5 -right-2'
+                    }`}
+                  >
                     {tab.badge}
                   </span>
                 ) : null}
               </div>
               <span className="text-[11px] mt-0.5 tracking-tight">{tab.label}</span>
-              {isActive && (
-                <span className="w-1 h-1 rounded-full bg-red-600 mt-0.5" />
-              )}
             </button>
           );
         })}

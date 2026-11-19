@@ -48,19 +48,8 @@ export default function Header({
             </div>
           </div>
 
-          {/* 우측 컨트롤 (내 인증 고등학교 뱃지, 디바이스 프레임 토글, 알림) */}
+          {/* 우측 컨트롤 (디바이스 프레임 토글, 알림) */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* 공식 인증된 내 고등학교 뱃지 (클릭 시 인증 상태 및 재인증 신청 카드 표시) */}
-            <button
-              onClick={() => setIsProfileModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 bg-red-50 hover:bg-red-100 border border-red-200 active:scale-95 rounded-full text-xs font-bold text-red-700 transition"
-              title="내 학교 인증 상태 확인"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-red-600" />
-              <span className="max-w-[75px] sm:max-w-[105px] truncate">{currentSchool.name}</span>
-              <Lock className="w-2.5 h-2.5 text-red-400" />
-            </button>
-
             {/* 디바이스 뷰 모드 토글 (모바일 목업 vs 와이드 뷰) */}
             <button
               onClick={() => setIsMobileFrame(!isMobileFrame)}
@@ -119,7 +108,7 @@ export default function Header({
               <div>
                 <h4 className="text-base font-black tracking-tight text-white">{currentSchool.name}</h4>
                 <p className="text-xs text-slate-300 font-medium">
-                  {currentUser?.name || '김민준'} · {currentUser?.grade || '고2'}
+                  {currentUser?.name || '서정윤'} · {currentUser?.grade || '고2'}
                 </p>
               </div>
 

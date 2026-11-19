@@ -1,890 +1,1321 @@
-import React, { useState } from 'react';
+// 🎓 HighTime (고교타임) - 대한민국 고등학생 커뮤니티 & 학교생활 플랫폼
+// React Native + Expo TypeScript 메인 앱 파일
+
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
-  ScrollView,
+  Text,
   TouchableOpacity,
+  Modal,
   SafeAreaView,
   StatusBar,
   Alert,
-  TextInput,
-  Platform
+  Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
-// 🎓 HighTime (고교타임) 공식 React Native 모바일 애플리케이션
+// 타입 정의
+import {
+  CurrentUser,
+  School,
+  SocialProvider,
+  MajorPost,
+  SchoolPost,
+  DirectQuestion,
+  AdmissionConsult,
+  ChatRoom,
+  ChatMessage,
+  NotificationItem,
+  PostComment,
+  CustomTimetableBlock,
+} from './src/types';
 
-// 1. 전국 고교 전공 카테고리 정의
-const MAJOR_CATEGORIES = [
-  { id: 'all', name: '전체 전공', icon: 'sparkles' },
-  { id: 'cs', name: '컴퓨터·IT', icon: 'code-slash' },
-  { id: 'med', name: '의약학·바이오', icon: 'medkit' },
-  { id: 'eng', name: '자연·공학', icon: 'hardware-chip' },
-  { id: 'biz', name: '경영·경제', icon: 'trending-up' },
-  { id: 'law', name: '사회·법학', icon: 'scale' },
-];
+// 초기 빈 데이터
+import {
+  INITIAL_MAJOR_POSTS,
+  INITIAL_SCHOOL_POSTS,
+  INITIAL_DIRECT_QUESTIONS,
+  INITIAL_ADMISSION_CONSULTS,
+  INITIAL_CHAT_ROOMS,
+  INITIAL_NOTIFICATIONS,
+} from './src/data/mockData';
+
+// 컴포넌트 임포트
+import { Header } from './src/components/Header';
+import { BottomNav, TabType } from './src/components/BottomNav';
+import { HomeTab } from './src/components/tabs/HomeTab';
+import { MajorBoardTab } from './src/components/tabs/MajorBoardTab';
+import { SchoolBoardTab } from './src/components/tabs/SchoolBoardTab';
+import { CounselingTab } from './src/components/tabs/CounselingTab';
+import { DirectChatTab } from './src/components/tabs/DirectChatTab';
+import { ProfileTab } from './src/components/tabs/ProfileTab';
+import { LoginScreen } from './src/components/LoginScreen';
+import { PhoneModal } from './src/components/PhoneModal';
+
+// 모달 임포트
+import { AuthModal } from './src/modals/AuthModal';
+import { NotificationModal } from './src/modals/NotificationModal';
+import { WritePostModal } from './src/modals/WritePostModal';
+import { PostDetailModal } from './src/modals/PostDetailModal';
+import { AskQuestionModal } from './src/modals/AskQuestionModal';
+import { ChatRequestModal } from './src/modals/ChatRequestModal';
+
+// Supabase (PostgreSQL on AWS) 데이터베이스 서비스 임포트
+import {
+  isSupabaseConfigured,
+  fetchMajorPostsFromDb,
+  insertMajorPostToDb,
+  updateMajorPostInDb,
+  deleteMajorPostFromDb,
+  fetchSchoolPostsFromDb,
+  insertSchoolPostToDb,
+  deleteSchoolPostFromDb,
+  updateSchoolPostInteractionInDb,
+  fetchDirectQuestionsFromDb,
+  insertDirectQuestionToDb,
+  saveVerifiedUserToDb,
+  fetchLatestVerifiedUserFromDb,
+  fetchChatRoomsFromDb,
+  upsertChatMessageToDb,
+  markChatRoomReadInDb,
+  subscribeChatRoomsRealtime,
+  buildUserChatKey,
+  buildPairRoomId,
+} from './src/services/supabaseService';
+import { searchNeisHighSchools } from './src/services/neisService';
 
 export default function App() {
-  // 현재 탭 상태 ('home' | 'major' | 'school' | 'counseling' | 'chat')
-  const [activeTab, setActiveTab] = useState<'home' | 'major' | 'school' | 'counseling' | 'chat'>('home');
-  const [selectedMajor, setSelectedMajor] = useState('all');
+  // =========================================================
+  //  1. 로그인 여부 & 사용자 · 소속 학교 상태
+  // =========================================================
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 사용자 정보 (소속 학교 고정 & 인증 상태)
-  const [currentUser, setCurrentUser] = useState({
-    name: '김민준',
-    school: '하나고등학교',
+  const [currentUser, setCurrentUser] = useState<CurrentUser>({
+    socialProvider: 'kakao',
+    email: '',
+    name: '',
+    nickname: '',
+    bio: '',
+    targetMajor: '컴퓨터·IT·인공지능',
+    birthDate: '',
+    telecom: 'SKT',
+    phone: '',
     grade: '고2',
-    isVerified: true
+    certFileName: '',
+    isVerified: false,
+    passVerified: false,
+    certVerified: false,
+    verifiedAt: '',
   });
 
-  // 전공 게시글 상태
-  const [majorPosts, setMajorPosts] = useState([
-    {
-      id: 'p-1',
-      title: '[정보 세특] 생성형 AI 환각 완화 알고리즘 탐구',
-      content: 'RAG 기법과 코사인 유사도 검증 파이썬 코드를 작성해봤습니다. 관심 있는 친구들 질문 환영해요!',
-      school: '하나고',
-      grade: '고2',
-      likes: 42,
-      comments: 9,
-      isMine: true // 내가 쓴 글 (삭제 권한 있음)
-    },
-    {
-      id: 'p-2',
-      title: '의대/약대 지망생 추천 면역학 도서 3권 & 세특 팁',
-      content: '《면역》과 《인류를 구한 12가지 약 이야기》를 활용한 생명과학 세특 연계 방향성 공유합니다.',
-      school: '상산고',
-      grade: '고3',
-      likes: 88,
-      comments: 15,
-      isMine: false // 타 학교 학생 글
+  const [currentSchool, setCurrentSchool] = useState<School>({
+    id: '',
+    name: '',
+    region: '',
+  });
+
+  // =========================================================
+  //  2. 탭 & UI 상태
+  // =========================================================
+  const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [isChatRoomFullOpen, setIsChatRoomFullOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // 채팅 탭에서 벗어나면 전체화면 대화방 상태 초기화
+  useEffect(() => {
+    if (activeTab !== 'chat') {
+      setIsChatRoomFullOpen(false);
     }
+  }, [activeTab]);
+  const [isNotiModalOpen, setIsNotiModalOpen] = useState(false);
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
+  const [writeTargetBoard, setWriteTargetBoard] = useState<'major' | 'school'>('major');
+  const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<MajorPost | null>(null);
+  const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  const [askMode, setAskMode] = useState<'direct' | 'admission'>('direct');
+  const [askDefaultTarget, setAskDefaultTarget] = useState('');
+  const [activeChatRoomId, setActiveChatRoomId] = useState<string | null>(null);
+  const [chatRequestPost, setChatRequestPost] = useState<MajorPost | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  // =========================================================
+  //  3. 콘텐츠 상태 (전공게시판 / 우리학교 / 상담 / 채팅 / 알림)
+  // =========================================================
+  const [majorPosts, setMajorPosts] = useState<MajorPost[]>(INITIAL_MAJOR_POSTS);
+  const [schoolPosts, setSchoolPosts] = useState<SchoolPost[]>(INITIAL_SCHOOL_POSTS);
+  const [directQuestions, setDirectQuestions] = useState<DirectQuestion[]>(INITIAL_DIRECT_QUESTIONS);
+  const [admissionConsults, setAdmissionConsults] = useState<AdmissionConsult[]>(INITIAL_ADMISSION_CONSULTS);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>(INITIAL_CHAT_ROOMS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+
+  // 로그인한 사용자별 고유 시간표 스토리지 키 생성 (다른 사용자와 절대 공유되지 않음)
+  const getUserTimetableStorageKey = (
+    userName: string,
+    schoolName: string,
+    username?: string
+  ) =>
+    username && username.trim()
+      ? `hightime_user_timetable_id_${encodeURIComponent(username.trim())}`
+      : `hightime_user_timetable_${encodeURIComponent(schoolName.trim())}_${encodeURIComponent(
+          userName.trim()
+        )}`;
+
+  // 현재 로그인한 사용자가 직접 추가/편집하는 주간 시간표 블록 목록
+  const [customTimetable, setCustomTimetable] = useState<CustomTimetableBlock[]>([]);
+
+  // 로그인한 학생(이름 + 학교)이 바뀔 때마다 해당 학생 전용 시간표만 불러오기
+  React.useEffect(() => {
+    if (!isLoggedIn || !currentUser.name) {
+      setCustomTimetable([]);
+      return;
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const key = getUserTimetableStorageKey(
+          currentUser.name,
+          currentSchool.name,
+          currentUser.username
+        );
+        const saved = localStorage.getItem(key);
+        setCustomTimetable(saved ? JSON.parse(saved) : []);
+      }
+    } catch {
+      setCustomTimetable([]);
+    }
+  }, [isLoggedIn, currentUser.name, currentUser.username, currentSchool.name]);
+
+  // 현재 로그인한 사용자의 시간표에 블록 추가 또는 수정 핸들러
+  const handleAddOrUpdateTimetableBlock = (block: CustomTimetableBlock) => {
+    setCustomTimetable((prev) => {
+      const exists = prev.some((b) => b.id === block.id);
+      const next = exists
+        ? prev.map((b) => (b.id === block.id ? block : b))
+        : [...prev, block];
+      try {
+        if (typeof localStorage !== 'undefined' && currentUser.name) {
+          const key = getUserTimetableStorageKey(
+            currentUser.name,
+            currentSchool.name,
+            currentUser.username
+          );
+          localStorage.setItem(key, JSON.stringify(next));
+        }
+      } catch {}
+      return next;
+    });
+  };
+
+  // 현재 로그인한 사용자의 시간표에서 블록 삭제 핸들러
+  const handleDeleteTimetableBlock = (blockId: string) => {
+    setCustomTimetable((prev) => {
+      const next = prev.filter((b) => b.id !== blockId);
+      try {
+        if (typeof localStorage !== 'undefined' && currentUser.name) {
+          const key = getUserTimetableStorageKey(
+            currentUser.name,
+            currentSchool.name,
+            currentUser.username
+          );
+          localStorage.setItem(key, JSON.stringify(next));
+        }
+      } catch {}
+      return next;
+    });
+  };
+
+  // 읽지 않은 알림 카운트
+  const unreadNotiCount = notifications.filter((n) => !n.isRead).length;
+  // 읽지 않은 채팅 카운트
+  const unreadChatCount = chatRooms.reduce((sum, r) => sum + r.unreadCount, 0);
+
+  // 현재 로그인한 사용자의 채팅 식별자
+  const myChatKey = buildUserChatKey(currentUser.username, currentUser.name, currentSchool.name);
+  // 이미 벨 알림으로 등록한 채팅 메시지 / 댓글 ID 기록 (중복 알림 방지 + 영구 저장)
+  const seenChatNotiIdsRef = React.useRef<Set<string>>(new Set());
+  const seenCommentNotiIdsRef = React.useRef<Set<string>>(new Set());
+
+  const getSeenCommentStorageKey = (userKey: string) =>
+    `hightime_seen_comment_notis_${userKey}`;
+
+  const loadSeenCommentIds = (userKey: string): Set<string> => {
+    try {
+      if (typeof localStorage !== 'undefined' && userKey) {
+        const raw = localStorage.getItem(getSeenCommentStorageKey(userKey));
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return new Set(parsed.map(String));
+        }
+      }
+    } catch {}
+    return new Set();
+  };
+
+  const saveSeenCommentIds = (userKey: string, ids: Set<string>) => {
+    try {
+      if (typeof localStorage !== 'undefined' && userKey) {
+        localStorage.setItem(
+          getSeenCommentStorageKey(userKey),
+          JSON.stringify(Array.from(ids))
+        );
+      }
+    } catch {}
+  };
+
+  // 카카오톡 스타일 실시간 1:1 채팅방 동기화 (Supabase Realtime + 2.5초 주기 갱신)
+  const refreshChatRooms = React.useCallback(async () => {
+    if (!isLoggedIn || !currentUser.name || !isSupabaseConfigured()) return;
+    const rooms = await fetchChatRoomsFromDb(myChatKey, currentUser.name, currentSchool.name);
+    if (rooms) {
+      setChatRooms(rooms);
+
+      // 상대방이 보낸 안 읽은 새 메시지가 있으면 상단 벨 알림 센터에도 추가
+      const incomingNotis: NotificationItem[] = [];
+      for (const room of rooms) {
+        if (room.unreadCount <= 0) continue;
+        // 현재 이 채팅방을 전체화면으로 보고 있는 중이면 알림 생략
+        if (activeTab === 'chat' && isChatRoomFullOpen && activeChatRoomId === room.id) {
+          continue;
+        }
+        const unreadPeerMsgs = room.messages.filter(
+          (m) => m.sender === 'peer' && !m.isRead && !seenChatNotiIdsRef.current.has(m.id)
+        );
+        for (const msg of unreadPeerMsgs) {
+          seenChatNotiIdsRef.current.add(msg.id);
+          incomingNotis.push({
+            id: `chat-noti-${msg.id}`,
+            type: 'chat',
+            title: `${room.peerName}님의 1:1 채팅`,
+            message: msg.text,
+            time: msg.time || '방금 전',
+            isRead: false,
+            roomId: room.id,
+          });
+        }
+      }
+
+      if (incomingNotis.length > 0) {
+        setNotifications((prev) => {
+          const existingIds = new Set(prev.map((n) => n.id));
+          const fresh = incomingNotis.filter((n) => !existingIds.has(n.id));
+          return fresh.length > 0 ? [...fresh.reverse(), ...prev] : prev;
+        });
+      }
+    }
+  }, [
+    isLoggedIn,
+    myChatKey,
+    currentUser.name,
+    currentSchool.name,
+    activeTab,
+    isChatRoomFullOpen,
+    activeChatRoomId,
   ]);
 
-  // 게시글 삭제 핸들러 (내 글만 삭제 가능)
-  const handleDeletePost = (id: string) => {
-    Alert.alert(
-      '게시글 삭제',
-      '정말 내가 작성한 이 게시물을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setMajorPosts(prev => prev.filter(p => p.id !== id));
-            Alert.alert('알림', '게시물이 삭제되었습니다.');
-          }
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      setChatRooms([]);
+      return;
+    }
+    refreshChatRooms();
+    const unsubscribe = subscribeChatRoomsRealtime(() => {
+      refreshChatRooms();
+    });
+    const poll = setInterval(() => {
+      refreshChatRooms();
+    }, 2500);
+    return () => {
+      unsubscribe();
+      clearInterval(poll);
+    };
+  }, [isLoggedIn, refreshChatRooms]);
+
+  // Supabase (AWS PostgreSQL) 연결 시 DB 데이터 로드 + 내 글 댓글 실시간 알림 감지
+  const syncMajorPostsAndCommentNotis = React.useCallback(async () => {
+    if (!isSupabaseConfigured()) return;
+    const dbMajor = await fetchMajorPostsFromDb();
+    if (!dbMajor) return;
+    setMajorPosts(dbMajor);
+
+    if (!isLoggedIn || !currentUser.name) return;
+    // 스토리지에 저장된 이미 확인한 댓글 ID 동기화 (로그인/새로고침 시 재알림 방지)
+    const storedSeen = loadSeenCommentIds(myChatKey);
+    storedSeen.forEach((id) => seenCommentNotiIdsRef.current.add(id));
+
+    const incomingCommentNotis: NotificationItem[] = [];
+    let addedSeen = false;
+    for (const post of dbMajor) {
+      const isMyPost =
+        post.author.school === currentSchool.name &&
+        (post.author.nickname === currentUser.name ||
+          (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname));
+      if (!isMyPost) continue;
+
+      for (const c of post.comments || []) {
+        const commentAuthorName = c.author?.nickname || '';
+        const isMyComment =
+          c.author?.school === currentSchool.name &&
+          (commentAuthorName === currentUser.name ||
+            (Boolean(currentUser.nickname) && commentAuthorName === currentUser.nickname));
+        if (isMyComment) continue;
+        if (seenCommentNotiIdsRef.current.has(c.id)) continue;
+
+        seenCommentNotiIdsRef.current.add(c.id);
+        addedSeen = true;
+        incomingCommentNotis.push({
+          id: `comment-noti-${c.id}`,
+          type: 'comment',
+          title: `${commentAuthorName || '학생'}님이 내 글에 댓글을 남겼어요`,
+          message: c.content,
+          time: c.createdAt || '방금 전',
+          isRead: false,
+          postId: post.id,
+        });
+      }
+    }
+
+    if (addedSeen) {
+      saveSeenCommentIds(myChatKey, seenCommentNotiIdsRef.current);
+    }
+
+    if (incomingCommentNotis.length > 0) {
+      setNotifications((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        const fresh = incomingCommentNotis.filter((n) => !existingIds.has(n.id));
+        return fresh.length > 0 ? [...fresh.reverse(), ...prev] : prev;
+      });
+    }
+  }, [isLoggedIn, myChatKey, currentUser.name, currentUser.nickname, currentSchool.name]);
+
+  React.useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    (async () => {
+      const [, dbSchool, dbQuestions] = await Promise.all([
+        syncMajorPostsAndCommentNotis(),
+        fetchSchoolPostsFromDb(currentSchool.id),
+        fetchDirectQuestionsFromDb(),
+      ]);
+
+      if (dbSchool) setSchoolPosts(dbSchool);
+      if (dbQuestions) setDirectQuestions(dbQuestions);
+    })();
+
+    if (!isLoggedIn) return;
+    const poll = setInterval(() => {
+      syncMajorPostsAndCommentNotis();
+    }, 5000);
+    return () => clearInterval(poll);
+  }, [currentSchool.id, isLoggedIn, syncMajorPostsAndCommentNotis]);
+
+  // =========================================================
+  //  4. 핸들러 함수들
+  // =========================================================
+
+  /** 소속 학교 인증 뱃지 클릭 → 4단계 로그인/인증 모달 즉시 열기 */
+  const handlePressSchoolBadge = () => {
+    setIsAuthModalOpen(true);
+  };
+
+  /** 학생 로그인(DB 조회 완료) 또는 신규 4단계 회원가입 완료 핸들러 */
+  const handleCompleteAuth = async (
+    authData: {
+      username?: string;
+      socialProvider: SocialProvider;
+      email: string;
+      name: string;
+      nickname?: string;
+      birthDate: string;
+      telecom: string;
+      phone: string;
+      grade: string;
+      school: School;
+      certFileName: string;
+      passVerified: boolean;
+      certVerified: boolean;
+      verifiedAt: string;
+    },
+    isNewSignup = true
+  ) => {
+    let savedProfileImage: string | undefined;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const imgKey = `hightime_profile_image_${encodeURIComponent(
+          authData.username || `${authData.school.name}_${authData.name}`
+        )}`;
+        savedProfileImage = localStorage.getItem(imgKey) || undefined;
+      }
+    } catch {}
+
+    const updatedUser: CurrentUser = {
+      ...currentUser,
+      username: authData.username || currentUser.username,
+      socialProvider: authData.socialProvider,
+      email: authData.email,
+      name: authData.name,
+      nickname: authData.nickname || `${authData.name}학생`,
+      birthDate: authData.birthDate,
+      telecom: authData.telecom,
+      phone: authData.phone,
+      grade: authData.grade,
+      profileImage: savedProfileImage || currentUser.profileImage,
+      certFileName: authData.certFileName,
+      isVerified: true,
+      passVerified: authData.passVerified,
+      certVerified: authData.certVerified,
+      verifiedAt: authData.verifiedAt,
+    };
+
+    setCurrentUser(updatedUser);
+    setCurrentSchool(authData.school);
+    setIsLoggedIn(true);
+
+    // 신규 회원가입이거나 학교 재인증인 경우에만 Supabase(AWS PostgreSQL) users 테이블에 INSERT 저장
+    if (isNewSignup) {
+      await saveVerifiedUserToDb(updatedUser, authData.school);
+    }
+  };
+
+  /** 하단 [프로필] 탭에서 내 프로필 수정 시 앱 전체 및 DB 즉시 업데이트 */
+  const handleUpdateProfile = async (updated: {
+    name: string;
+    nickname: string;
+    grade: string;
+    targetMajor: string;
+    bio: string;
+    phone: string;
+    profileImage?: string;
+  }) => {
+    const nextProfileImage =
+      updated.profileImage !== undefined ? updated.profileImage : currentUser.profileImage;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const imgKey = `hightime_profile_image_${encodeURIComponent(
+          currentUser.username || `${currentSchool.name}_${updated.name}`
+        )}`;
+        if (nextProfileImage) {
+          localStorage.setItem(imgKey, nextProfileImage);
+        } else {
+          localStorage.removeItem(imgKey);
         }
-      ]
+      }
+    } catch {}
+
+    const nextUser: CurrentUser = {
+      ...currentUser,
+      name: updated.name,
+      nickname: updated.nickname,
+      grade: updated.grade,
+      targetMajor: updated.targetMajor,
+      bio: updated.bio,
+      phone: updated.phone,
+      profileImage: nextProfileImage,
+    };
+    setCurrentUser(nextUser);
+    await saveVerifiedUserToDb(nextUser, currentSchool);
+  };
+
+  /** 로그아웃 (처음 4단계 로그인 화면으로 돌아가기) */
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setActiveTab('home');
+  };
+
+  /** 알림 모두 읽음 처리 */
+  const handleMarkAllNotiRead = () => {
+    setNotifications([]);
+  };
+
+  /** 글쓰기 모달 열기 */
+  const [writeInitialSchoolCategory, setWriteInitialSchoolCategory] = useState('자유게시판');
+
+  const handleOpenWriteModal = (
+    targetBoard: 'major' | 'school',
+    initialSchoolCategory?: string
+  ) => {
+    setWriteTargetBoard(targetBoard);
+    setWriteInitialSchoolCategory(initialSchoolCategory || '자유게시판');
+    setIsWriteModalOpen(true);
+  };
+
+  /** 전공게시판 글 등록 */
+  const handleSubmitMajorPost = (post: MajorPost) => {
+    setMajorPosts((prev) => [post, ...prev]);
+    insertMajorPostToDb(post);
+  };
+
+  /** 우리학교 글 등록 */
+  const handleSubmitSchoolPost = (post: SchoolPost) => {
+    setSchoolPosts((prev) => [post, ...prev]);
+    insertSchoolPostToDb(post, currentSchool.id);
+  };
+
+  /** 우리학교 글 좋아요 토글 */
+  const handleToggleSchoolLike = (postId: string) => {
+    setSchoolPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const nextLiked = !post.isLikedByUser;
+        const nextLikes = Math.max(0, post.likes + (nextLiked ? 1 : -1));
+        updateSchoolPostInteractionInDb(
+          postId,
+          nextLikes,
+          (post.comments || []).length || post.commentCount,
+          post.comments
+        );
+        return { ...post, isLikedByUser: nextLiked, likes: nextLikes };
+      })
     );
   };
 
-  return (
+  /** 우리학교 글 댓글 등록 */
+  const handleAddSchoolComment = (postId: string, content: string, isAnonymous: boolean) => {
+    const newComment = {
+      id: `sc-${Date.now()}`,
+      author: currentUser.name || '학생',
+      grade: currentUser.grade || '고2',
+      isAnonymous,
+      content,
+      createdAt: '방금 전',
+    };
+    setSchoolPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const nextComments = [...(post.comments || []), newComment];
+        updateSchoolPostInteractionInDb(postId, post.likes, nextComments.length, nextComments);
+        return {
+          ...post,
+          comments: nextComments,
+          commentCount: nextComments.length,
+        };
+      })
+    );
+  };
+
+  /** 우리학교 글 댓글 삭제 */
+  const handleDeleteSchoolComment = (postId: string, commentId: string) => {
+    setSchoolPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const nextComments = (post.comments || []).filter((c) => c.id !== commentId);
+        updateSchoolPostInteractionInDb(postId, post.likes, nextComments.length, nextComments);
+        return {
+          ...post,
+          comments: nextComments,
+          commentCount: nextComments.length,
+        };
+      })
+    );
+  };
+
+  /** 전공게시판 글 삭제 (이름 + 소속 학교가 모두 일치하는 내 글만 삭제 가능) */
+  const handleDeleteMajorPost = (postId: string, skipConfirm = false) => {
+    const target = majorPosts.find((p) => p.id === postId);
+    const isActuallyMine =
+      target &&
+      target.author.school === currentSchool.name &&
+      (target.author.nickname === currentUser.name ||
+        (Boolean(currentUser.nickname) && target.author.nickname === currentUser.nickname));
+
+    if (!isActuallyMine) {
+      Alert.alert('권한 없음', '본인이 작성한 글만 삭제할 수 있습니다.');
+      return;
+    }
+
+    const executeDelete = () => {
+      setMajorPosts((prev) => prev.filter((p) => p.id !== postId));
+      deleteMajorPostFromDb(postId);
+      if (selectedPost?.id === postId) {
+        setSelectedPost(null);
+        setIsPostDetailOpen(false);
+      }
+    };
+
+    if (skipConfirm) {
+      executeDelete();
+      return;
+    }
+
+    setDeleteConfirmModal({
+      title: '게시글 삭제',
+      message: '삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
+      onConfirm: executeDelete,
+    });
+  };
+
+  /** 우리학교 글 삭제 (본인 글만 삭제 가능) */
+  const handleDeleteSchoolPost = (postId: string) => {
+    const target = schoolPosts.find((p) => p.id === postId);
+    const isActuallyMine =
+      target &&
+      (target.author === currentUser.name ||
+        (Boolean(currentUser.nickname) && target.author === currentUser.nickname));
+    if (!isActuallyMine) {
+      Alert.alert('권한 없음', '본인이 작성한 글만 삭제할 수 있습니다.');
+      return;
+    }
+
+    setDeleteConfirmModal({
+      title: '게시글 삭제',
+      message: '삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
+      onConfirm: () => {
+        setSchoolPosts((prev) => prev.filter((p) => p.id !== postId));
+        deleteSchoolPostFromDb(postId);
+      },
+    });
+  };
+
+  /** 좋아요 토글 */
+  const handleToggleLike = (postId: string) => {
+    setMajorPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const liked = post.isLikedByUser;
+        const nextLikes = liked ? post.likes - 1 : post.likes + 1;
+        updateMajorPostInDb(postId, { likes: nextLikes });
+        return {
+          ...post,
+          likes: nextLikes,
+          isLikedByUser: !liked,
+        };
+      })
+    );
+    if (selectedPost?.id === postId) {
+      setSelectedPost((prev) => {
+        if (!prev) return null;
+        const liked = prev.isLikedByUser;
+        return { ...prev, likes: liked ? prev.likes - 1 : prev.likes + 1, isLikedByUser: !liked };
+      });
+    }
+  };
+
+  /** 댓글 등록 */
+  const handleAddComment = (postId: string, comment: PostComment) => {
+    setMajorPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const updated = [...(post.comments || []), comment];
+        updateMajorPostInDb(postId, { comments: updated, commentCount: updated.length });
+        return { ...post, comments: updated, commentCount: updated.length };
+      })
+    );
+    if (selectedPost?.id === postId) {
+      setSelectedPost((prev) => {
+        if (!prev) return null;
+        const updated = [...(prev.comments || []), comment];
+        return { ...prev, comments: updated, commentCount: updated.length };
+      });
+    }
+  };
+
+  /** 댓글 삭제 (내 댓글만) */
+  const handleDeleteComment = (postId: string, commentId: string) => {
+    setMajorPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const updated = (post.comments || []).filter((c) => c.id !== commentId);
+        updateMajorPostInDb(postId, { comments: updated, commentCount: updated.length });
+        return { ...post, comments: updated, commentCount: updated.length };
+      })
+    );
+    if (selectedPost?.id === postId) {
+      setSelectedPost((prev) => {
+        if (!prev) return null;
+        const updated = (prev.comments || []).filter((c) => c.id !== commentId);
+        return { ...prev, comments: updated, commentCount: updated.length };
+      });
+    }
+  };
+
+  /** 게시글 상세 보기 열기 */
+  const handleSelectPost = (post: MajorPost) => {
+    setSelectedPost(post);
+    setIsPostDetailOpen(true);
+  };
+
+  /** 1:1 질문 모달 열기 */
+  const handleOpenAskModal = (mode: 'direct' | 'admission' = 'direct', target = '') => {
+    setAskMode(mode);
+    setAskDefaultTarget(target);
+    setIsAskModalOpen(true);
+  };
+
+  /** 전공게시판 게시글에서 작성자에게 [1:1 채팅 신청] 클릭 시 메시지 작성 모달 오픈 */
+  const handleStartDirectChatFromPost = (post: MajorPost) => {
+    setIsPostDetailOpen(false);
+    setSelectedPost(null);
+    setChatRequestPost(post);
+  };
+
+  /** 사용자가 직접 작성한 1:1 채팅 신청 메시지를 전송하고 채팅방 열기 */
+  const handleSendDirectChatRequest = (post: MajorPost, messageText: string) => {
+    const peerDisplayName = post.author.isAnonymous ? '익명 멘토' : post.author.nickname;
+    const peerSchoolInfo = `${post.author.school} ${post.author.grade}`;
+    const peerKey = buildUserChatKey(undefined, post.author.nickname, post.author.school);
+    const roomId = buildPairRoomId(myChatKey, peerKey);
+
+    const nowTimeStr = new Date().toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const userMessage: ChatMessage = {
+      id: `m-${Date.now()}`,
+      sender: 'me',
+      senderKey: myChatKey,
+      senderName: currentUser.name,
+      text: messageText,
+      time: nowTimeStr,
+      isRead: false,
+    };
+
+    setChatRooms((prev) => {
+      const existing = prev.find((r) => r.id === roomId);
+      if (existing) {
+        return prev.map((r) =>
+          r.id === roomId
+            ? {
+                ...r,
+                lastMessage: messageText,
+                lastTime: nowTimeStr,
+                messages: [...r.messages, userMessage],
+              }
+            : r
+        );
+      }
+
+      const newRoom: ChatRoom = {
+        id: roomId,
+        peerKey,
+        peerName: peerDisplayName,
+        peerSchool: peerSchoolInfo,
+        avatar: peerDisplayName.slice(0, 1),
+        avatarBg: post.author.avatarColor || '#dc2626',
+        unreadCount: 0,
+        lastMessage: messageText,
+        lastTime: nowTimeStr,
+        safetyNotice:
+          '건전하고 안전한 학생 간 학습·진로 교류를 위해 개인 연락처 요구 및 비방 행위는 자동 차단됩니다.',
+        messages: [userMessage],
+      };
+      return [newRoom, ...prev];
+    });
+
+    upsertChatMessageToDb({
+      roomId,
+      myKey: myChatKey,
+      myName: currentUser.name,
+      mySchool: currentSchool.name,
+      peerKey,
+      peerName: peerDisplayName,
+      peerSchool: post.author.school,
+      avatarBg: post.author.avatarColor || '#dc2626',
+      newMessage: { id: userMessage.id, text: messageText, time: nowTimeStr },
+    });
+
+    setChatRequestPost(null);
+    setActiveChatRoomId(roomId);
+    setActiveTab('chat');
+  };
+
+  /** 게시글에서 1:1 채팅으로 바로 연결 */
+  const handleQuickAsk = (post: MajorPost) => {
+    handleStartDirectChatFromPost(post);
+  };
+
+  /** 1:1 질문 등록 */
+  const handleSubmitQuestion = (question: DirectQuestion) => {
+    setDirectQuestions((prev) => [question, ...prev]);
+    insertDirectQuestionToDb(question);
+  };
+
+  /** 입시 상담 등록 */
+  const handleSubmitConsult = (consult: AdmissionConsult) => {
+    setAdmissionConsults((prev) => [consult, ...prev]);
+  };
+
+  /** 채팅방 메시지 전송 및 실시간 DB 저장 */
+  const handleUpdateChatRoom = (roomId: string, messages: ChatMessage[]) => {
+    const targetRoom = chatRooms.find((r) => r.id === roomId);
+    const lastMsg = messages[messages.length - 1];
+    setChatRooms((prev) =>
+      prev.map((room) => {
+        if (room.id !== roomId) return room;
+        return {
+          ...room,
+          messages,
+          lastMessage: lastMsg?.text || room.lastMessage,
+          lastTime: lastMsg?.time || room.lastTime,
+          unreadCount: 0,
+        };
+      })
+    );
+
+    if (targetRoom && lastMsg && lastMsg.sender === 'me') {
+      upsertChatMessageToDb({
+        roomId,
+        myKey: myChatKey,
+        myName: currentUser.name,
+        mySchool: currentSchool.name,
+        peerKey:
+          targetRoom.peerKey ||
+          buildUserChatKey(undefined, targetRoom.peerName, targetRoom.peerSchool),
+        peerName: targetRoom.peerName,
+        peerSchool: targetRoom.peerSchool,
+        avatarBg: targetRoom.avatarBg,
+        newMessage: { id: lastMsg.id, text: lastMsg.text, time: lastMsg.time },
+      });
+    }
+  };
+
+  /** 채팅방 입장 시 읽음 처리 + 해당 방의 벨 알림 제거 */
+  const handleMarkRoomRead = (roomId: string) => {
+    setChatRooms((prev) =>
+      prev.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r))
+    );
+    setNotifications((prev) => prev.filter((n) => n.roomId !== roomId));
+    markChatRoomReadInDb(roomId, myChatKey);
+  };
+
+  /** 새 채팅 상대 선택 시 1:1 카톡방 생성/이동 */
+  const handleStartPeerChat = (peer: {
+    key: string;
+    name: string;
+    school: string;
+    grade: string;
+  }) => {
+    const roomId = buildPairRoomId(myChatKey, peer.key);
+    const existing = chatRooms.find((r) => r.id === roomId);
+    if (!existing) {
+      const nowTimeStr = new Date().toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+      const newRoom: ChatRoom = {
+        id: roomId,
+        peerKey: peer.key,
+        peerName: peer.name,
+        peerSchool: `${peer.school} ${peer.grade}`,
+        avatar: peer.name.slice(0, 1),
+        avatarBg: '#dc2626',
+        unreadCount: 0,
+        lastMessage: '대화를 시작해 보세요!',
+        lastTime: nowTimeStr,
+        safetyNotice:
+          '개인 연락처(전화번호·SNS) 요구 및 비속어는 자동 차단됩니다.',
+        messages: [],
+      };
+      setChatRooms((prev) => [newRoom, ...prev]);
+    }
+    setActiveChatRoomId(roomId);
+  };
+
+  // =========================================================
+  //  5. 현재 활성 탭에 따른 본문 화면 렌더링
+  // =========================================================
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <HomeTab
+            currentUser={currentUser}
+            currentSchool={currentSchool}
+            hotPosts={[...majorPosts].sort((a, b) => b.likes - a.likes)}
+            customTimetable={customTimetable}
+            onAddOrUpdateTimetableBlock={handleAddOrUpdateTimetableBlock}
+            onDeleteTimetableBlock={handleDeleteTimetableBlock}
+            onNavigateTab={setActiveTab}
+            onOpenWriteModal={handleOpenWriteModal}
+            onSelectPost={handleSelectPost}
+            onOpenAskModal={() => handleOpenAskModal('direct')}
+          />
+        );
+      case 'major':
+        return (
+          <MajorBoardTab
+            posts={majorPosts}
+            currentUser={currentUser}
+            currentSchool={currentSchool}
+            onSelectPost={handleSelectPost}
+            onDeletePost={handleDeleteMajorPost}
+            onOpenWriteModal={() => handleOpenWriteModal('major')}
+            onToggleLike={handleToggleLike}
+            onStartDirectChat={handleStartDirectChatFromPost}
+          />
+        );
+      case 'school':
+        return (
+          <SchoolBoardTab
+            currentSchool={currentSchool}
+            currentUser={currentUser}
+            posts={schoolPosts}
+            onDeletePost={handleDeleteSchoolPost}
+            onOpenWriteModal={(cat) => handleOpenWriteModal('school', cat)}
+            onToggleLike={handleToggleSchoolLike}
+            onAddComment={handleAddSchoolComment}
+            onDeleteComment={handleDeleteSchoolComment}
+          />
+        );
+      case 'counseling':
+        return (
+          <CounselingTab
+            directQuestions={directQuestions}
+            admissionConsults={admissionConsults}
+            onOpenAskDirect={() => handleOpenAskModal('direct')}
+            onOpenAskAdmission={() => handleOpenAskModal('admission')}
+          />
+        );
+      case 'chat':
+        return (
+          <DirectChatTab
+            chatRooms={chatRooms}
+            currentUser={currentUser}
+            currentSchool={currentSchool}
+            onUpdateChatRoom={handleUpdateChatRoom}
+            onMarkRoomRead={handleMarkRoomRead}
+            onStartPeerChat={handleStartPeerChat}
+            initialOpenRoomId={activeChatRoomId}
+            onRoomOpenChange={setIsChatRoomFullOpen}
+          />
+        );
+      case 'profile':
+        return (
+          <ProfileTab
+            currentUser={currentUser}
+            currentSchool={currentSchool}
+            myMajorPostCount={
+              majorPosts.filter(
+                (p) =>
+                  p.author.school === currentSchool.name &&
+                  (p.author.nickname === currentUser.name ||
+                    (Boolean(currentUser.nickname) &&
+                      p.author.nickname === currentUser.nickname))
+              ).length
+            }
+            mySchoolPostCount={
+              schoolPosts.filter(
+                (p) =>
+                  p.author === currentUser.name ||
+                  (Boolean(currentUser.nickname) && p.author === currentUser.nickname)
+              ).length
+            }
+            onUpdateProfile={handleUpdateProfile}
+            onOpenReAuthModal={() => setIsAuthModalOpen(true)}
+            onLogout={handleLogout}
+          />
+        );
+    }
+  };
+
+  // =========================================================
+  //  6. 앱 최종 렌더링 (로그인 전에는 전용 4단계 로그인 화면부터 시작)
+  // =========================================================
+  // PC 웹 브라우저(8081)에서 볼 때도 스마트폰 화면 비율(430px)로 깔끔하게 보이도록 래핑
+  // (실제 iOS/Android 앱에서는 전체 화면 그대로 동작)
+  const renderWithWebPhoneFrame = (content: React.ReactNode) => {
+    if (Platform.OS !== 'web') return <>{content}</>;
+    return (
+      <View style={styles.webRoot}>
+        <View style={styles.webTopHint}>
+          <View style={styles.webDot} />
+          <Text style={styles.webTopHintText}>HighTime 앱스토어 출시용 모바일 앱 (8081)</Text>
+        </View>
+        <View style={styles.webPhoneFrame}>
+          <View style={styles.webNotchWrap}>
+            <View style={styles.webNotch} />
+          </View>
+          <View style={{ flex: 1, overflow: 'hidden' }}>{content}</View>
+        </View>
+      </View>
+    );
+  };
+
+  if (!isLoggedIn) {
+    return renderWithWebPhoneFrame(
+      <LoginScreen
+        initialUser={currentUser}
+        initialSchool={currentSchool}
+        onLoginSuccess={handleCompleteAuth}
+      />
+    );
+  }
+
+  return renderWithWebPhoneFrame(
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
 
-      {/* 1. 상단 앱 헤더 */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>H</Text>
-          </View>
-          <View>
-            <View style={styles.logoRow}>
-              <Text style={styles.logoTitle}>HighTime</Text>
-              <View style={styles.highSchoolBadge}>
-                <Text style={styles.highSchoolBadgeText}>고교타임</Text>
-              </View>
+      {/* 상단 고정 헤더 (1:1 채팅방 전체화면 진입 시 숨김) */}
+      {!(activeTab === 'chat' && isChatRoomFullOpen) && (
+        <Header
+          currentUser={currentUser}
+          currentSchool={currentSchool}
+          unreadNotiCount={unreadNotiCount}
+          onPressSchoolBadge={handlePressSchoolBadge}
+          onPressNotification={() => setIsNotiModalOpen(true)}
+        />
+      )}
+
+      {/* 본문: 탭 컨텐츠 */}
+      <View style={styles.body}>
+        {renderTabContent()}
+      </View>
+
+      {/* 하단 5탭 내비게이션 (1:1 채팅방 전체화면 진입 시 숨김) */}
+      {!(activeTab === 'chat' && isChatRoomFullOpen) && (
+        <BottomNav
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
+          unreadChatCount={unreadChatCount}
+        />
+      )}
+
+      {/* ===== 모달들 ===== */}
+
+      {/* 학생 인증 모달 */}
+      <AuthModal
+        visible={isAuthModalOpen}
+        currentUser={currentUser}
+        currentSchool={currentSchool}
+        onClose={() => setIsAuthModalOpen(false)}
+        onCompleteAuth={handleCompleteAuth}
+      />
+
+      {/* 알림 센터 모달 */}
+      <NotificationModal
+        visible={isNotiModalOpen}
+        notifications={notifications}
+        onClose={() => setIsNotiModalOpen(false)}
+        onMarkAllAsRead={handleMarkAllNotiRead}
+        onSelectNotification={(item) => {
+          setNotifications((prev) => prev.filter((n) => n.id !== item.id));
+          setIsNotiModalOpen(false);
+          if (item.type === 'chat' && item.roomId) {
+            setActiveChatRoomId(item.roomId);
+            setActiveTab('chat');
+          } else if (item.type === 'comment' && item.postId) {
+            const targetPost = majorPosts.find((p) => p.id === item.postId);
+            if (targetPost) {
+              setSelectedPost(targetPost);
+              setIsPostDetailOpen(true);
+            }
+          }
+        }}
+      />
+
+      {/* 글쓰기 모달 */}
+      <WritePostModal
+        visible={isWriteModalOpen}
+        targetBoard={writeTargetBoard}
+        initialSchoolCategory={writeInitialSchoolCategory}
+        currentUser={currentUser}
+        currentSchool={currentSchool}
+        onClose={() => setIsWriteModalOpen(false)}
+        onSubmitMajorPost={handleSubmitMajorPost}
+        onSubmitSchoolPost={handleSubmitSchoolPost}
+      />
+
+      {/* 게시글 상세 모달 */}
+      <PostDetailModal
+        visible={isPostDetailOpen}
+        post={selectedPost}
+        currentUser={currentUser}
+        currentSchool={currentSchool}
+        onClose={() => {
+          setIsPostDetailOpen(false);
+          setSelectedPost(null);
+        }}
+        onToggleLike={handleToggleLike}
+        onDeletePost={handleDeleteMajorPost}
+        onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        onQuickAsk={handleQuickAsk}
+      />
+
+      {/* 1:1 질문 / 입시 상담 모달 */}
+      <AskQuestionModal
+        visible={isAskModalOpen}
+        mode={askMode}
+        defaultTarget={askDefaultTarget}
+        currentUser={currentUser}
+        onClose={() => setIsAskModalOpen(false)}
+        onSubmitQuestion={handleSubmitQuestion}
+        onSubmitConsult={handleSubmitConsult}
+      />
+
+      {/* 전공게시판 1:1 채팅 신청 메시지 작성 모달 */}
+      <ChatRequestModal
+        visible={Boolean(chatRequestPost)}
+        post={chatRequestPost}
+        onClose={() => setChatRequestPost(null)}
+        onSendRequest={handleSendDirectChatRequest}
+      />
+
+      {/* 공용 삭제 확인 모달 (예 / 아니요) */}
+      <PhoneModal
+        visible={Boolean(deleteConfirmModal)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirmModal(null)}
+      >
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmTitle}>
+              {deleteConfirmModal?.title || '삭제 확인'}
+            </Text>
+            <Text style={styles.confirmMessage}>
+              {deleteConfirmModal?.message || '삭제하시겠습니까?'}
+            </Text>
+            <View style={styles.confirmBtnRow}>
+              <TouchableOpacity
+                style={styles.confirmCancelBtn}
+                onPress={() => setDeleteConfirmModal(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.confirmCancelText}>아니요</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmYesBtn}
+                onPress={() => {
+                  const action = deleteConfirmModal?.onConfirm;
+                  setDeleteConfirmModal(null);
+                  action?.();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.confirmYesText}>예</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.logoSub}>전국 고교 커뮤니티 & 학교생활</Text>
           </View>
         </View>
-
-        {/* 내 인증 학교 고정 뱃지 */}
-        <TouchableOpacity
-          style={styles.schoolBadge}
-          onPress={() => Alert.alert('학생 인증 정보', `${currentUser.name} (${currentUser.school} ${currentUser.grade})\nPASS 본인확인 및 재학증명서 인증 완료`)}
-        >
-          <Ionicons name="shield-checkmark" size={13} color="#dc2626" />
-          <Text style={styles.schoolBadgeText}>{currentUser.school}</Text>
-          <Ionicons name="lock-closed" size={10} color="#991b1b" />
-        </TouchableOpacity>
-      </View>
-
-      {/* 2. 본문 스크롤 영역 (활성 탭에 따른 뷰) */}
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        
-        {/* 탭 1: 종합 [홈] 화면 */}
-        {activeTab === 'home' && (
-          <View style={styles.tabContent}>
-            {/* 환영 카드 */}
-            <View style={styles.welcomeCard}>
-              <View style={styles.welcomeTop}>
-                <View style={styles.verifiedPill}>
-                  <Ionicons name="school" size={12} color="#ffffff" />
-                  <Text style={styles.verifiedPillText}>{currentUser.school} 정회원</Text>
-                </View>
-                <Text style={styles.welcomeDate}>2026. 11. 15 (수)</Text>
-              </View>
-              <Text style={styles.welcomeTitle}>{currentUser.name} 학생, 오늘도 열공하세요! 🔥</Text>
-              <Text style={styles.welcomeSub}>수능과 기말고사를 준비하는 전국 고교생 라운지</Text>
-
-              {/* 퀵 바로가기 버튼 */}
-              <View style={styles.quickActionRow}>
-                <TouchableOpacity
-                  style={styles.quickButton}
-                  onPress={() => setActiveTab('major')}
-                >
-                  <Ionicons name="create-outline" size={16} color="#ffffff" />
-                  <Text style={styles.quickButtonText}>글쓰기</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.quickButton}
-                  onPress={() => setActiveTab('counseling')}
-                >
-                  <Ionicons name="help-circle-outline" size={16} color="#ffffff" />
-                  <Text style={styles.quickButtonText}>1:1 질문</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.quickButton}
-                  onPress={() => setActiveTab('counseling')}
-                >
-                  <Ionicons name="school-outline" size={16} color="#ffffff" />
-                  <Text style={styles.quickButtonText}>입시상담</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* D-Day 학사 일정 */}
-            <Text style={styles.sectionTitle}>📅 주요 시험 D-day</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dDayScroll}>
-              <View style={[styles.dDayCard, { borderLeftColor: '#ef4444' }]}>
-                <Text style={styles.dDayName}>2027 대학수능</Text>
-                <Text style={[styles.dDayCount, { color: '#ef4444' }]}>D-4</Text>
-              </View>
-              <View style={[styles.dDayCard, { borderLeftColor: '#6366f1' }]}>
-                <Text style={styles.dDayName}>2학기 기말고사</Text>
-                <Text style={[styles.dDayCount, { color: '#6366f1' }]}>D-29</Text>
-              </View>
-              <View style={[styles.dDayCard, { borderLeftColor: '#10b981' }]}>
-                <Text style={styles.dDayName}>겨울방학식</Text>
-                <Text style={[styles.dDayCount, { color: '#10b981' }]}>D-54</Text>
-              </View>
-            </ScrollView>
-
-            {/* 오늘의 급식 & 시간표 위젯 */}
-            <View style={styles.gridRow}>
-              {/* 급식 위젯 */}
-              <View style={styles.widgetCard}>
-                <View style={styles.widgetHeader}>
-                  <Ionicons name="restaurant" size={14} color="#dc2626" />
-                  <Text style={styles.widgetTitle}>오늘의 급식</Text>
-                  <Text style={styles.calText}>892 kcal</Text>
-                </View>
-                <Text style={styles.menuItem}>• 차조밥</Text>
-                <Text style={styles.menuItem}>• 얼큰순두부찌개</Text>
-                <Text style={styles.menuItem}>• 수제 치즈 돈까스</Text>
-                <Text style={styles.menuItem}>• 단호박 샐러드</Text>
-                <Text style={styles.voteText}>❤️ 대존맛 (142표)</Text>
-              </View>
-
-              {/* 시간표 위젯 */}
-              <View style={styles.widgetCard}>
-                <View style={styles.widgetHeader}>
-                  <Ionicons name="time" size={14} color="#4f46e5" />
-                  <Text style={styles.widgetTitle}>수요 시간표</Text>
-                  <Text style={styles.shortText}>6교시</Text>
-                </View>
-                <Text style={styles.timeItem}>1교시: 수학I</Text>
-                <Text style={styles.timeItem}>2교시: 지구과학I</Text>
-                <Text style={styles.timeItem}>3교시: 문학</Text>
-                <Text style={[styles.timeItem, styles.currentTime]}>4교시: 체육 (진행중)</Text>
-                <Text style={styles.nextText}>5교시: 영어 · 6교시: 정보</Text>
-              </View>
-            </View>
-
-            {/* 추천 탐구 키워드 */}
-            <Text style={styles.sectionTitle}>💡 오늘의 추천 세특 키워드</Text>
-            <View style={styles.keywordWrap}>
-              {['#RAG_생성형AI', '#미하엘리스_효소학', '#기준금리_통화정책', '#베르누이_유체역학'].map((kw, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.keywordChip}
-                  onPress={() => setActiveTab('major')}
-                >
-                  <Text style={styles.keywordText}>{kw}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* 탭 2: 전국 [전공게시판] */}
-        {activeTab === 'major' && (
-          <View style={styles.tabContent}>
-            {/* 전공 카테고리 칩 */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.majorChipsScroll}>
-              {MAJOR_CATEGORIES.map(cat => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[styles.majorChip, selectedMajor === cat.id && styles.majorChipActive]}
-                  onPress={() => setSelectedMajor(cat.id)}
-                >
-                  <Text style={[styles.majorChipText, selectedMajor === cat.id && styles.majorChipTextActive]}>
-                    {cat.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* 글 목록 */}
-            <View style={styles.postList}>
-              {majorPosts.map(post => (
-                <View key={post.id} style={styles.postCard}>
-                  <View style={styles.postTop}>
-                    <View style={styles.postSchoolBadge}>
-                      <Text style={styles.postSchoolText}>{post.school} · {post.grade}</Text>
-                    </View>
-
-                    {/* 내가 쓴 글인 경우에만 [내 글] 뱃지 & 삭제 버튼 노출 */}
-                    {post.isMine && (
-                      <View style={styles.mineRow}>
-                        <View style={styles.mineBadge}>
-                          <Text style={styles.mineBadgeText}>내 글</Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => handleDeletePost(post.id)}
-                          style={styles.deleteButton}
-                        >
-                          <Ionicons name="trash-outline" size={14} color="#dc2626" />
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-
-                  <Text style={styles.postTitle}>{post.title}</Text>
-                  <Text style={styles.postSnippet} numberOfLines={2}>{post.content}</Text>
-
-                  <View style={styles.postFooter}>
-                    <Text style={styles.footerInfo}>방금 전</Text>
-                    <View style={styles.interactionRow}>
-                      <Text style={styles.interactionText}>👍 {post.likes}</Text>
-                      <Text style={styles.interactionText}>💬 {post.comments}</Text>
-                    </View>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* 탭 3: [우리학교] 게시판 */}
-        {activeTab === 'school' && (
-          <View style={styles.tabContent}>
-            <View style={styles.schoolNoticeCard}>
-              <Ionicons name="shield-checkmark" size={18} color="#16a34a" />
-              <Text style={styles.schoolNoticeText}>
-                {currentUser.school} 인증 학생만 입장 가능한 교내 비밀 커뮤니티입니다.
-              </Text>
-            </View>
-            <View style={styles.postCard}>
-              <Text style={styles.postTitle}>오늘 급식 돈까스 진짜 맛있었음 ㅋㅋ</Text>
-              <Text style={styles.postSnippet}>영양사 선생님 항상 감사합니다!</Text>
-              <View style={styles.postFooter}>
-                <Text style={styles.footerInfo}>익명 · 방금 전</Text>
-                <Text style={styles.interactionText}>👍 38 · 💬 7</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* 탭 4: [입시·1:1질문] */}
-        {activeTab === 'counseling' && (
-          <View style={styles.tabContent}>
-            <View style={styles.counselingBanner}>
-              <Text style={styles.bannerTitle}>🎓 고교 1:1 질문 & 맞춤 입시 상담</Text>
-              <Text style={styles.bannerSub}>명문대 선배 멘토진이 생기부와 진로를 답변해드립니다.</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.askButton}
-              onPress={() => Alert.alert('1:1 질문', '관심 있는 전공의 우수 선배에게 질문을 등록합니다.')}
-            >
-              <Ionicons name="add" size={18} color="#ffffff" />
-              <Text style={styles.askButtonText}>새 1:1 질문 남기기</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* 탭 5: [1:1 채팅] */}
-        {activeTab === 'chat' && (
-          <View style={styles.tabContent}>
-            <View style={styles.chatCard}>
-              <View style={styles.chatAvatar}>
-                <Text style={styles.avatarText}>하얀</Text>
-              </View>
-              <View style={styles.chatInfo}>
-                <Text style={styles.chatName}>하얀가운꿈나무 (상산고 멘토)</Text>
-                <Text style={styles.chatMsg}>카탈레이스 실험 오차 줄이는 노트 사진 보내드렸어요!</Text>
-              </View>
-              <Text style={styles.chatTime}>오후 2:48</Text>
-            </View>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* 3. 하단 5개 탭 내비게이션 바 */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('major')}
-        >
-          <Ionicons
-            name={activeTab === 'major' ? 'layers' : 'layers-outline'}
-            size={22}
-            color={activeTab === 'major' ? '#dc2626' : '#94a3b8'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'major' && styles.navLabelActive]}>
-            전공게시판
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('school')}
-        >
-          <Ionicons
-            name={activeTab === 'school' ? 'school' : 'school-outline'}
-            size={22}
-            color={activeTab === 'school' ? '#dc2626' : '#94a3b8'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'school' && styles.navLabelActive]}>
-            우리학교
-          </Text>
-        </TouchableOpacity>
-
-        {/* 가운데 종합 홈 탭 */}
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('home')}
-        >
-          <Ionicons
-            name={activeTab === 'home' ? 'home' : 'home-outline'}
-            size={24}
-            color={activeTab === 'home' ? '#dc2626' : '#94a3b8'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'home' && styles.navLabelActive]}>
-            홈
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('counseling')}
-        >
-          <Ionicons
-            name={activeTab === 'counseling' ? 'heart-circle' : 'heart-circle-outline'}
-            size={22}
-            color={activeTab === 'counseling' ? '#dc2626' : '#94a3b8'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'counseling' && styles.navLabelActive]}>
-            입시·질문
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('chat')}
-        >
-          <Ionicons
-            name={activeTab === 'chat' ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
-            size={22}
-            color={activeTab === 'chat' ? '#dc2626' : '#94a3b8'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'chat' && styles.navLabelActive]}>
-            1:1채팅
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </PhoneModal>
     </SafeAreaView>
   );
 }
 
-// React Native 모바일 스타일시트
 const styles = StyleSheet.create({
+  webRoot: {
+    flex: 1,
+    minHeight: '100vh' as any,
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  webTopHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  webDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#34d399',
+  },
+  webTopHintText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  webPhoneFrame: {
+    width: '100%',
+    maxWidth: 430,
+    height: '90vh' as any,
+    maxHeight: 860,
+    backgroundColor: '#ffffff',
+    borderRadius: 36,
+    borderWidth: 6,
+    borderColor: '#1e293b',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 30,
+  },
+  webNotchWrap: {
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 4,
+    backgroundColor: '#ffffff',
+  },
+  webNotch: {
+    width: 80,
+    height: 14,
+    borderRadius: 99,
+    backgroundColor: '#0f172a',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    backgroundColor: '#ffffff',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#dc2626',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoBadgeText: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 16,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  logoTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#dc2626',
-    letterSpacing: -0.5,
-  },
-  highSchoolBadge: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  highSchoolBadgeText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#dc2626',
-  },
-  logoSub: {
-    fontSize: 9,
-    color: '#64748b',
-    marginTop: 1,
-  },
-  schoolBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  schoolBadgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#b91c1c',
-  },
-  container: {
+  body: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
-  scrollContent: {
-    paddingBottom: 24,
-  },
-  tabContent: {
-    padding: 16,
-    gap: 14,
-  },
-  welcomeCard: {
-    backgroundColor: '#dc2626',
-    borderRadius: 24,
-    padding: 18,
-    shadowColor: '#dc2626',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  welcomeTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  confirmCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  confirmTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#0f172a',
     marginBottom: 8,
   },
-  verifiedPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  verifiedPillText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  welcomeDate: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 10,
-  },
-  welcomeTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#ffffff',
-    letterSpacing: -0.3,
-  },
-  welcomeSub: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginTop: 4,
-  },
-  quickActionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  quickButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingVertical: 7,
-    borderRadius: 12,
-  },
-  quickButtonText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  sectionTitle: {
+  confirmMessage: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#1e293b',
-    marginTop: 4,
+    color: '#475569',
+    lineHeight: 20,
+    marginBottom: 18,
   },
-  dDayScroll: {
-    flexDirection: 'row',
-  },
-  dDayCard: {
-    backgroundColor: '#ffffff',
-    padding: 12,
-    borderRadius: 14,
-    marginRight: 8,
-    minWidth: 115,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderLeftWidth: 4,
-  },
-  dDayName: {
-    fontSize: 10,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  dDayCount: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginTop: 4,
-  },
-  gridRow: {
+  confirmBtnRow: {
     flexDirection: 'row',
     gap: 10,
   },
-  widgetCard: {
+  confirmCancelBtn: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  widgetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    marginBottom: 8,
-  },
-  widgetTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    flex: 1,
-    marginLeft: 4,
-  },
-  calText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#d97706',
-  },
-  shortText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#4f46e5',
-  },
-  menuItem: {
-    fontSize: 11,
-    color: '#334155',
-    marginBottom: 3,
-  },
-  voteText: {
-    fontSize: 10,
-    color: '#e11d48',
-    fontWeight: 'bold',
-    marginTop: 6,
-  },
-  timeItem: {
-    fontSize: 11,
-    color: '#475569',
-    marginBottom: 3,
-  },
-  currentTime: {
-    color: '#dc2626',
-    fontWeight: 'bold',
-  },
-  nextText: {
-    fontSize: 9,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  keywordWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  keywordChip: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 11,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  keywordText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  majorChipsScroll: {
-    flexDirection: 'row',
-    marginBottom: 6,
-  },
-  majorChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginRight: 6,
-  },
-  majorChipActive: {
-    backgroundColor: '#0f172a',
-    borderColor: '#0f172a',
-  },
-  majorChipText: {
-    fontSize: 11,
-    color: '#475569',
-    fontWeight: '600',
-  },
-  majorChipTextActive: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  postList: {
-    gap: 10,
-  },
-  postCard: {
-    backgroundColor: '#ffffff',
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  postTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  postSchoolBadge: {
     backgroundColor: '#f1f5f9',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  postSchoolText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#475569',
-  },
-  mineRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
-  mineBadge: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  mineBadgeText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#dc2626',
-  },
-  deleteButton: {
-    padding: 2,
-  },
-  postTitle: {
+  confirmCancelText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: '#475569',
   },
-  postSnippet: {
-    fontSize: 11,
-    color: '#64748b',
-    lineHeight: 16,
-    marginBottom: 8,
-  },
-  postFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#f8fafc',
-    paddingTop: 6,
-  },
-  footerInfo: {
-    fontSize: 10,
-    color: '#94a3b8',
-  },
-  interactionRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  interactionText: {
-    fontSize: 10,
-    color: '#64748b',
-  },
-  schoolNoticeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#f0fdf4',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  schoolNoticeText: {
-    fontSize: 11,
-    color: '#166534',
-    fontWeight: '600',
+  confirmYesBtn: {
     flex: 1,
-  },
-  counselingBanner: {
-    backgroundColor: '#1e293b',
-    padding: 16,
-    borderRadius: 18,
-  },
-  bannerTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  bannerSub: {
-    fontSize: 11,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  askButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 12,
     backgroundColor: '#dc2626',
-    paddingVertical: 12,
-    borderRadius: 14,
+    alignItems: 'center',
   },
-  askButtonText: {
+  confirmYesText: {
+    fontSize: 13,
+    fontWeight: '800',
     color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  chatCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 10,
-  },
-  chatAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f43f5e',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 11,
-  },
-  chatInfo: {
-    flex: 1,
-  },
-  chatName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  chatMsg: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  chatTime: {
-    fontSize: 9,
-    color: '#94a3b8',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    backgroundColor: '#ffffff',
-    paddingVertical: 8,
-    paddingBottom: Platform.OS === 'ios' ? 4 : 8,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  navLabelActive: {
-    color: '#dc2626',
-    fontWeight: 'bold',
   },
 });

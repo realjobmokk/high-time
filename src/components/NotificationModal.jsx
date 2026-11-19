@@ -1,41 +1,14 @@
 import React from 'react';
 import { X, Bell, MessageSquare, HelpCircle, GraduationCap, Check } from 'lucide-react';
 
-export default function NotificationModal({ isOpen, onClose, onReadNotifications }) {
+export default function NotificationModal({
+  isOpen,
+  onClose,
+  onReadNotifications,
+  notifications = [],
+  onSelectNotification
+}) {
   if (!isOpen) return null;
-
-  const notifications = [
-    {
-      id: 'noti-1',
-      type: 'comment',
-      icon: MessageSquare,
-      iconColor: 'text-blue-500 bg-blue-50',
-      title: '내 글에 새 댓글이 달렸습니다.',
-      content: '알고리즘깎는노인: "수학과 연계해서 벡터 내적과 코사인 법칙 수식까지..."',
-      time: '18분 전',
-      unread: true
-    },
-    {
-      id: 'noti-2',
-      type: 'qa',
-      icon: HelpCircle,
-      iconColor: 'text-rose-500 bg-rose-50',
-      title: '1:1 질문에 멘토의 답변이 등록되었습니다!',
-      content: '하얀가운꿈나무(상산고 고3): "전혀 과하지 않습니다! 오히려 생명과학2 효소..."',
-      time: '45분 전',
-      unread: true
-    },
-    {
-      id: 'noti-3',
-      type: 'consult',
-      icon: GraduationCap,
-      iconColor: 'text-purple-500 bg-purple-50',
-      title: '신청하신 입시 컨설팅 분석 리포트가 도착했습니다.',
-      content: '대치동 입시연구소 김멘토: "컴공 학종에서 수학 세특은 1순위 평가 요소..."',
-      time: '2시간 전',
-      unread: false
-    }
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
@@ -57,34 +30,46 @@ export default function NotificationModal({ isOpen, onClose, onReadNotifications
         </div>
 
         <div className="space-y-2 mt-3 max-h-72 overflow-y-auto">
-          {notifications.map((n) => {
-            const Icon = n.icon;
-            return (
-              <div
-                key={n.id}
-                className={`p-3 rounded-2xl border text-xs transition ${
-                  n.unread
-                    ? 'bg-red-50/50 border-red-100'
-                    : 'bg-slate-50 border-slate-100'
-                }`}
-              >
-                <div className="flex items-start gap-2.5">
-                  <div className={`p-1.5 rounded-xl ${n.iconColor} shrink-0`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-[11px]">{n.title}</span>
-                      <span className="text-[10px] text-slate-400">{n.time}</span>
+          {notifications.length === 0 ? (
+            <div className="py-10 text-center text-slate-400">
+              <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-xs font-bold text-slate-500">새로운 알림이 없습니다.</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                내 글에 댓글이나 1:1 질문이 오면 여기에 표시됩니다.
+              </p>
+            </div>
+          ) : (
+            notifications.map((n) => {
+              const Icon = n.icon || MessageSquare;
+              const iconColor = n.iconColor || 'bg-red-100 text-red-600';
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => onSelectNotification?.(n)}
+                  className={`w-full text-left p-3 rounded-2xl border text-xs transition ${n.unread
+                    ? 'bg-red-50/50 border-red-100 hover:bg-red-50'
+                    : 'bg-slate-50 border-slate-100 hover:bg-slate-100'
+                    }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className={`p-1.5 rounded-xl ${iconColor} shrink-0`}>
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-slate-600 text-[11px] mt-1 leading-snug line-clamp-2">
-                      {n.content}
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-[11px]">{n.title}</span>
+                        <span className="text-[10px] text-slate-400">{n.time}</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px] mt-1 leading-snug line-clamp-2">
+                        {n.content}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

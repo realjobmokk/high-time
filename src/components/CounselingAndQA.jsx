@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MessageSquareHeart, 
   HelpCircle, 
@@ -18,17 +18,31 @@ export default function CounselingAndQA({
   counselingData,
   onAddQuestion,
   onAddConsult,
-  onNavigateToChat
+  onNavigateToChat,
+  externalWriteTrigger = 0
 }) {
   const [subTab, setSubTab] = useState('direct'); // 'direct' (1:1 질문) or 'admission' (입시상담)
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [isConsultModalOpen, setIsConsultModalOpen] = useState(false);
 
-  // 1:1 질문 폼 상태
-  const [qTarget, setQTarget] = useState('전공 멘토 / 탐구 작성자');
+  // 외부 플로팅 + 버튼 클릭 시 현재 서브탭에 맞는 작성 모달 열기
+  useEffect(() => {
+    if (externalWriteTrigger > 0) {
+      if (subTab === 'direct') {
+        setIsQuestionModalOpen(true);
+      } else {
+        setIsConsultModalOpen(true);
+      }
+    }
+  }, [externalWriteTrigger]);
+
+  // 입시 질문 게시판 폼 상태
+  const [qTarget, setQTarget] = useState('수시/학종');
   const [qTopic, setQTopic] = useState('');
   const [qContent, setQContent] = useState('');
   const [qIsPublic, setQIsPublic] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const Q_CATEGORIES = ['전체', '수시/학종', '정시/수능', '생기부/세특', '내신/공부법', '대학/학과선택'];
 
   // 입시 상담 폼 상태
   const [cCategory, setCCategory] = useState('학생부종합(학종)');
@@ -91,7 +105,7 @@ export default function CounselingAndQA({
 
   return (
     <div className="pb-24 pt-2 px-4 space-y-3">
-      {/* 1. 상단 전환 탭 (1:1 질문함 vs 입시 상담 라운지) */}
+      {/* 1. 상단 전환 탭 (입시 질문 게시판 vs 입시 상담 라운지) */}
       <div className="grid grid-cols-2 gap-2 bg-slate-200/80 p-1 rounded-2xl">
         <button
           onClick={() => setSubTab('direct')}
@@ -102,7 +116,7 @@ export default function CounselingAndQA({
           }`}
         >
           <HelpCircle className="w-4 h-4" />
-          <span>1:1 질문함 ({counselingData.directQuestions.length})</span>
+          <span>입시 질문 게시판 ({counselingData.directQuestions.length})</span>
         </button>
         <button
           onClick={() => setSubTab('admission')}
@@ -117,37 +131,58 @@ export default function CounselingAndQA({
         </button>
       </div>
 
-      {/* 2. 서브 탭 1: 1:1 질문함 */}
+      {/* 2. 서브 탭 1: 입시 질문 게시판 */}
       {subTab === 'direct' && (
         <div className="space-y-3">
           <div className="bg-gradient-to-r from-red-500 to-rose-600 p-3.5 rounded-2xl text-white shadow-sm flex items-center justify-between">
             <div>
               <div className="flex items-center gap-1 text-[11px] text-red-100 font-semibold">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>관심 글 작성자·멘토에게 1:1 직답 받기</span>
+                <span>수시 · 정시 · 생기부 · 내신 입시 Q&A</span>
               </div>
-              <h3 className="text-sm font-bold mt-0.5">혼자 고민하지 말고 직접 물어보세요!</h3>
-              <p className="text-[11px] text-red-100">탐구 세특, 과제, 교재 질문 등 무엇이든 1:1로</p>
+              <h3 className="text-sm font-bold mt-0.5">입시 질문 게시판</h3>
+              <p className="text-[11px] text-red-100">궁금한 입시 전형이나 생기부 질문을 자유롭게 올려보세요</p>
             </div>
-            <button
-              onClick={() => setIsQuestionModalOpen(true)}
-              className="px-3 py-1.5 bg-white text-red-600 rounded-xl text-xs font-bold shadow hover:bg-red-50 active:scale-95 transition"
-            >
-              질문하기
-            </button>
+          </div>
+
+          {/* 카테고리 필터 (한 줄 가로 스크롤/드래그) */}
+          <div className="flex gap-1.5 overflow-x-auto flex-nowrap pb-1">
+            {Q_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0 transition ${
+                  selectedCategory === cat
+                    ? 'bg-red-600 text-white'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
           {/* 질문 목록 */}
           <div className="space-y-3">
-            {counselingData.directQuestions.map((q) => (
+            {counselingData.directQuestions.filter((q) =>
+              selectedCategory === '전체' ? true : q.targetAuthor === selectedCategory
+            ).length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-400 font-bold">
+                아직 등록된 입시 질문 게시글이 없습니다.
+              </div>
+            ) : (
+              counselingData.directQuestions
+                .filter((q) =>
+                  selectedCategory === '전체' ? true : q.targetAuthor === selectedCategory
+                )
+                .map((q) => (
               <div
                 key={q.id}
                 className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-slate-300 transition"
               >
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-bold text-slate-800 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                    To: {q.targetAuthor}
+                  <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    {q.targetAuthor}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <span
@@ -204,7 +239,8 @@ export default function CounselingAndQA({
                   </div>
                 )}
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}
@@ -221,12 +257,6 @@ export default function CounselingAndQA({
               <h3 className="text-sm font-bold mt-0.5">맞춤형 고교 입시 컨설팅 라운지</h3>
               <p className="text-[11px] text-slate-300">내신 등급 및 목표 학과별 합격 전략 분석</p>
             </div>
-            <button
-              onClick={() => setIsConsultModalOpen(true)}
-              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow active:scale-95 transition"
-            >
-              상담 신청
-            </button>
           </div>
 
           {/* 입시 상담 피드 */}
@@ -281,32 +311,35 @@ export default function CounselingAndQA({
         </div>
       )}
 
-      {/* 1:1 질문 모달 */}
+      {/* 입시 질문 게시판 글쓰기 모달 */}
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-5 shadow-2xl">
             <h3 className="font-bold text-slate-900 text-base mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-red-500" />
-              1:1 질문 작성하기
+              입시 질문 게시판 글쓰기
             </h3>
             <form onSubmit={handleQuestionSubmit} className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">질문 대상</label>
-                <input
-                  type="text"
+                <label className="text-xs font-semibold text-slate-700 block mb-1">질문 카테고리</label>
+                <select
                   value={qTarget}
                   onChange={(e) => setQTarget(e.target.value)}
-                  placeholder="예: 컴퓨터공학 선배 / 특정 글 작성자"
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 font-medium"
-                  required
-                />
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 font-bold"
+                >
+                  {Q_CATEGORIES.filter((c) => c !== '전체').map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">질문 핵심 주제</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">질문 제목</label>
                 <input
                   type="text"
-                  placeholder="예: 수리생물학 세특 보고서 수식 연계 질문"
+                  placeholder="예: 일반고 2.1등급 컴공 학종 vs 교과 어디가 유리할까요?"
                   value={qTopic}
                   onChange={(e) => setQTopic(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 font-bold"

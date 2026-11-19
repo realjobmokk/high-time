@@ -25,6 +25,7 @@ export default function PostDetailModal({
   const [commentText, setCommentText] = useState('');
   const [isAnonymousComment, setIsAnonymousComment] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [commentError, setCommentError] = useState('');
 
   if (!post) return null;
 
@@ -40,7 +41,11 @@ export default function PostDetailModal({
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    setCommentError('');
+    if (!commentText.trim()) {
+      setCommentError('댓글 내용을 포함해야 합니다.');
+      return;
+    }
 
     const newComment = {
       id: `c-${Date.now()}`,
@@ -129,14 +134,16 @@ export default function PostDetailModal({
               </div>
             </div>
 
-            {/* 1:1 질문 연결 버튼 */}
-            <button
-              onClick={() => onQuickAsk(post)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition border border-red-200 active:scale-95"
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>작성자에게 1:1 질문</span>
-            </button>
+            {/* 1:1 질문 연결 버튼 (본인 글에는 표시하지 않음) */}
+            {!post.author.isMine && (
+              <button
+                onClick={() => onQuickAsk(post)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition border border-red-200 active:scale-95"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>작성자에게 1:1 질문</span>
+              </button>
+            )}
           </div>
 
           {/* 제목 및 내용 */}
@@ -242,13 +249,24 @@ export default function PostDetailModal({
             <span className="text-[10px] text-slate-400">타 학교 학생과의 예의를 지켜주세요</span>
           </div>
 
+          {commentError && (
+            <p className="text-[11px] font-bold text-red-600 mb-1.5 px-1">
+              {commentError}
+            </p>
+          )}
+
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
+              onChange={(e) => {
+                setCommentText(e.target.value);
+                if (commentError) setCommentError('');
+              }}
               placeholder="댓글을 남겨보세요..."
-              className="flex-1 bg-slate-100 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-400 placeholder-slate-400"
+              className={`flex-1 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-400 placeholder-slate-400 ${
+                commentError ? 'bg-red-50 border border-red-500' : 'bg-slate-100'
+              }`}
             />
             <button
               type="submit"

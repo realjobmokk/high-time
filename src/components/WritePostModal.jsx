@@ -13,10 +13,19 @@ export default function WritePostModal({
   const [content, setContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [nickname, setNickname] = useState('열정고딩2');
+  const [formError, setFormError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+    setFormError('');
+    if (!title.trim()) {
+      setFormError('글 제목을 포함해야 합니다.');
+      return;
+    }
+    if (!content.trim()) {
+      setFormError('글 내용을 포함해야 합니다.');
+      return;
+    }
 
     const selectedMajor = MAJOR_CATEGORIES.find((m) => m.id === majorId);
 
@@ -32,7 +41,7 @@ export default function WritePostModal({
         school: currentSchool.name,
         grade: '고2',
         isAnonymous,
-        avatarColor: 'bg-red-500',
+        avatarColor: isAnonymous ? 'bg-slate-400' : 'bg-red-600',
         isMine: true // 내가 쓴 글 표시
       },
       likes: 1,
@@ -115,9 +124,11 @@ export default function WritePostModal({
               type="text"
               placeholder="예: [컴공 세특] 생성형 AI 환각 완화 알고리즘 탐구 보고서"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setFormError('');
+              }}
               className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 font-bold"
-              required
             />
           </div>
 
@@ -130,11 +141,19 @@ export default function WritePostModal({
               rows={6}
               placeholder="탐구한 배경, 가설, 사용한 도서/논문, 느낀 점, 교과 연계성 등을 자세히 적어주세요. 전국 친구들과 의미 있는 피드백을 주고받을 수 있습니다."
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                setFormError('');
+              }}
               className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 resize-none leading-relaxed"
-              required
             />
           </div>
+
+          {formError && (
+            <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-extrabold">
+              {formError}
+            </div>
+          )}
 
           {/* 작성자 정보 안내 */}
           <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs text-slate-600">

@@ -104,7 +104,7 @@ export default function MajorBoard({
                 onClick={() => setSelectedMajor(category.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition border ${
                   isSelected
-                    ? 'bg-slate-900 text-white border-slate-900 font-bold shadow-sm'
+                    ? 'bg-red-600 text-white border-red-600 font-bold shadow-sm'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-medium'
                 }`}
               >
@@ -261,33 +261,26 @@ export default function MajorBoard({
                     <span>{post.commentCount}</span>
                   </div>
 
-                  {/* 1:1 질문 신청 퀵 버튼 */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onQuickAsk(post);
-                    }}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-[10px] transition"
-                    title="이 글 작성자에게 1:1 질문하기"
-                  >
-                    <HelpCircle className="w-3 h-3" />
-                    <span>1:1 질문</span>
-                  </button>
+                  {/* 1:1 채팅 신청 버튼 (본인 글에는 표시하지 않음) */}
+                  {!post.author.isMine && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onQuickAsk(post);
+                      }}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-[10px] transition"
+                      title="이 글 작성자에게 1:1 채팅 신청하기"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>1:1 채팅 신청</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))
         )}
       </div>
-
-      {/* 플로팅 글쓰기 버튼 (Floating Action Button) */}
-      <button
-        onClick={onOpenWriteModal}
-        className="fixed bottom-20 right-4 z-20 flex items-center gap-1.5 px-4 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-full shadow-lg shadow-red-300 hover:shadow-xl active:scale-95 transition font-bold text-xs"
-      >
-        <PenSquare className="w-4 h-4" />
-        <span>글쓰기</span>
-      </button>
     </div>
   );
 }
