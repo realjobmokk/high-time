@@ -138,30 +138,43 @@ export async function deleteMajorPostFromDb(postId: string): Promise<boolean> {
 export async function fetchSchoolPostsFromDb(schoolId = 'daehyeon'): Promise<SchoolPost[] | null> {
   if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from('school_posts')
-    .select('*')
-    .eq('school_id', schoolId)
-    .order('created_at', { ascending: false });
+  const [{ data, error }, { data: commentRows }] = await Promise.all([
+    supabase
+      .from('school_posts')
+      .select('*')
+      .eq('school_id', schoolId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('direct_questions')
+      .select('id, answer')
+      .like('id', 'school_comments_%'),
+  ]);
 
   if (error || !data) {
     console.warn('우리학교 게시판 DB 조회 실패:', error?.message);
     return null;
   }
 
+  // 클라우드 보조 저장소(direct_questions)에 저장된 댓글 매핑
+  const cloudCommentsMap = new Map<string, any[]>();
+  for (const cr of commentRows || []) {
+    try {
+      const postId = String(cr.id || '').replace('school_comments_', '');
+      const parsed = JSON.parse(cr.answer || '[]');
+      if (postId && Array.isArray(parsed)) {
+        cloudCommentsMap.set(postId, parsed);
+      }
+    } catch {}
+  }
+
   return data
     .filter((row: any) => !String(row.id || '').startsWith('chatroom_'))
     .map((row: any) => {
-      let localComments: any[] = [];
-      try {
-        if (typeof localStorage !== 'undefined') {
-          const raw = localStorage.getItem(`hightime_school_comments_${row.id}`);
-          if (raw) localComments = JSON.parse(raw);
-        }
-      } catch {}
-      const comments = Array.isArray(row.comments) && row.comments.length > 0
-        ? row.comments
-        : localComments;
+      const cloudComments = cloudCommentsMap.get(row.id) || [];
+      const comments =
+        Array.isArray(row.comments) && row.comments.length > 0
+          ? row.comments
+          : cloudComments;
 
       return {
         id: row.id,
@@ -216,26 +229,48 @@ export async function deleteSchoolPostFromDb(postId: string): Promise<boolean> {
   return !error;
 }
 
-/** 우리학교 게시판 좋아요 및 댓글 수/목록 업데이트 */
+/** 우리학교 게시판 좋아요 및 댓글 수/목록 업데이트 (모든 기기 클라우드 동기화) */
 export async function updateSchoolPostInteractionInDb(
   postId: string,
   likes: number,
   commentCount: number,
   comments?: any[]
 ): Promise<boolean> {
-  if (comments) {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(`hightime_school_comments_${postId}`, JSON.stringify(comments));
-      }
-    } catch {}
-  }
   if (!supabase) return false;
+
+  // 1순위: school_posts.comments 컬럼 포함 업데이트 시도
+  const updatePayload: any = { likes, comment_count: commentCount };
+  if (comments) updatePayload.comments = comments;
+
   const { error } = await supabase
     .from('school_posts')
-    .update({ likes, comment_count: commentCount })
+    .update(updatePayload)
     .eq('id', postId);
-  return !error;
+
+  if (error) {
+    // school_posts.comments 컬럼이 아직 없는 경우 likes/comment_count만 업데이트
+    await supabase
+      .from('school_posts')
+      .update({ likes, comment_count: commentCount })
+      .eq('id', postId);
+  }
+
+  // 모든 기기에서 댓글 내용이 즉시 공유되도록 direct_questions 보조 저장소에도 함께 동기화
+  if (comments) {
+    await supabase.from('direct_questions').upsert({
+      id: `school_comments_${postId}`,
+      target_author: postId,
+      topic: '우리학교 댓글',
+      question: `댓글 ${comments.length}개`,
+      answer: JSON.stringify(comments),
+      status: '동기화',
+      created_at_label: '방금 전',
+      answered_at_label: '방금 전',
+      is_public: false,
+    } as any);
+  }
+
+  return true;
 }
 
 

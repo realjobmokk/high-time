@@ -429,7 +429,8 @@ export default function App() {
     );
     const poll = setInterval(() => {
       syncMajorRef.current();
-    }, 5000);
+      refreshSchoolPosts();
+    }, 3500);
     return () => {
       unsubscribePosts();
       clearInterval(poll);

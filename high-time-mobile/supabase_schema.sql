@@ -61,6 +61,9 @@ CREATE TABLE IF NOT EXISTS public.school_posts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- 기존 school_posts 테이블에 댓글(JSONB) 컬럼 추가
+ALTER TABLE public.school_posts ADD COLUMN IF NOT EXISTS comments JSONB NOT NULL DEFAULT '[]'::jsonb;
+
 -- 4. 1:1 질문 테이블 (direct_questions)
 CREATE TABLE IF NOT EXISTS public.direct_questions (
   id TEXT PRIMARY KEY,
@@ -138,5 +141,17 @@ END $$;
 DO $$
 BEGIN
   ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.major_posts;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.school_posts;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
