@@ -268,12 +268,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       <View style={styles.gridRow}>
         {/* 나이스 실시간 급식 위젯 (선택한 고등학교 기준) */}
         <View style={styles.widgetCard}>
-          <View style={styles.widgetHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="restaurant" size={14} color="#dc2626" />
-              <Text style={styles.widgetTitle}>오늘의 급식</Text>
+          <View style={[styles.widgetHeader, { gap: 4 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
+              <Ionicons name="restaurant" size={13} color="#dc2626" />
+              <Text style={[styles.widgetTitle, { fontSize: 12 }]} numberOfLines={1}>
+                오늘의 급식
+              </Text>
             </View>
-            <Text style={styles.calText}>{displayCalorie}</Text>
+            <Text style={styles.calText} numberOfLines={1}>
+              {displayCalorie}
+            </Text>
           </View>
 
           <View style={{ marginBottom: 6 }}>
@@ -694,9 +698,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   calText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
     color: '#dc2626',
+    flexShrink: 0,
   },
   shortText: {
     fontSize: 10,
