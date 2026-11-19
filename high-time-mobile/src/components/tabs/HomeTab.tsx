@@ -329,20 +329,17 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             <TouchableOpacity
               onPress={() => setIsTimetableModalOpen(true)}
               style={{
-                flexDirection: 'row',
+                width: 24,
+                height: 24,
                 alignItems: 'center',
-                gap: 2,
+                justifyContent: 'center',
                 backgroundColor: '#eef2ff',
-                paddingHorizontal: 6,
-                paddingVertical: 3,
-                borderRadius: 6,
+                borderRadius: 8,
                 flexShrink: 0,
               }}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
-              <Ionicons name="add" size={12} color="#4f46e5" />
-              <Text style={{ fontSize: 10, fontWeight: '800', color: '#4f46e5' }} numberOfLines={1}>
-                시간표 편집
-              </Text>
+              <Ionicons name="add" size={15} color="#4f46e5" />
             </TouchableOpacity>
           </View>
 
@@ -575,7 +572,8 @@ const styles = StyleSheet.create({
   },
   suneungMidRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+    marginTop: 2,
     marginBottom: 4,
   },
   suneungBadgeText: {

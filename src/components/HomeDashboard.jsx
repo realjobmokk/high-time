@@ -263,7 +263,7 @@ export default function HomeDashboard({
         <h2 className="text-base font-black tracking-tight leading-snug truncate">
           {currentUser?.name || '서정윤'} 학생, 오늘도 열공하세요! 🔥
         </h2>
-        <div className="flex justify-end my-0.5">
+        <div className="flex justify-start my-1">
           <span className="text-[15px] font-black text-white whitespace-nowrap">
             🎓 {(() => {
               const getSuneungDate = (y) => {
@@ -405,10 +405,10 @@ export default function HomeDashboard({
               </span>
               <button
                 onClick={() => setIsTimetableModalOpen(true)}
-                className="text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 whitespace-nowrap shrink-0"
+                title="시간표 편집"
+                className="w-6 h-6 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"
               >
-                <Plus className="w-2.5 h-2.5 shrink-0" />
-                <span>시간표 편집</span>
+                <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
 
