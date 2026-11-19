@@ -79,6 +79,7 @@ import {
   upsertChatMessageToDb,
   markChatRoomReadInDb,
   subscribeChatRoomsRealtime,
+  subscribePostsRealtime,
   buildUserChatKey,
   buildPairRoomId,
 } from './src/services/supabaseService';
@@ -316,23 +317,29 @@ export default function App() {
     activeChatRoomId,
   ]);
 
+  const refreshChatRoomsRef = React.useRef<() => void>(() => {});
+  React.useEffect(() => {
+    refreshChatRoomsRef.current = refreshChatRooms;
+  }, [refreshChatRooms]);
+
   React.useEffect(() => {
     if (!isLoggedIn) {
       setChatRooms([]);
       return;
     }
-    refreshChatRooms();
+    refreshChatRoomsRef.current();
+    // 로그인 중 WebSocket 채널이 탭/대화방 전환으로 끊기지 않도록 ref를 통해 1회만 구독
     const unsubscribe = subscribeChatRoomsRealtime(() => {
-      refreshChatRooms();
+      refreshChatRoomsRef.current();
     });
     const poll = setInterval(() => {
-      refreshChatRooms();
-    }, 2500);
+      refreshChatRoomsRef.current();
+    }, 2000);
     return () => {
       unsubscribe();
       clearInterval(poll);
     };
-  }, [isLoggedIn, refreshChatRooms]);
+  }, [isLoggedIn]);
 
   // Supabase (AWS PostgreSQL) 연결 시 DB 데이터 로드 + 내 글 댓글 실시간 알림 감지
   const syncMajorPostsAndCommentNotis = React.useCallback(async () => {
@@ -391,12 +398,22 @@ export default function App() {
     }
   }, [isLoggedIn, myChatKey, currentUser.name, currentUser.nickname, currentSchool.name]);
 
+  const syncMajorRef = React.useRef<() => void>(() => {});
+  React.useEffect(() => {
+    syncMajorRef.current = syncMajorPostsAndCommentNotis;
+  }, [syncMajorPostsAndCommentNotis]);
+
   React.useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
+    const refreshSchoolPosts = async () => {
+      const dbSchool = await fetchSchoolPostsFromDb(currentSchool.id);
+      if (dbSchool) setSchoolPosts(dbSchool);
+    };
+
     (async () => {
       const [, dbSchool, dbQuestions] = await Promise.all([
-        syncMajorPostsAndCommentNotis(),
+        syncMajorRef.current(),
         fetchSchoolPostsFromDb(currentSchool.id),
         fetchDirectQuestionsFromDb(),
       ]);
@@ -406,11 +423,18 @@ export default function App() {
     })();
 
     if (!isLoggedIn) return;
+    const unsubscribePosts = subscribePostsRealtime(
+      () => syncMajorRef.current(),
+      () => refreshSchoolPosts()
+    );
     const poll = setInterval(() => {
-      syncMajorPostsAndCommentNotis();
+      syncMajorRef.current();
     }, 5000);
-    return () => clearInterval(poll);
-  }, [currentSchool.id, isLoggedIn, syncMajorPostsAndCommentNotis]);
+    return () => {
+      unsubscribePosts();
+      clearInterval(poll);
+    };
+  }, [currentSchool.id, isLoggedIn]);
 
   // =========================================================
   //  4. 핸들러 함수들

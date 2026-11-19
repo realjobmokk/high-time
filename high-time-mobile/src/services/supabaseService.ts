@@ -591,6 +591,39 @@ export function subscribeChatRoomsRealtime(onUpdate: () => void): () => void {
   };
 }
 
+/**
+ * Supabase Realtime 구독 + 전공/우리학교 게시판 실시간 변경 감지
+ */
+export function subscribePostsRealtime(
+  onMajorUpdate: () => void,
+  onSchoolUpdate: () => void
+): () => void {
+  if (!supabase) return () => {};
+  const channel = supabase
+    .channel('hightime-posts-realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'major_posts' },
+      () => {
+        onMajorUpdate();
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'school_posts' },
+      () => {
+        onSchoolUpdate();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    try {
+      supabase?.removeChannel(channel);
+    } catch {}
+  };
+}
+
 // =============================================================================
 // 4. 학생 계정 및 인증 정보 (users) DB 저장 / 조회
 // =============================================================================
