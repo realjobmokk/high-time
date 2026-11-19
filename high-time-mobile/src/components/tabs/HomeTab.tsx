@@ -40,6 +40,7 @@ interface HomeTabProps {
   onOpenWriteModal: (targetBoard: 'major' | 'school') => void;
   onSelectPost: (post: MajorPost) => void;
   onOpenAskModal: () => void;
+  onOpenAdmissionConsult?: () => void;
 }
 
 export const HomeTab: React.FC<HomeTabProps> = ({
@@ -53,6 +54,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   onOpenWriteModal,
   onSelectPost,
   onOpenAskModal,
+  onOpenAdmissionConsult,
 }) => {
   const [mealInfo, setMealInfo] = useState<MealInfo | null>(null);
   const [isMealLoading, setIsMealLoading] = useState(false);
@@ -223,7 +225,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickButton}
-            onPress={() => onNavigateTab('counseling')}
+            onPress={() =>
+              onOpenAdmissionConsult ? onOpenAdmissionConsult() : onNavigateTab('counseling')
+            }
             activeOpacity={0.8}
           >
             <Ionicons name="school-outline" size={15} color="#ffffff" />

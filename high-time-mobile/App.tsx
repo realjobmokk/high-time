@@ -132,6 +132,7 @@ export default function App() {
   //  2. 탭 & UI 상태
   // =========================================================
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [counselingSubTab, setCounselingSubTab] = useState<'direct' | 'admission'>('direct');
   const [isChatRoomFullOpen, setIsChatRoomFullOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -1013,6 +1014,10 @@ export default function App() {
             onOpenWriteModal={handleOpenWriteModal}
             onSelectPost={handleSelectPost}
             onOpenAskModal={() => handleOpenAskModal('direct')}
+            onOpenAdmissionConsult={() => {
+              setCounselingSubTab('admission');
+              setActiveTab('counseling');
+            }}
           />
         );
       case 'major':
@@ -1046,6 +1051,7 @@ export default function App() {
           <CounselingTab
             directQuestions={directQuestions}
             admissionConsults={admissionConsults}
+            initialSubTab={counselingSubTab}
             onOpenAskDirect={() => handleOpenAskModal('direct')}
             onOpenAskAdmission={() => handleOpenAskModal('admission')}
             onAddQuestionComment={handleAddQuestionComment}

@@ -1,5 +1,5 @@
 // 4번 탭: 입시·1:1질문 화면
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -41,6 +41,7 @@ function parseQuestionComments(answer: string | null, fallbackTime?: string | nu
 interface CounselingTabProps {
   directQuestions: DirectQuestion[];
   admissionConsults: AdmissionConsult[];
+  initialSubTab?: SubTab;
   onOpenAskDirect: () => void;
   onOpenAskAdmission: () => void;
   onAddQuestionComment: (questionId: string, content: string) => void;
@@ -51,11 +52,16 @@ type SubTab = 'direct' | 'admission';
 export const CounselingTab: React.FC<CounselingTabProps> = ({
   directQuestions,
   admissionConsults,
+  initialSubTab = 'direct',
   onOpenAskDirect,
   onOpenAskAdmission,
   onAddQuestionComment,
 }) => {
-  const [subTab, setSubTab] = useState<SubTab>('direct');
+  const [subTab, setSubTab] = useState<SubTab>(initialSubTab);
+
+  useEffect(() => {
+    setSubTab(initialSubTab);
+  }, [initialSubTab]);
   const [selectedCategory, setSelectedCategory] = useState<string>('전체');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);

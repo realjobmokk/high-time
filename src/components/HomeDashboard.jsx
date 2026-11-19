@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  UtensilsCrossed, 
-  Clock, 
-  CalendarDays, 
-  Flame, 
+import {
+  UtensilsCrossed,
+  Clock,
+  CalendarDays,
+  Flame,
   ChevronLeft,
-  ChevronRight, 
-  School, 
-  HelpCircle, 
-  PenSquare, 
-  GraduationCap, 
+  ChevronRight,
+  School,
+  HelpCircle,
+  PenSquare,
+  GraduationCap,
   Heart,
   ShieldCheck,
   Plus,
@@ -106,7 +106,7 @@ export default function HomeDashboard({
     setCustomCalEvents(next);
     try {
       localStorage.setItem(calStorageKey, JSON.stringify(next));
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -185,12 +185,12 @@ export default function HomeDashboard({
   const bannerText = activeBlock
     ? `현재 ${currentTimeStr} · [${activeBlock.subject}] 수강 중 (${activeBlock.startHour}:00~${activeBlock.endHour}:00)`
     : nextBlock
-    ? `현재 ${currentTimeStr} · 다음 수업 [${nextBlock.subject}] (${nextBlock.startHour}:00 시작)`
-    : todayBlocks.length > 0
-    ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}) 등록된 수업 종료`
-    : customTimetable.length > 0
-    ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}요일) 수업 없음 (총 ${customTimetable.length}개 등록됨)`
-    : `현재 ${currentTimeStr} · [오늘 시간표]에서 직접 내 시간표를 추가해 보세요!`;
+      ? `현재 ${currentTimeStr} · 다음 수업 [${nextBlock.subject}] (${nextBlock.startHour}:00 시작)`
+      : todayBlocks.length > 0
+        ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}) 등록된 수업 종료`
+        : customTimetable.length > 0
+          ? `현재 ${currentTimeStr} · 오늘(${todayDayKey}요일) 수업 없음 (총 ${customTimetable.length}개 등록됨)`
+          : `현재 ${currentTimeStr} · [오늘 시간표]에서 직접 내 시간표를 추가해 보세요!`;
 
   const handleOpenAddForm = (day = '월', hour = 9) => {
     setEditingId(null);
@@ -296,14 +296,14 @@ export default function HomeDashboard({
             <span>글쓰기</span>
           </button>
           <button
-            onClick={() => onNavigateTab('counseling')}
+            onClick={() => onNavigateTab('counseling', 'direct')}
             className="flex items-center justify-center gap-1 py-1.5 bg-white/15 hover:bg-white/25 rounded-xl text-xs font-bold transition active:scale-95"
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>1:1 질문</span>
           </button>
           <button
-            onClick={() => onNavigateTab('counseling')}
+            onClick={() => onNavigateTab('counseling', 'admission')}
             className="flex items-center justify-center gap-1 py-1.5 bg-white/15 hover:bg-white/25 rounded-xl text-xs font-bold transition active:scale-95"
           >
             <GraduationCap className="w-3.5 h-3.5" />
@@ -419,17 +419,16 @@ export default function HomeDashboard({
             {todayBlocks.length > 0 && (
               <div
                 onClick={() => setIsTimetableModalOpen(true)}
-                className={`px-2 py-1.5 rounded-xl text-[10px] font-bold mb-2 border cursor-pointer ${
-                  activeBlock
-                    ? 'bg-red-50 text-red-700 border-red-200'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                }`}
+                className={`px-2 py-1.5 rounded-xl text-[10px] font-bold mb-2 border cursor-pointer ${activeBlock
+                  ? 'bg-red-50 text-red-700 border-red-200'
+                  : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  }`}
               >
                 {activeBlock
                   ? `🔴 [${activeBlock.subject}] 수강중 (${String(activeBlock.startHour).padStart(2, '0')}:00 ~ ${String(activeBlock.startHour).padStart(2, '0')}:50)`
                   : nextBlock
-                  ? `⏳ 다음 수업 [${nextBlock.subject}] (${String(nextBlock.startHour).padStart(2, '0')}:00 시작)`
-                  : `✅ 오늘(${todayDayKey}) 등록된 수업 종료`}
+                    ? `⏳ 다음 수업 [${nextBlock.subject}] (${String(nextBlock.startHour).padStart(2, '0')}:00 시작)`
+                    : `✅ 오늘(${todayDayKey}) 등록된 수업 종료`}
               </div>
             )}
 
@@ -449,13 +448,12 @@ export default function HomeDashboard({
                     <div
                       key={block.id}
                       onClick={() => setIsTimetableModalOpen(true)}
-                      className={`flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer ${
-                        isTakingNow
-                          ? 'bg-red-50 text-red-600 font-bold border border-red-200'
-                          : isNext
+                      className={`flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer ${isTakingNow
+                        ? 'bg-red-50 text-red-600 font-bold border border-red-200'
+                        : isNext
                           ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
                           : 'text-slate-600 bg-slate-50/70'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <span
@@ -472,9 +470,8 @@ export default function HomeDashboard({
                       </div>
                       {(isTakingNow || isNext) && (
                         <span
-                          className={`text-[9px] text-white px-1.5 py-0.5 rounded shrink-0 ml-1 ${
-                            isTakingNow ? 'bg-red-500' : 'bg-indigo-600'
-                          }`}
+                          className={`text-[9px] text-white px-1.5 py-0.5 rounded shrink-0 ml-1 ${isTakingNow ? 'bg-red-500' : 'bg-indigo-600'
+                            }`}
                         >
                           {isTakingNow ? '수강중' : '다음'}
                         </span>
@@ -696,9 +693,8 @@ export default function HomeDashboard({
                         key={c}
                         onClick={() => setColor(c)}
                         style={{ backgroundColor: c }}
-                        className={`w-7 h-7 rounded-full ${
-                          color === c ? 'ring-2 ring-white' : ''
-                        }`}
+                        className={`w-7 h-7 rounded-full ${color === c ? 'ring-2 ring-white' : ''
+                          }`}
                       />
                     ))}
                   </div>
@@ -929,24 +925,22 @@ export default function HomeDashboard({
                             setIsCalFormOpen(false);
                             setIsCalDaySheetOpen(true);
                           }}
-                          className={`h-12 rounded-xl flex flex-col items-center justify-start pt-1 px-0.5 transition ${
-                            isSelected
-                              ? 'bg-red-600 text-white'
-                              : isToday
+                          className={`h-12 rounded-xl flex flex-col items-center justify-start pt-1 px-0.5 transition ${isSelected
+                            ? 'bg-red-600 text-white'
+                            : isToday
                               ? 'bg-red-50 border border-red-300'
                               : 'hover:bg-slate-50'
-                          }`}
+                            }`}
                         >
                           <span
-                            className={`text-[11px] font-bold ${
-                              isSelected
-                                ? 'text-white'
-                                : colIdx === 0 || hasHoliday
+                            className={`text-[11px] font-bold ${isSelected
+                              ? 'text-white'
+                              : colIdx === 0 || hasHoliday
                                 ? 'text-red-600'
                                 : colIdx === 6
-                                ? 'text-blue-600'
-                                : 'text-slate-800'
-                            }`}
+                                  ? 'text-blue-600'
+                                  : 'text-slate-800'
+                              }`}
                           >
                             {day}
                           </span>
@@ -955,23 +949,20 @@ export default function HomeDashboard({
                               <div className="flex items-center gap-0.5 mt-0.5">
                                 {neisDayEvents.length > 0 && (
                                   <span
-                                    className={`w-1.5 h-1.5 rounded-full ${
-                                      isSelected ? 'bg-white' : hasHoliday ? 'bg-red-600' : 'bg-indigo-600'
-                                    }`}
+                                    className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : hasHoliday ? 'bg-red-600' : 'bg-indigo-600'
+                                      }`}
                                   />
                                 )}
                                 {customDayEvents.length > 0 && (
                                   <span
-                                    className={`w-1.5 h-1.5 rounded-full ${
-                                      isSelected ? 'bg-amber-300' : 'bg-emerald-600'
-                                    }`}
+                                    className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-amber-300' : 'bg-emerald-600'
+                                      }`}
                                   />
                                 )}
                               </div>
                               <span
-                                className={`text-[8px] truncate w-full text-center mt-0.5 ${
-                                  isSelected ? 'text-red-100' : 'text-slate-500'
-                                }`}
+                                className={`text-[8px] truncate w-full text-center mt-0.5 ${isSelected ? 'text-red-100' : 'text-slate-500'
+                                  }`}
                               >
                                 {firstTitle}
                               </span>
@@ -1152,11 +1143,10 @@ export default function HomeDashboard({
                                         key={c.label}
                                         type="button"
                                         onClick={() => setNewCalCategory(c.label)}
-                                        className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition ${
-                                          newCalCategory === c.label
-                                            ? `${c.badgeClass} border-current`
-                                            : 'bg-slate-50 text-slate-500 border-slate-200'
-                                        }`}
+                                        className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition ${newCalCategory === c.label
+                                          ? `${c.badgeClass} border-current`
+                                          : 'bg-slate-50 text-slate-500 border-slate-200'
+                                          }`}
                                       >
                                         {c.label}
                                       </button>
@@ -1172,11 +1162,10 @@ export default function HomeDashboard({
                                     <button
                                       type="button"
                                       onClick={() => setNewCalAllDay(!newCalAllDay)}
-                                      className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold ${
-                                        newCalAllDay
-                                          ? 'bg-red-100 text-red-600'
-                                          : 'bg-slate-100 text-slate-600'
-                                      }`}
+                                      className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold ${newCalAllDay
+                                        ? 'bg-red-100 text-red-600'
+                                        : 'bg-slate-100 text-slate-600'
+                                        }`}
                                     >
                                       {newCalAllDay ? '종일 ✓' : '시간 직접 입력'}
                                     </button>
@@ -1259,9 +1248,8 @@ export default function HomeDashboard({
                                         className="flex items-center gap-2.5 bg-slate-50 rounded-xl p-2.5 border border-slate-200 text-xs"
                                       >
                                         <span
-                                          className={`w-1 self-stretch rounded-full ${
-                                            ev.isHoliday ? 'bg-red-600' : 'bg-indigo-600'
-                                          }`}
+                                          className={`w-1 self-stretch rounded-full ${ev.isHoliday ? 'bg-red-600' : 'bg-indigo-600'
+                                            }`}
                                         />
                                         <div className="flex-1 min-w-0">
                                           <p className="font-bold text-slate-800">{ev.title}</p>
@@ -1270,11 +1258,10 @@ export default function HomeDashboard({
                                           </p>
                                         </div>
                                         <span
-                                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                                            ev.isHoliday
-                                              ? 'bg-red-100 text-red-600'
-                                              : 'bg-indigo-50 text-indigo-600'
-                                          }`}
+                                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${ev.isHoliday
+                                            ? 'bg-red-100 text-red-600'
+                                            : 'bg-indigo-50 text-indigo-600'
+                                            }`}
                                         >
                                           {ev.isHoliday ? '휴업/공휴' : '학교일정'}
                                         </span>

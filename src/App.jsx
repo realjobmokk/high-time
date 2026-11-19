@@ -66,6 +66,7 @@ export default function App() {
 
   // 4. 활성 탭 상태 ('home' | 'major' | 'school' | 'counseling' | 'chat')
   const [activeTab, setActiveTab] = useState('home');
+  const [counselingSubTab, setCounselingSubTab] = useState('direct');
 
   // 3. 전국 전공 게시판 글 목록 상태 (더미 데이터 제거된 새 스토리지 키 사용)
   const [majorPosts, setMajorPosts] = useState(() => {
@@ -669,7 +670,10 @@ export default function App() {
               majorPosts={majorPosts}
               schoolPosts={schoolPosts}
               onSelectPost={(post) => setSelectedPost(post)}
-              onNavigateTab={(tab) => setActiveTab(tab)}
+              onNavigateTab={(tab, sub) => {
+                if (tab === 'counseling' && sub) setCounselingSubTab(sub);
+                setActiveTab(tab);
+              }}
               onOpenWriteModal={() => setIsWriteModalOpen(true)}
             />
           )}
@@ -704,6 +708,7 @@ export default function App() {
           {activeTab === 'counseling' && (
             <CounselingAndQA
               counselingData={counselingData}
+              initialSubTab={counselingSubTab}
               onAddQuestion={handleAddQuestion}
               onAddQuestionComment={handleAddQuestionComment}
               onAddConsult={handleAddConsult}

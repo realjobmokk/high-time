@@ -16,13 +16,18 @@ import {
 
 export default function CounselingAndQA({
   counselingData,
+  initialSubTab = 'direct',
   onAddQuestion,
   onAddQuestionComment,
   onAddConsult,
   onNavigateToChat,
   externalWriteTrigger = 0
 }) {
-  const [subTab, setSubTab] = useState('direct'); // 'direct' (1:1 질문) or 'admission' (입시상담)
+  const [subTab, setSubTab] = useState(initialSubTab); // 'direct' (1:1 질문) or 'admission' (입시상담)
+
+  useEffect(() => {
+    setSubTab(initialSubTab);
+  }, [initialSubTab]);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [isConsultModalOpen, setIsConsultModalOpen] = useState(false);
   const [expandedQId, setExpandedQId] = useState(null);
