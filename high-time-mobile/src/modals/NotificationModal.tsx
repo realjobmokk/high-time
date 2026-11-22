@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationItem } from '../types';
 import { PhoneModal } from '../components/PhoneModal';
+import { COLORS } from '../theme/colors';
 
 interface NotificationModalProps {
   visible: boolean;
@@ -30,16 +31,16 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   const getIcon = (type: NotificationItem['type']) => {
     switch (type) {
       case 'chat':
-        return { name: 'chatbubble-ellipses', color: '#dc2626', bg: '#fee2e2' };
+        return { name: 'chatbubble-ellipses', color: COLORS.accent, bg: COLORS.accentSoft };
       case 'comment':
-        return { name: 'chatbubble-ellipses', color: '#2563eb', bg: '#dbeafe' };
+        return { name: 'chatbubble-ellipses', color: COLORS.ink, bg: COLORS.sageSurface };
       case 'question':
-        return { name: 'heart', color: '#e11d48', bg: '#ffe4e6' };
+        return { name: 'heart', color: COLORS.accent, bg: COLORS.accentSoft };
       case 'like':
-        return { name: 'thumbs-up', color: '#059669', bg: '#d1fae5' };
+        return { name: 'thumbs-up', color: COLORS.success, bg: COLORS.sageSurface };
       case 'notice':
       default:
-        return { name: 'shield-checkmark', color: '#dc2626', bg: '#fee2e2' };
+        return { name: 'shield-checkmark', color: COLORS.ink, bg: COLORS.sageCard };
     }
   };
 
@@ -50,7 +51,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           {/* 헤더 */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Ionicons name="notifications" size={18} color="#dc2626" />
+              <Ionicons name="notifications-outline" size={20} color={COLORS.ink} />
               <Text style={styles.headerTitle}>알림 센터</Text>
             </View>
             <View style={styles.headerRight}>
@@ -58,7 +59,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 <Text style={styles.readAllBtnText}>모두 읽음</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <Ionicons name="close" size={20} color="#64748b" />
+                <Ionicons name="close" size={20} color={COLORS.muted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -106,13 +107,13 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(34, 39, 34, 0.45)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: COLORS.bg,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     maxHeight: '80%',
     paddingBottom: 24,
   },
@@ -120,10 +121,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: COLORS.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -131,9 +132,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0f172a',
+    color: COLORS.ink,
+    letterSpacing: -0.34,
   },
   headerRight: {
     flexDirection: 'row',
@@ -141,47 +143,47 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   readAllBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     borderRadius: 6,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.sageButton,
   },
   readAllBtnText: {
     fontSize: 11,
-    color: '#475569',
+    color: COLORS.ink,
     fontWeight: '600',
   },
   closeBtn: {
     padding: 2,
   },
   list: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 10,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 44,
     gap: 8,
   },
   emptyText: {
     fontSize: 13,
-    color: '#94a3b8',
+    color: COLORS.muted,
   },
   itemCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    paddingVertical: 12,
+    gap: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: COLORS.border,
   },
   itemCardUnread: {
-    backgroundColor: '#fff5f5',
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
+    backgroundColor: COLORS.accentSoft,
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
     borderLeftWidth: 3,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: COLORS.accent,
   },
   iconWrap: {
     width: 32,

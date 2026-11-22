@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CurrentUser, School } from '../types';
 import { PhoneModal } from '../components/PhoneModal';
 import { fetchNeisMonthSchedule, MonthlyScheduleItem } from '../services/neisService';
+import { COLORS } from '../theme/colors';
 
 type EventCategory = '수행평가' | '시험' | '동아리' | '개인';
 
@@ -655,11 +656,11 @@ export const ScheduleCalendarModal: React.FC<ScheduleCalendarModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(34, 39, 34, 0.45)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.bg,
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     maxHeight: '88%',
@@ -669,10 +670,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: COLORS.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -681,45 +682,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.ink,
     flex: 1,
   },
   body: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 18,
   },
   monthBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   monthArrowBtn: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.sageCard,
     alignItems: 'center',
     justifyContent: 'center',
   },
   monthTitle: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#0f172a',
+    fontWeight: '800',
+    color: COLORS.ink,
   },
   weekRow: {
     flexDirection: 'row',
     paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: COLORS.border,
   },
   weekCell: {
     width: '14.285%',
     textAlign: 'center',
     fontSize: 11,
-    fontWeight: '700',
-    color: '#64748b',
+    fontWeight: '600',
+    color: COLORS.muted,
   },
   loadingBox: {
     paddingVertical: 40,
@@ -745,16 +746,16 @@ const styles = StyleSheet.create({
   },
   dayCellToday: {
     borderWidth: 1,
-    borderColor: '#fca5a5',
-    backgroundColor: '#fef2f2',
+    borderColor: COLORS.accent,
+    backgroundColor: COLORS.accentSoft,
   },
   dayCellSelected: {
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.ink,
   },
   dayNum: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1e293b',
+    color: COLORS.ink,
   },
   eventDotRow: {
     flexDirection: 'row',
@@ -768,22 +769,22 @@ const styles = StyleSheet.create({
   },
   dayEventMini: {
     fontSize: 8,
-    color: '#64748b',
+    color: COLORS.muted,
     marginTop: 1,
     textAlign: 'center',
   },
   detailBox: {
     marginTop: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: COLORS.sageCard,
     borderRadius: 14,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: COLORS.border,
   },
   detailTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#0f172a',
+    color: COLORS.ink,
     marginBottom: 8,
   },
   addRow: {
@@ -793,21 +794,21 @@ const styles = StyleSheet.create({
   },
   addInput: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: COLORS.border,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 7,
     fontSize: 12,
-    color: '#0f172a',
+    color: COLORS.ink,
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 11,
+    backgroundColor: COLORS.ink,
+    paddingHorizontal: 12,
     borderRadius: 10,
     justifyContent: 'center',
   },

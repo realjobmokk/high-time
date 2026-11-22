@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SchoolPost, School, CurrentUser } from '../../types';
 import { PhoneModal } from '../PhoneModal';
+import { COLORS } from '../../theme/colors';
 
 interface SchoolBoardTabProps {
   currentSchool: School;
@@ -38,15 +39,24 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
   onDeleteComment,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [isCommentAnon, setIsCommentAnon] = useState(true);
 
   const selectedPost = posts.find((p) => p.id === selectedPostId) || null;
+  const trimmedQuery = searchQuery.trim().toLowerCase();
 
-  const filteredPosts = posts.filter(
-    (post) => selectedCategory === '전체' || post.category === selectedCategory
-  );
+  const filteredPosts = posts.filter((post) => {
+    const matchCategory = selectedCategory === '전체' || post.category === selectedCategory;
+    if (!matchCategory) return false;
+    if (!trimmedQuery) return true;
+    return (
+      post.title.toLowerCase().includes(trimmedQuery) ||
+      post.content.toLowerCase().includes(trimmedQuery) ||
+      post.category.toLowerCase().includes(trimmedQuery)
+    );
+  });
 
   const handleDelete = (postId: string) => {
     onDeletePost(postId);
@@ -54,157 +64,159 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 소속 학교 인증 헤더 배너 */}
-      <View style={styles.schoolBanner}>
-        <View style={styles.schoolBannerLeft}>
-          <View style={styles.schoolIconWrap}>
-            <Ionicons name="school" size={20} color="#dc2626" />
-          </View>
-          <View>
-            <Text style={styles.schoolName}>{currentSchool.name}</Text>
-            <Text style={styles.schoolSub}>
-              <Ionicons name="shield-checkmark" size={10} color="#dc2626" /> 재학증명서 인증 완료 · 외부 열람 차단
-            </Text>
-          </View>
-        </View>
-        <View style={styles.lockBadge}>
-          <Ionicons name="lock-closed" size={12} color="#dc2626" />
-          <Text style={styles.lockBadgeText}>비공개</Text>
-        </View>
-      </View>
-
-      {/* 카테고리 필터 탭 (가로 5등분 균등 분할 바) */}
-      <View style={styles.categoryBar}>
-        {SCHOOL_CATEGORIES.map((cat, idx) => {
-          const isSelected = selectedCategory === cat;
-          const isLast = idx === SCHOOL_CATEGORIES.length - 1;
-          return (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.catCell,
-                !isLast && styles.catCellBorderRight,
-                isSelected && styles.catCellActive,
-              ]}
-              onPress={() => setSelectedCategory(cat)}
-              activeOpacity={0.75}
-            >
-              <Text
-                style={[styles.catCellText, isSelected && styles.catCellTextActive]}
-                numberOfLines={1}
-              >
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* 게시글 목록 */}
       <ScrollView
-        style={styles.postList}
-        contentContainerStyle={{ flexGrow: 1 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* 검색창 */}
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={18} color={COLORS.muted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="우리학교 게시글, 동아리, 정보 검색"
+            placeholderTextColor={COLORS.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
+              <Ionicons name="close-circle" size={18} color={COLORS.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* 카테고리 필터 칩 */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          {SCHOOL_CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.filterChip, isSelected && styles.filterChipActive]}
+                onPress={() => setSelectedCategory(cat)}
+                activeOpacity={0.75}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    isSelected && styles.filterChipTextActive,
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* 소속 학교 인증 배너 (세이지 카드) */}
+        <View style={styles.schoolBanner}>
+          <View style={styles.schoolBannerLeft}>
+            <Text style={styles.schoolName}>{currentSchool.name}</Text>
+            <Text style={styles.schoolSub}>
+              재학증명서 인증 완료 · 외부 열람 차단
+            </Text>
+          </View>
+          <View style={styles.lockBadge}>
+            <Ionicons name="lock-closed" size={12} color={COLORS.accent} />
+            <Text style={styles.lockBadgeText}>비공개</Text>
+          </View>
+        </View>
+
+        {/* 게시글 목록 */}
         {filteredPosts.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <Ionicons name="school-outline" size={40} color="#dc2626" />
-            <Text style={styles.emptyText}>이 카테고리에 게시글이 없습니다.</Text>
-            <TouchableOpacity
-              style={styles.emptyWriteBtn}
-              onPress={() =>
-                onOpenWriteModal(selectedCategory !== '전체' ? selectedCategory : '자유게시판')
-              }
-            >
-              <Text style={styles.emptyWriteBtnText}>첫 글 작성하기</Text>
-            </TouchableOpacity>
+            <Ionicons name="school-outline" size={38} color={COLORS.muted} />
+            <Text style={styles.emptyText}>
+              {trimmedQuery
+                ? `'${searchQuery}'에 대한 검색 결과가 없습니다.`
+                : '이 카테고리에 게시글이 없습니다.'}
+            </Text>
           </View>
         ) : (
-          filteredPosts.map((post) => (
-            <TouchableOpacity
-              key={post.id}
-              style={styles.postCard}
-              onPress={() => setSelectedPostId(post.id)}
-              activeOpacity={0.85}
-            >
-              {/* 카드 상단 */}
-              <View style={styles.cardTop}>
-                <View style={styles.catBadge}>
-                  <Text style={styles.catBadgeText}>{post.category}</Text>
-                </View>
-                <View style={styles.cardTopRight}>
-                  {(post.author === currentUser.name ||
-                    (Boolean(currentUser.nickname) && post.author === currentUser.nickname)) && (
-                      <>
-                        <View style={styles.mineBadge}>
-                          <Text style={styles.mineBadgeText}>내 글</Text>
-                        </View>
+          <View style={styles.postList}>
+            {filteredPosts.map((post) => {
+              const isMine =
+                post.author === currentUser.name ||
+                (Boolean(currentUser.nickname) && post.author === currentUser.nickname);
+              return (
+                <TouchableOpacity
+                  key={post.id}
+                  style={styles.postCard}
+                  onPress={() => setSelectedPostId(post.id)}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.cardTop}>
+                    <Text style={styles.catBadgeText}>{post.category}</Text>
+                    <View style={styles.cardTopRight}>
+                      <Text style={styles.postTime}>{post.createdAt}</Text>
+                      {isMine && (
                         <TouchableOpacity
                           onPress={() => handleDelete(post.id)}
-                          style={styles.deleteBtn}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                          <Ionicons name="trash-outline" size={14} color="#dc2626" />
+                          <Ionicons name="trash-outline" size={14} color={COLORS.accent} />
                         </TouchableOpacity>
-                      </>
-                    )}
-                </View>
-              </View>
-
-              <Text style={styles.cardTitle} numberOfLines={2}>
-                {post.title}
-              </Text>
-              <Text style={styles.cardSnippet} numberOfLines={2}>
-                {post.content}
-              </Text>
-
-              <View style={styles.cardFooter}>
-                <Text style={styles.footerInfo}>
-                  {post.isAnonymous ? '익명' : post.author} · {post.grade} · {post.createdAt}
-                </Text>
-                <View style={styles.interactionRow}>
-                  <TouchableOpacity
-                    style={styles.interactionItem}
-                    onPress={() => onToggleLike(post.id)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons
-                      name={post.isLikedByUser ? 'heart' : 'heart-outline'}
-                      size={14}
-                      color={post.isLikedByUser ? '#dc2626' : '#94a3b8'}
-                    />
-                    <Text
-                      style={[
-                        styles.interactionText,
-                        post.isLikedByUser && { color: '#dc2626', fontWeight: '800' },
-                      ]}
-                    >
-                      {post.likes}
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={styles.interactionItem}>
-                    <Ionicons name="chatbubble-outline" size={13} color="#94a3b8" />
-                    <Text style={styles.interactionText}>
-                      {post.comments ? post.comments.length : post.commentCount}
-                    </Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
 
-      {/* 플로팅 글쓰기 버튼 */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() =>
-          onOpenWriteModal(selectedCategory !== '전체' ? selectedCategory : '자유게시판')
-        }
-        activeOpacity={0.85}
-      >
-        <Ionicons name="add" size={22} color="#ffffff" />
-      </TouchableOpacity>
+                  <Text style={styles.cardTitle} numberOfLines={2}>
+                    {post.title}
+                  </Text>
+                  <Text style={styles.cardSnippet} numberOfLines={2}>
+                    {post.content}
+                  </Text>
+
+                  <View style={styles.cardFooter}>
+                    <Text style={styles.footerInfo}>
+                      {post.isAnonymous ? '익명' : post.author} · {post.grade}
+                    </Text>
+                    <View style={styles.interactionRow}>
+                      <TouchableOpacity
+                        style={styles.interactionItem}
+                        onPress={() => onToggleLike(post.id)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text
+                          style={[
+                            styles.interactionText,
+                            post.isLikedByUser && { color: COLORS.accent, fontWeight: '700' },
+                          ]}
+                        >
+                          좋아요 {post.likes}
+                        </Text>
+                      </TouchableOpacity>
+                      <Text style={styles.footerDot}>·</Text>
+                      <Text style={styles.interactionText}>
+                        댓글 {post.comments ? post.comments.length : post.commentCount}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {/* 하단 글쓰기 버튼 */}
+        <TouchableOpacity
+          style={styles.writeBtn}
+          onPress={() =>
+            onOpenWriteModal(selectedCategory !== '전체' ? selectedCategory : '자유게시판')
+          }
+          activeOpacity={0.85}
+        >
+          <Ionicons name="pencil" size={16} color="#ffffff" />
+          <Text style={styles.writeBtnText}>글쓰기</Text>
+        </TouchableOpacity>
+      </ScrollView>
 
       {/* 우리학교 게시글 상세 & 좋아요/댓글 모달 */}
       <PhoneModal visible={Boolean(selectedPost)} animationType="slide" transparent>
@@ -359,213 +371,196 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: COLORS.bg,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: 28,
+    gap: 18,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.searchBg,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 9,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.ink,
+    paddingVertical: 2,
+  },
+  chipRow: {
+    gap: 7,
+    alignItems: 'center',
+  },
+  filterChip: {
+    backgroundColor: COLORS.sageCard,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: COLORS.ink,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.muted,
+  },
+  filterChipTextActive: {
+    color: '#ffffff',
+    fontWeight: '600',
   },
   schoolBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  schoolBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: COLORS.sageSurface,
+    borderRadius: 14,
+    padding: 16,
     gap: 10,
   },
-  schoolIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#fef2f2',
-    alignItems: 'center',
-    justifyContent: 'center',
+  schoolBannerLeft: {
+    flex: 1,
+    gap: 3,
   },
   schoolName: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.ink,
+    letterSpacing: -0.32,
   },
   schoolSub: {
-    fontSize: 10,
-    color: '#dc2626',
-    marginTop: 2,
+    fontSize: 11,
+    fontWeight: '500',
+    color: COLORS.success,
   },
   lockBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#fecaca',
+    backgroundColor: COLORS.accentSoft,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 6,
   },
   lockBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  // 가로 5등분 고정 카테고리 탭 바
-  categoryBar: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#cbd5e1',
-    height: 42,
-  },
-  catCell: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  catCellBorderRight: {
-    borderRightWidth: 1,
-    borderRightColor: '#e2e8f0',
-  },
-  catCellActive: {
-    backgroundColor: '#fef2f2',
-    borderBottomColor: '#dc2626',
-  },
-  catCellText: {
-    fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
-  },
-  catCellTextActive: {
-    color: '#dc2626',
-    fontWeight: '800',
+    color: COLORS.accent,
   },
   postList: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 14,
-    paddingTop: 10,
+    width: '100%',
   },
   emptyWrap: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    paddingVertical: 48,
     gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
   emptyText: {
     fontSize: 13,
-    color: '#94a3b8',
-  },
-  emptyWriteBtn: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  emptyWriteBtnText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 13,
+    color: COLORS.muted,
   },
   postCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 18,
+    paddingBottom: 20,
+    gap: 8,
   },
   cardTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    gap: 8,
   },
   catBadge: {
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
+    backgroundColor: COLORS.accentSoft,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   catBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#dc2626',
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.accent,
   },
   cardTopRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  mineBadge: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-  },
-  mineBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#dc2626',
-  },
-  deleteBtn: {
-    padding: 2,
+  postTime: {
+    fontSize: 11,
+    color: COLORS.muted,
   },
   cardTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
-    lineHeight: 20,
-    marginBottom: 4,
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.ink,
+    lineHeight: 24,
+    letterSpacing: -0.34,
   },
   cardSnippet: {
-    fontSize: 12,
-    color: '#475569',
-    lineHeight: 17,
-    marginBottom: 10,
+    fontSize: 13,
+    color: COLORS.muted,
+    lineHeight: 19,
+    letterSpacing: -0.26,
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 2,
   },
   footerInfo: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 11,
+    color: COLORS.muted,
   },
   interactionRow: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
+    gap: 6,
   },
   interactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
   },
   interactionText: {
     fontSize: 11,
-    color: '#94a3b8',
-    fontWeight: '600',
+    color: COLORS.muted,
   },
-  fab: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#dc2626',
+  footerDot: {
+    fontSize: 11,
+    color: COLORS.muted,
+  },
+  writeBtn: {
+    backgroundColor: COLORS.ink,
+    borderRadius: 10,
+    minHeight: 46,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    gap: 8,
+    marginTop: 4,
+  },
+  writeBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   detailOverlay: {
     flex: 1,

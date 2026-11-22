@@ -1,58 +1,85 @@
-// 상단 모바일 헤더 컴포넌트
+// 상단 모바일 헤더 컴포넌트 (Figma v2.0 에디토리얼 디자인 적용)
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CurrentUser, School } from '../types';
+import { TabType } from './BottomNav';
+import { COLORS } from '../theme/colors';
 
 interface HeaderProps {
+  activeTab?: TabType;
   currentUser: CurrentUser;
   currentSchool: School;
   unreadNotiCount: number;
   onPressSchoolBadge: () => void;
   onPressNotification: () => void;
+  onPressSettings?: () => void;
 }
 
+const TAB_TITLES: Record<TabType, string> = {
+  home: 'HighTime',
+  board: '게시판',
+  chat: '채팅',
+  profile: '내 정보',
+};
+
 export const Header: React.FC<HeaderProps> = ({
-  currentUser,
+  activeTab = 'home',
   currentSchool,
   unreadNotiCount,
   onPressSchoolBadge,
   onPressNotification,
+  onPressSettings,
 }) => {
+  const isHome = activeTab === 'home';
+  const isProfile = activeTab === 'profile';
+
   return (
     <View style={styles.header}>
-      {/* 로고 영역 */}
-      <View style={styles.headerLeft}>
-        <View style={styles.logoBadge}>
-          <Ionicons name="school" size={13} color="#ffffff" />
-          <Text style={styles.logoBadgeText}>HT</Text>
-        </View>
-        <View>
-          <View style={styles.logoRow}>
-            <Text style={styles.logoTitle}>HighTime</Text>
-            <View style={styles.highSchoolBadge}>
-              <Text style={styles.highSchoolBadgeText}>고교타임</Text>
-            </View>
-          </View>
-          <Text style={styles.logoSub}>전국 고교 커뮤니티 & 학교생활</Text>
-        </View>
-      </View>
+      {/* 좌측 화면 제목 */}
+      <Text style={[styles.title, isHome && styles.homeTitle]}>
+        {TAB_TITLES[activeTab]}
+      </Text>
 
-      {/* 우측 알림 버튼 */}
+      {/* 우측 학교 선택(홈 전용) 및 알림/설정 아이콘 */}
       <View style={styles.headerRight}>
-        {/* 알림 버튼 */}
-        <TouchableOpacity
-          style={styles.notiButton}
-          onPress={onPressNotification}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="notifications-outline" size={20} color="#334155" />
-          {unreadNotiCount > 0 && (
-            <View style={styles.notiBadge}>
-              <Text style={styles.notiBadgeText}>{unreadNotiCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        {isHome && (
+          <TouchableOpacity
+            style={styles.schoolButton}
+            onPress={onPressSchoolBadge}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.schoolName} numberOfLines={1}>
+              {currentSchool.name}
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={COLORS.ink} />
+          </TouchableOpacity>
+        )}
+
+        {isProfile ? (
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onPressSettings || onPressSchoolBadge}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="settings-outline" size={22} color={COLORS.ink} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onPressNotification}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="notifications-outline" size={22} color={COLORS.ink} />
+            {unreadNotiCount > 0 && (
+              <View style={styles.notiBadge}>
+                <Text style={styles.notiBadgeText}>
+                  {unreadNotiCount > 99 ? '99+' : unreadNotiCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -63,102 +90,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    height: 60,
+    paddingHorizontal: 22,
+    backgroundColor: COLORS.bg,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: '#dc2626',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 0,
-  },
-  logoBadgeText: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 10,
-    lineHeight: 11,
-    letterSpacing: -0.3,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  logoTitle: {
-    fontSize: 16,
+  title: {
+    fontSize: 25,
     fontWeight: '800',
-    color: '#0f172a',
+    color: COLORS.ink,
     letterSpacing: -0.5,
   },
-  highSchoolBadge: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-  },
-  highSchoolBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  logoSub: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: -1,
+  homeTitle: {
+    fontSize: 24,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  schoolBadge: {
+  schoolButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 14,
-    maxWidth: 120,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
-  schoolBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#991b1b',
+  schoolName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.ink,
   },
-  notiButton: {
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
-    padding: 6,
-    borderRadius: 16,
   },
   notiBadge: {
     position: 'absolute',
     top: 4,
-    right: 4,
-    backgroundColor: '#dc2626',
-    borderRadius: 8,
-    minWidth: 15,
-    height: 15,
+    right: 3,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   notiBadgeText: {
     color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
   },
 });

@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { DirectQuestion, AdmissionConsult } from '../../types';
 import { PhoneModal } from '../PhoneModal';
+import { COLORS } from '../../theme/colors';
 
 interface QuestionCommentItem {
   id: string;
@@ -77,63 +78,53 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 상단 배너 */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>🎓 입시 질문 게시판 & 맞춤 입시 컨설팅</Text>
-        <Text style={styles.bannerSub}>
-          전국 고등학생들과 수시·정시·생기부 입시 질문을 나누고 전문 컨설팅을 받아보세요.
-        </Text>
-      </View>
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 서브 탭 전환 (세그먼트 필) */}
+        <View style={styles.subTabBar}>
+          <TouchableOpacity
+            style={[styles.subTab, subTab === 'direct' && styles.subTabActive]}
+            onPress={() => setSubTab('direct')}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.subTabText, subTab === 'direct' && styles.subTabTextActive]}>
+              입시 질문 게시판
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.subTab, subTab === 'admission' && styles.subTabActive]}
+            onPress={() => setSubTab('admission')}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.subTabText, subTab === 'admission' && styles.subTabTextActive]}>
+              전문 입시 컨설팅
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* 서브 탭 전환 */}
-      <View style={styles.subTabBar}>
-        <TouchableOpacity
-          style={[styles.subTab, subTab === 'direct' && styles.subTabActive]}
-          onPress={() => setSubTab('direct')}
-        >
-          <Ionicons
-            name="help-buoy-outline"
-            size={14}
-            color={subTab === 'direct' ? '#dc2626' : '#64748b'}
-          />
-          <Text style={[styles.subTabText, subTab === 'direct' && styles.subTabTextActive]}>
-            입시 질문 게시판
+        {/* 상단 에디토리얼 안내 카드 */}
+        <View style={styles.banner}>
+          <Text style={styles.bannerTitle}>
+            {subTab === 'direct'
+              ? '입시 고민, 함께 풀어요.'
+              : '맞춤형 전문 입시 컨설팅'}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.subTab, subTab === 'admission' && styles.subTabActive]}
-          onPress={() => setSubTab('admission')}
-        >
-          <Ionicons
-            name="school-outline"
-            size={14}
-            color={subTab === 'admission' ? '#dc2626' : '#64748b'}
-          />
-          <Text style={[styles.subTabText, subTab === 'admission' && styles.subTabTextActive]}>
-            전문 입시 컨설팅
+          <Text style={styles.bannerSub}>
+            {subTab === 'direct'
+              ? '수시·정시·생기부 질문을 전국 친구·선배들과 나눠보세요.'
+              : '목표 대학과 성적을 입력하면 전문 컨설턴트의 조언을 받을 수 있어요.'}
           </Text>
-        </TouchableOpacity>
-      </View>
+        </View>
 
-      {/* 입시 질문 게시판 카테고리 필터 바 (한 줄 가로 드래그/스크롤) */}
-      {subTab === 'direct' && (
-        <View
-          style={{
-            backgroundColor: '#ffffff',
-            borderBottomWidth: 1,
-            borderBottomColor: '#e2e8f0',
-          }}
-        >
+        {/* 입시 질문 게시판 카테고리 필터 칩 */}
+        {subTab === 'direct' && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-              gap: 6,
-            }}
+            contentContainerStyle={styles.chipRow}
           >
             {ADMISSION_Q_CATEGORIES.map((cat) => {
               const active = selectedCategory === cat;
@@ -141,19 +132,14 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
                 <TouchableOpacity
                   key={cat}
                   onPress={() => setSelectedCategory(cat)}
-                  style={{
-                    paddingHorizontal: 11,
-                    paddingVertical: 5,
-                    borderRadius: 99,
-                    backgroundColor: active ? '#dc2626' : '#f1f5f9',
-                  }}
+                  style={[styles.filterChip, active && styles.filterChipActive]}
+                  activeOpacity={0.75}
                 >
                   <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: '700',
-                      color: active ? '#ffffff' : '#475569',
-                    }}
+                    style={[
+                      styles.filterChipText,
+                      active && styles.filterChipTextActive,
+                    ]}
                   >
                     {cat}
                   </Text>
@@ -161,10 +147,7 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
               );
             })}
           </ScrollView>
-        </View>
-      )}
-
-      <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
+        )}
         {/* 입시 질문 게시판 목록 */}
         {subTab === 'direct' && (
           <View style={styles.list}>
@@ -312,16 +295,18 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
             )}
           </View>
         )}
+        {/* 하단 글쓰기 / 신청하기 CTA 버튼 */}
+        <TouchableOpacity
+          style={styles.ctaBtn}
+          onPress={subTab === 'direct' ? onOpenAskDirect : onOpenAskAdmission}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="pencil" size={16} color="#ffffff" />
+          <Text style={styles.ctaBtnText}>
+            {subTab === 'direct' ? '입시 질문 올리기' : '입시 컨설팅 신청하기'}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
-
-      {/* 오른쪽 밑 플로팅 + 글쓰기/상담신청 버튼 */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={subTab === 'direct' ? onOpenAskDirect : onOpenAskAdmission}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="add" size={24} color="#ffffff" />
-      </TouchableOpacity>
 
       {/* 입시질문 상세 & 댓글 모달 (전공게시판 PostDetailModal 스타일) */}
       <PhoneModal visible={Boolean(selectedQuestion)} animationType="slide" transparent>
@@ -446,98 +431,109 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#dc2626',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  banner: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  bannerTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  bannerSub: {
-    fontSize: 12,
-    color: '#fecaca',
-    lineHeight: 17,
-  },
-  subTabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  subTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 11,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  subTabActive: {
-    borderBottomColor: '#dc2626',
-  },
-  subTabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  subTabTextActive: {
-    color: '#dc2626',
-    fontWeight: '800',
+    backgroundColor: COLORS.bg,
   },
   scrollArea: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingTop: 12,
   },
-  newBtn: {
-    backgroundColor: '#dc2626',
+  scrollContent: {
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: 28,
+    gap: 18,
+  },
+  subTabBar: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.sageCard,
+    borderRadius: 10,
+    padding: 4,
+    gap: 4,
+  },
+  subTab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
+  subTabActive: {
+    backgroundColor: COLORS.surface,
+  },
+  subTabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.muted,
+  },
+  subTabTextActive: {
+    color: COLORS.ink,
+    fontWeight: '700',
+  },
+  banner: {
+    backgroundColor: COLORS.sageSurface,
+    borderRadius: 14,
+    padding: 18,
+    gap: 5,
+  },
+  bannerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.ink,
+    letterSpacing: -0.34,
+  },
+  bannerSub: {
+    fontSize: 12,
+    color: COLORS.muted,
+    lineHeight: 18,
+    letterSpacing: -0.24,
+  },
+  chipRow: {
+    gap: 7,
+    alignItems: 'center',
+  },
+  filterChip: {
+    backgroundColor: COLORS.sageCard,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: COLORS.ink,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.muted,
+  },
+  filterChipTextActive: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  list: {
+    width: '100%',
+  },
+  qaCard: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 18,
+    paddingBottom: 20,
+    gap: 8,
+  },
+  ctaBtn: {
+    backgroundColor: COLORS.ink,
+    borderRadius: 10,
+    minHeight: 46,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 13,
-    borderRadius: 12,
-    marginBottom: 16,
+    marginTop: 4,
   },
-  newBtnText: {
-    color: '#ffffff',
+  ctaBtnText: {
     fontSize: 14,
     fontWeight: '700',
-  },
-  list: {
-    gap: 10,
-    paddingBottom: 30,
-  },
-  qaCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    color: '#ffffff',
   },
   qaTop: {
     flexDirection: 'row',
@@ -598,16 +594,17 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   qaTopic: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 6,
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.ink,
+    letterSpacing: -0.34,
+    marginBottom: 4,
   },
   qaQuestion: {
-    fontSize: 12,
-    color: '#475569',
-    lineHeight: 17,
-    marginBottom: 8,
+    fontSize: 13,
+    color: COLORS.muted,
+    lineHeight: 19,
+    marginBottom: 6,
   },
   answerBox: {
     backgroundColor: '#f0fdf4',

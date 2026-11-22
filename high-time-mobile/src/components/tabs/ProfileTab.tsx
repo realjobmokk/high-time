@@ -1,10 +1,4 @@
-// =============================================================================
-// 👤 HighTime (고교타임) - 내 프로필(Profile) 조회 및 수정 탭 컴포넌트
-// - 로그인된 학생증 카드 표시 (학교 · 학년 · 실명 · 소셜 계정 · PASS/재학PDF 인증 상태)
-// - 프로필 수정: 활동 닉네임, 학년(고1/고2/고3), 희망 진로/전공, 한줄 자기소개 수정 후 DB 반영
-// - 소속 학교/재학증명서 재인증 및 로그아웃(로그인 화면으로 복귀) 지원
-// =============================================================================
-
+// 4번 탭: 내 정보(Profile) 조회 및 수정 탭 컴포넌트 (Figma v2.0 에디토리얼 디자인 적용)
 import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
@@ -15,18 +9,20 @@ import {
   TextInput,
   Alert,
   Image,
-  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { CurrentUser, School } from '../../types';
 import { MAJOR_CATEGORIES } from '../../data/mockData';
+import { COLORS } from '../../theme/colors';
 
 interface ProfileTabProps {
   currentUser: CurrentUser;
   currentSchool: School;
   myMajorPostCount: number;
   mySchoolPostCount: number;
+  myCommentCount?: number;
+  chatRoomCount?: number;
   onUpdateProfile: (updated: {
     name: string;
     nickname: string;
@@ -37,6 +33,7 @@ interface ProfileTabProps {
     profileImage?: string;
   }) => void;
   onOpenReAuthModal: () => void;
+  onOpenAdmissionConsult?: () => void;
   onLogout: () => void;
 }
 
@@ -45,8 +42,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   currentSchool,
   myMajorPostCount,
   mySchoolPostCount,
+  myCommentCount = 0,
+  chatRoomCount = 0,
   onUpdateProfile,
   onOpenReAuthModal,
+  onOpenAdmissionConsult,
   onLogout,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -65,7 +65,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [savedNotice, setSavedNotice] = useState(false);
   const [galleryPermissionError, setGalleryPermissionError] = useState<string | null>(null);
 
-  // 상위에서 로그인 정보가 바뀌면 입력 폼도 동기화
   useEffect(() => {
     setName(currentUser.name);
     setNickname(currentUser.nickname || `${currentUser.name}학생`);
@@ -74,6 +73,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     setBio(currentUser.bio || `${currentSchool.name} 재학 중인 ${currentUser.grade} 학생입니다.`);
     setPhone(currentUser.phone || '010-3849-2910');
   }, [currentUser, currentSchool.name]);
+
+  const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   const handleSaveProfile = () => {
     if (!name.trim() || !nickname.trim()) {
@@ -95,20 +96,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     setTimeout(() => setSavedNotice(false), 2500);
   };
 
-  const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  const editSectionYRef = useRef<number>(0);
-
-  const handleOpenEditFromCard = () => {
-    setIsEditing(true);
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({
-        y: Math.max(0, editSectionYRef.current - 12),
-        animated: true,
-      });
-    }, 80);
-  };
-
-  // 아이폰/안드로이드 OS 시스템 갤러리 접근 권한 요청 후 바로 사진 선택 실행
   const handleRequestGalleryAccess = async () => {
     setGalleryPermissionError(null);
     try {
@@ -151,418 +138,230 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     }
   };
 
-  // 기본 프로필 아바타로 초기화
-  const handleResetProfileImage = () => {
-    onUpdateProfile({
-      name: name.trim() || currentUser.name,
-      nickname: nickname.trim() || currentUser.nickname || `${currentUser.name}학생`,
-      grade,
-      targetMajor,
-      bio: bio.trim(),
-      phone: phone.trim(),
-      profileImage: '',
-    });
-  };
-
-  const socialLabel =
-    currentUser.socialProvider === 'naver'
-      ? '네이버'
-      : currentUser.socialProvider === 'google'
-      ? 'Google'
-      : currentUser.socialProvider === 'apple'
-      ? 'Apple'
-      : '카카오톡';
+  const totalMyPosts = myMajorPostCount + mySchoolPostCount;
 
   return (
     <ScrollView
       ref={scrollViewRef}
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* 1. 디지털 모바일 학생증 카드 */}
-      <View style={styles.studentIdCard}>
-        <View style={styles.idCardTopRow}>
-          <View style={styles.idCardTitleWrap}>
-            <Ionicons name="shield-checkmark" size={14} color="#34d399" />
-            <Text style={styles.idCardTitleText}>HIGHTIME STUDENT ID</Text>
-          </View>
-          <View style={styles.verifiedBadge}>
-            <Text style={styles.verifiedBadgeText}>PASS + 재학PDF 인증완료</Text>
-          </View>
-        </View>
-
-        <View style={styles.profileRow}>
+      {/* 1. 학생 프로필 영역 */}
+      <View style={styles.profileSection}>
+        <View style={styles.nameRow}>
           <TouchableOpacity
-            style={{ position: 'relative' }}
+            style={styles.nameWithAvatar}
             onPress={handleRequestGalleryAccess}
             activeOpacity={0.8}
           >
             {currentUser.profileImage ? (
               <Image
                 source={{ uri: currentUser.profileImage }}
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 26,
-                  borderWidth: 2,
-                  borderColor: '#f8fafc',
-                }}
+                style={styles.avatarImage}
               />
-            ) : (
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarInitial}>{currentUser.name.slice(0, 1)}</Text>
-              </View>
-            )}
-            <View
-              style={{
-                position: 'absolute',
-                right: -2,
-                bottom: -2,
-                width: 20,
-                height: 20,
-                borderRadius: 10,
-                backgroundColor: '#334155',
-                borderWidth: 1.5,
-                borderColor: '#0f172a',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name="camera" size={11} color="#ffffff" />
-            </View>
+            ) : null}
+            <Text style={styles.userName} numberOfLines={1}>
+              {currentUser.name || currentUser.nickname || '학생'}
+            </Text>
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <View style={styles.nameRow}>
-              <Text style={styles.studentName}>{currentUser.name}</Text>
-              <Text style={styles.nicknameBadge}>
-                @{currentUser.nickname || `${currentUser.name}학생`}
-              </Text>
-            </View>
-            <Text style={styles.schoolInfoText}>
-              {currentSchool.name} ({currentSchool.region}) · {currentUser.grade}
-            </Text>
-            <Text style={styles.majorInfoText}>
-              희망 진로: {currentUser.targetMajor || '컴퓨터·IT·인공지능'}
-            </Text>
+          <View style={styles.gradeBadge}>
+            <Text style={styles.gradeBadgeText}>{currentUser.grade || '고2'}</Text>
           </View>
         </View>
 
-        <Text style={styles.bioText}>
-          "{currentUser.bio || `${currentSchool.name} 재학 중인 ${currentUser.grade} 학생입니다.`}"
-        </Text>
+        <Text style={styles.schoolText}>{currentSchool.name}</Text>
 
-        {/* 인증 상세 내역 */}
-        <View style={styles.certMetaBox}>
-          <View style={styles.certMetaRow}>
-            <Text style={styles.certMetaLabel}>연동 소셜 계정</Text>
-            <Text style={styles.certMetaValue}>
-              {socialLabel} ({currentUser.email || 'seojeongyun@kakao.com'})
-            </Text>
-          </View>
-          <View style={styles.certMetaRow}>
-            <Text style={styles.certMetaLabel}>PASS 본인인증</Text>
-            <Text style={styles.certMetaSuccess}>
-              실명 일치 완료 ({currentUser.telecom || 'SKT'} · {currentUser.birthDate || '090514'})
-            </Text>
-          </View>
-          <View style={styles.certMetaRow}>
-            <Text style={styles.certMetaLabel}>재학증명서 PDF</Text>
-            <Text style={styles.certMetaSuccess} numberOfLines={1}>
-              {currentUser.certFileName || `2026학년도_재학증명서_${currentUser.name}.pdf`}
-            </Text>
-          </View>
-        </View>
-
-        {/* 검은 학생증 카드 내 프로필 수정 및 사진 변경 버튼 */}
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+        {/* 관심 있는 진로 카드 */}
+        <View style={styles.majorCard}>
+          <Text style={styles.majorCardLabel}>관심 있는 진로</Text>
+          <Text style={styles.majorCardTitle}>
+            {currentUser.targetMajor || '컴퓨터·IT·인공지능'}
+          </Text>
           <TouchableOpacity
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              backgroundColor: '#1e293b',
-              borderWidth: 1,
-              borderColor: '#334155',
-              borderRadius: 12,
-              paddingVertical: 10,
-            }}
-            onPress={handleRequestGalleryAccess}
-            activeOpacity={0.85}
+            style={styles.consultLinkBtn}
+            onPress={onOpenAdmissionConsult}
+            activeOpacity={0.75}
           >
-            <Ionicons name="images-outline" size={15} color="#f8fafc" />
-            <Text style={{ color: '#f8fafc', fontSize: 12, fontWeight: '800' }}>
-              사진 변경
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              backgroundColor: '#1e293b',
-              borderWidth: 1,
-              borderColor: '#334155',
-              borderRadius: 12,
-              paddingVertical: 10,
-            }}
-            onPress={handleOpenEditFromCard}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="create-outline" size={15} color="#f8fafc" />
-            <Text style={{ color: '#f8fafc', fontSize: 12, fontWeight: '800' }}>
-              프로필 수정
-            </Text>
+            <Text style={styles.consultLinkText}>입시 컨설팅 알아보기  →</Text>
           </TouchableOpacity>
         </View>
 
-        {currentUser.profileImage ? (
-          <TouchableOpacity
-            style={{ marginTop: 8, alignSelf: 'flex-end' }}
-            onPress={handleResetProfileImage}
-          >
-            <Text style={{ fontSize: 11, color: '#94a3b8', fontWeight: '700' }}>
-              기본 프로필 이미지로 되돌리기
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-
-        {galleryPermissionError && (
-          <View
-            style={{
-              marginTop: 10,
-              backgroundColor: 'rgba(239, 68, 68, 0.16)',
-              borderWidth: 1,
-              borderColor: 'rgba(248, 113, 113, 0.45)',
-              borderRadius: 10,
-              padding: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <Ionicons name="alert-circle" size={15} color="#fca5a5" />
-            <Text style={{ color: '#fecaca', fontSize: 11, fontWeight: '700', flex: 1 }}>
-              {galleryPermissionError}
-            </Text>
-          </View>
-        )}
+        {/* 학교 인증 상태 */}
+        <View style={styles.authRow}>
+          <Ionicons name="shield-checkmark-outline" size={18} color={COLORS.success} />
+          <Text style={styles.authText}>
+            {currentUser.passVerified || currentUser.certVerified
+              ? 'PASS · 재학증명서 인증 완료'
+              : '학교 학생 인증 대기 중'}
+          </Text>
+        </View>
       </View>
 
-      {/* 저장 완료 알림 배너 */}
       {savedNotice && (
         <View style={styles.savedBanner}>
-          <Ionicons name="checkmark-circle" size={16} color="#15803d" />
-          <Text style={styles.savedBannerText}>
-            프로필 정보가 수정되어 앱 전체와 클라우드 DB에 반영되었습니다!
-          </Text>
+          <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+          <Text style={styles.savedBannerText}>프로필 정보가 저장되었습니다.</Text>
+        </View>
+      )}
+
+      {galleryPermissionError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{galleryPermissionError}</Text>
         </View>
       )}
 
       {/* 2. 내 활동 요약 */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{myMajorPostCount}</Text>
-          <Text style={styles.statLabel}>내 전공게시글</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{mySchoolPostCount}</Text>
-          <Text style={styles.statLabel}>내 학교게시글</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNumber, { color: '#16a34a' }]}>정회원</Text>
-          <Text style={styles.statLabel}>커뮤니티 등급</Text>
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionTitle}>내 활동</Text>
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{totalMyPosts}</Text>
+            <Text style={styles.statLabel}>작성한 글</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{myCommentCount}</Text>
+            <Text style={styles.statLabel}>달린 댓글</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{chatRoomCount}</Text>
+            <Text style={styles.statLabel}>1:1 채팅</Text>
+          </View>
         </View>
       </View>
 
-      {/* 3. 프로필 정보 수정 섹션 */}
-      <View
-        style={styles.sectionCard}
-        onLayout={(e) => {
-          editSectionYRef.current = e.nativeEvent.layout.y;
-        }}
-      >
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleWrap}>
-            <Ionicons name="create-outline" size={18} color="#dc2626" />
-            <Text style={styles.sectionTitle}>내 프로필 정보 관리 및 수정</Text>
-          </View>
-          {!isEditing && (
-            <TouchableOpacity
-              style={styles.editToggleBtn}
-              onPress={() => setIsEditing(true)}
-            >
-              <Text style={styles.editToggleBtnText}>프로필 수정</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      {/* 3. 프로필 수정 인라인 폼 (수정 클릭 시 펼침) */}
+      {isEditing && (
+        <View style={styles.editCard}>
+          <Text style={styles.editTitle}>프로필 및 희망 전공 수정</Text>
 
-        {!isEditing ? (
-          <View style={styles.infoList}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>이름 (실명)</Text>
-              <Text style={styles.infoVal}>{currentUser.name}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>커뮤니티 닉네임</Text>
-              <Text style={styles.infoVal}>
-                {currentUser.nickname || `${currentUser.name}학생`}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>소속 고등학교</Text>
-              <Text style={[styles.infoVal, { color: '#dc2626' }]}>{currentSchool.name}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>현재 학년</Text>
-              <Text style={styles.infoVal}>{currentUser.grade}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>희망 전공 / 진로</Text>
-              <Text style={styles.infoVal}>
-                {currentUser.targetMajor || '컴퓨터·IT·인공지능'}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>휴대폰 번호</Text>
-              <Text style={styles.infoVal}>{currentUser.phone || '010-3849-2910'}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>한줄 소개</Text>
-              <Text style={styles.infoVal}>
-                {currentUser.bio || `${currentSchool.name} 재학 중인 ${currentUser.grade} 학생입니다.`}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.editForm}>
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>이름</Text>
-              <TextInput
-                style={styles.textInput}
-                value={name}
-                onChangeText={setName}
-                placeholder="이름 입력"
-              />
-            </View>
+          <Text style={styles.inputLabel}>이름</Text>
+          <TextInput
+            style={styles.textInput}
+            value={name}
+            onChangeText={setName}
+            placeholder="이름"
+            placeholderTextColor={COLORS.muted}
+          />
 
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>커뮤니티 활동 닉네임</Text>
-              <TextInput
-                style={styles.textInput}
-                value={nickname}
-                onChangeText={setNickname}
-                placeholder="닉네임 입력"
-              />
-            </View>
+          <Text style={styles.inputLabel}>활동 닉네임</Text>
+          <TextInput
+            style={styles.textInput}
+            value={nickname}
+            onChangeText={setNickname}
+            placeholder="닉네임"
+            placeholderTextColor={COLORS.muted}
+          />
 
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>학년 변경 (시간표 자동 연동)</Text>
-              <View style={styles.gradeSelector}>
-                {['고1', '고2', '고3'].map((g) => (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.gradeBtn, grade === g && styles.gradeBtnActive]}
-                    onPress={() => setGrade(g)}
-                  >
-                    <Text
-                      style={[
-                        styles.gradeBtnText,
-                        grade === g && styles.gradeBtnTextActive,
-                      ]}
-                    >
-                      {g}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>희망 진로 / 전공 분야</Text>
-              <View style={styles.majorChipWrap}>
-                {MAJOR_CATEGORIES.filter((m) => m.id !== 'all').map((m) => {
-                  const selected = targetMajor === m.name;
-                  return (
-                    <TouchableOpacity
-                      key={m.id}
-                      style={[styles.majorChip, selected && styles.majorChipActive]}
-                      onPress={() => setTargetMajor(m.name)}
-                    >
-                      <Text
-                        style={[
-                          styles.majorChipText,
-                          selected && styles.majorChipTextActive,
-                        ]}
-                      >
-                        {m.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>휴대폰 번호</Text>
-              <TextInput
-                style={styles.textInput}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="010-0000-0000"
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>한줄 자기소개</Text>
-              <TextInput
-                style={[styles.textInput, { height: 64, textAlignVertical: 'top' }]}
-                value={bio}
-                onChangeText={setBio}
-                multiline
-                placeholder="자신을 소개하는 한줄 메시지를 적어주세요"
-              />
-            </View>
-
-            <View style={styles.editActionRow}>
+          <Text style={styles.inputLabel}>학년</Text>
+          <View style={styles.gradeRow}>
+            {(['고1', '고2', '고3'] as const).map((g) => (
               <TouchableOpacity
-                style={styles.cancelEditBtn}
-                onPress={() => setIsEditing(false)}
+                key={g}
+                style={[styles.gradeOption, grade === g && styles.gradeOptionActive]}
+                onPress={() => setGrade(g)}
+                activeOpacity={0.75}
               >
-                <Text style={styles.cancelEditBtnText}>취소</Text>
+                <Text
+                  style={[
+                    styles.gradeOptionText,
+                    grade === g && styles.gradeOptionTextActive,
+                  ]}
+                >
+                  {g}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveEditBtn} onPress={handleSaveProfile}>
-                <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
-                <Text style={styles.saveEditBtnText}>프로필 변경사항 저장</Text>
-              </TouchableOpacity>
-            </View>
+            ))}
           </View>
-        )}
-      </View>
 
-      {/* 4. 계정 보안 및 학교 재인증 / 로그아웃 */}
-      <View style={styles.actionSection}>
-        <TouchableOpacity style={styles.reAuthButton} onPress={onOpenReAuthModal}>
-          <View style={styles.reAuthLeft}>
-            <Ionicons name="school-outline" size={18} color="#0f172a" />
-            <View>
-              <Text style={styles.reAuthTitle}>전학 / 소속 고등학교 재인증 신청</Text>
-              <Text style={styles.reAuthSub}>
-                PASS 본인인증 및 새 재학증명서 PDF를 다시 제출합니다
-              </Text>
-            </View>
+          <Text style={styles.inputLabel}>희망 진로 / 전공</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.majorChipRow}
+          >
+            {MAJOR_CATEGORIES.filter((c) => c.id !== 'all').map((cat) => {
+              const selected = targetMajor === cat.name;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[styles.majorOption, selected && styles.majorOptionActive]}
+                  onPress={() => setTargetMajor(cat.name)}
+                  activeOpacity={0.75}
+                >
+                  <Text
+                    style={[
+                      styles.majorOptionText,
+                      selected && styles.majorOptionTextActive,
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          <Text style={styles.inputLabel}>한줄 소개</Text>
+          <TextInput
+            style={styles.textInput}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="나를 한 줄로 소개해보세요"
+            placeholderTextColor={COLORS.muted}
+          />
+
+          <View style={styles.editBtnRow}>
+            <TouchableOpacity
+              style={styles.cancelEditBtn}
+              onPress={() => setIsEditing(false)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.cancelEditBtnText}>취소</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.saveEditBtn}
+              onPress={handleSaveProfile}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.saveEditBtnText}>저장하기</Text>
+            </TouchableOpacity>
           </View>
-          <Ionicons name="chevron-forward" size={16} color="#64748b" />
+        </View>
+      )}
+
+      {/* 4. 프로필 및 계정 관리 메뉴 */}
+      <View style={styles.menuSection}>
+        <Text style={styles.sectionTitle}>프로필 및 계정</Text>
+
+        <TouchableOpacity
+          style={styles.menuRow}
+          onPress={() => setIsEditing((prev) => !prev)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="pencil-outline" size={19} color={COLORS.ink} />
+          <Text style={styles.menuText}>프로필 및 희망 전공 수정</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-          <Ionicons name="log-out-outline" size={18} color="#dc2626" />
-          <Text style={styles.logoutText}>로그아웃 (로그인 화면으로 돌아가기)</Text>
+        <TouchableOpacity
+          style={styles.menuRow}
+          onPress={onOpenReAuthModal}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="shield-checkmark-outline" size={19} color={COLORS.ink} />
+          <Text style={styles.menuText}>학교 재인증 관리</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuRow}
+          onPress={onLogout}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="log-out-outline" size={19} color={COLORS.muted} />
+          <Text style={styles.menuTextMuted}>로그아웃</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -572,375 +371,288 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: COLORS.bg,
   },
-  contentContainer: {
-    padding: 14,
+  content: {
+    paddingHorizontal: 22,
+    paddingTop: 12,
     paddingBottom: 32,
+    gap: 26,
   },
-  studentIdCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-  },
-  idCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  idCardTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  idCardTitleText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#94a3b8',
-    letterSpacing: 1,
-  },
-  verifiedBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.4)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 99,
-  },
-  verifiedBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#34d399',
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 10,
-  },
-  avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#dc2626',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#ffffff',
+
+  // 1. 학생 프로필
+  profileSection: {
+    gap: 14,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 2,
   },
-  studentName: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#ffffff',
+  nameWithAvatar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  nicknameBadge: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#fca5a5',
-  },
-  schoolInfoText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#e2e8f0',
-  },
-  majorInfoText: {
-    fontSize: 11,
-    color: '#94a3b8',
-    marginTop: 2,
-  },
-  bioText: {
-    fontSize: 12,
-    color: '#cbd5e1',
-    fontStyle: 'italic',
-    marginBottom: 12,
-  },
-  certMetaBox: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+  avatarImage: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    padding: 10,
+  },
+  userName: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: COLORS.ink,
+    letterSpacing: -0.6,
+  },
+  gradeBadge: {
+    backgroundColor: COLORS.sageSurface,
+    borderRadius: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+  },
+  gradeBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.ink,
+    letterSpacing: -0.24,
+  },
+  schoolText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.28,
+    marginTop: -6,
+  },
+  majorCard: {
+    backgroundColor: COLORS.sageCard,
+    borderRadius: 12,
+    padding: 16,
     gap: 5,
   },
-  certMetaRow: {
+  majorCardLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.22,
+  },
+  majorCardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.ink,
+    letterSpacing: -0.34,
+  },
+  consultLinkBtn: {
+    paddingTop: 8,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  consultLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.accent,
+    letterSpacing: -0.26,
+  },
+  authRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 6,
   },
-  certMetaLabel: {
-    fontSize: 11,
-    color: '#94a3b8',
+  authText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.success,
+    letterSpacing: -0.24,
   },
-  certMetaValue: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#f1f5f9',
-  },
-  certMetaSuccess: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#34d399',
-    maxWidth: '65%',
-  },
+
   savedBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#dcfce7',
-    borderWidth: 1,
-    borderColor: '#86efac',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 12,
+    gap: 6,
+    backgroundColor: COLORS.sageSurface,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   savedBannerText: {
     fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.success,
+  },
+  errorBanner: {
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: 10,
+    padding: 12,
+  },
+  errorBannerText: {
+    fontSize: 12,
+    color: COLORS.accent,
+  },
+
+  // 2. 내 활동
+  sectionBlock: {
+    gap: 14,
+  },
+  sectionTitle: {
+    fontSize: 17,
     fontWeight: '700',
-    color: '#14532d',
-    flex: 1,
+    color: COLORS.ink,
+    letterSpacing: -0.34,
   },
   statsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: 'center',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 16,
+    gap: 5,
   },
   statNumber: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0f172a',
-    marginBottom: 2,
+    fontSize: 25,
+    fontWeight: '800',
+    color: COLORS.ink,
+    letterSpacing: -0.5,
   },
   statLabel: {
-    fontSize: 11,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  sectionCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginBottom: 12,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    marginBottom: 12,
-  },
-  sectionTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  editToggleBtn: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  editToggleBtnText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#dc2626',
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.24,
   },
-  infoList: {
+
+  // 수정 폼
+  editCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    padding: 16,
     gap: 10,
   },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
+  editTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.ink,
+    marginBottom: 4,
   },
-  infoLabel: {
+  inputLabel: {
     fontSize: 12,
-    color: '#64748b',
     fontWeight: '600',
-  },
-  infoVal: {
-    fontSize: 13,
-    color: '#0f172a',
-    fontWeight: '700',
-    maxWidth: '68%',
-    textAlign: 'right',
-  },
-  editForm: {
-    gap: 12,
-  },
-  formField: {
-    gap: 6,
-  },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
+    color: COLORS.muted,
   },
   textInput: {
+    backgroundColor: COLORS.bg,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
+    borderColor: COLORS.border,
+    borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 13,
-    color: '#0f172a',
-    backgroundColor: '#f8fafc',
+    paddingVertical: 10,
+    fontSize: 14,
+    color: COLORS.ink,
   },
-  gradeSelector: {
+  gradeRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  gradeBtn: {
+  gradeOption: {
     flex: 1,
-    paddingVertical: 9,
+    backgroundColor: COLORS.sageCard,
+    borderRadius: 8,
+    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
   },
-  gradeBtnActive: {
-    borderColor: '#dc2626',
-    backgroundColor: '#fee2e2',
+  gradeOptionActive: {
+    backgroundColor: COLORS.ink,
   },
-  gradeBtnText: {
+  gradeOptionText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748b',
+    color: COLORS.muted,
   },
-  gradeBtnTextActive: {
-    color: '#dc2626',
-    fontWeight: '800',
+  gradeOptionTextActive: {
+    color: '#ffffff',
   },
-  majorChipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  majorChipRow: {
     gap: 6,
   },
-  majorChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+  majorOption: {
+    backgroundColor: COLORS.sageCard,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  majorChipActive: {
-    borderColor: '#dc2626',
-    backgroundColor: '#fee2e2',
+  majorOptionActive: {
+    backgroundColor: COLORS.ink,
   },
-  majorChipText: {
-    fontSize: 11,
+  majorOptionText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: COLORS.muted,
   },
-  majorChipTextActive: {
-    color: '#dc2626',
-    fontWeight: '800',
+  majorOptionTextActive: {
+    color: '#ffffff',
   },
-  editActionRow: {
+  editBtnRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 6,
+    marginTop: 8,
   },
   cancelEditBtn: {
+    flex: 1,
+    backgroundColor: COLORS.sageCard,
+    borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   cancelEditBtnText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#475569',
+    fontWeight: '600',
+    color: COLORS.muted,
   },
   saveEditBtn: {
     flex: 1,
-    backgroundColor: '#dc2626',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    backgroundColor: COLORS.ink,
+    borderRadius: 8,
     paddingVertical: 12,
-    borderRadius: 10,
+    alignItems: 'center',
   },
   saveEditBtnText: {
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#ffffff',
   },
-  actionSection: {
-    gap: 10,
+
+  // 4. 메뉴
+  menuSection: {
+    width: '100%',
   },
-  reAuthButton: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+  menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  reAuthLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  menuText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.ink,
+    letterSpacing: -0.28,
   },
-  reAuthTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  reAuthSub: {
-    fontSize: 11,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  logoutButton: {
-    backgroundColor: '#fef2f2',
-    borderRadius: 14,
-    paddingVertical: 13,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  logoutText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#dc2626',
+  menuTextMuted: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.28,
   },
 });

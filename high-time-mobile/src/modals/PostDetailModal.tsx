@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { PhoneModal } from '../components/PhoneModal';
 import { MajorPost, CurrentUser, School, PostComment } from '../types';
+import { COLORS } from '../theme/colors';
 
 interface PostDetailModalProps {
   visible: boolean;
@@ -413,24 +414,25 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(34, 39, 34, 0.45)',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.bg,
     marginTop: 40,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.bg,
   },
   backBtn: {
     padding: 4,
@@ -443,11 +445,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0f172a',
+    color: COLORS.ink,
   },
   headerTag: {
     fontSize: 12,
-    color: '#6366f1',
+    color: COLORS.accent,
     fontWeight: '600',
   },
   headerRight: {
@@ -458,17 +460,17 @@ const styles = StyleSheet.create({
   },
   deleteHeaderBtn: {
     padding: 6,
-    backgroundColor: '#fee2e2',
+    backgroundColor: COLORS.accentSoft,
     borderRadius: 8,
   },
   askHeaderBtn: {
     padding: 6,
-    backgroundColor: '#dbeafe',
+    backgroundColor: COLORS.sageButton,
     borderRadius: 8,
   },
   scrollArea: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   authorRow: {
     flexDirection: 'row',
@@ -534,17 +536,18 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   postTitle: {
-    fontSize: 17,
+    fontSize: 19,
     fontWeight: '800',
-    color: '#0f172a',
-    lineHeight: 24,
+    color: COLORS.ink,
+    lineHeight: 26,
     marginBottom: 10,
+    letterSpacing: -0.38,
   },
   postContent: {
     fontSize: 14,
-    color: '#334155',
+    color: COLORS.ink,
     lineHeight: 22,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   reactionBar: {
     flexDirection: 'row',
@@ -556,13 +559,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: COLORS.sageCard,
   },
   reactionBtnActive: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: COLORS.accentSoft,
   },
   reactionItem: {
     flexDirection: 'row',
@@ -572,16 +575,16 @@ const styles = StyleSheet.create({
   reactionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: COLORS.muted,
   },
   reactionTextActive: {
-    color: '#dc2626',
+    color: COLORS.accent,
     fontWeight: '700',
   },
   divider: {
     height: 1,
-    backgroundColor: '#f1f5f9',
-    marginVertical: 10,
+    backgroundColor: COLORS.border,
+    marginVertical: 12,
   },
   commentsHeader: {
     paddingVertical: 8,
@@ -589,7 +592,7 @@ const styles = StyleSheet.create({
   commentsTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0f172a',
+    color: COLORS.ink,
   },
   commentList: {
     paddingBottom: 20,
@@ -655,11 +658,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    backgroundColor: '#ffffff',
+    borderTopColor: COLORS.border,
+    backgroundColor: COLORS.surface,
     gap: 8,
   },
   anonCommentBtn: {
@@ -670,22 +673,22 @@ const styles = StyleSheet.create({
   anonCommentLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#475569',
+    color: COLORS.muted,
   },
   commentInput: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.searchBg,
     borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     fontSize: 13,
-    color: '#0f172a',
+    color: COLORS.ink,
   },
   commentSendBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },

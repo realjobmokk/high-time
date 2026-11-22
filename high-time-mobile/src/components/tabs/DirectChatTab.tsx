@@ -19,6 +19,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ChatRoom, ChatMessage, CurrentUser, School } from '../../types';
 import { buildUserChatKey } from '../../services/supabaseService';
+import { COLORS } from '../../theme/colors';
 
 interface DirectChatTabProps {
   chatRooms: ChatRoom[];
@@ -29,6 +30,7 @@ interface DirectChatTabProps {
   onStartPeerChat?: (peer: { key: string; name: string; school: string; grade: string }) => void;
   initialOpenRoomId?: string | null;
   onRoomOpenChange?: (isOpen: boolean) => void;
+  onNavigateBoard?: () => void;
 }
 
 const BLOCKED_PATTERNS = [
@@ -46,8 +48,10 @@ export const DirectChatTab: React.FC<DirectChatTabProps> = ({
   onStartPeerChat,
   initialOpenRoomId = null,
   onRoomOpenChange,
+  onNavigateBoard,
 }) => {
   const [openRoomId, setOpenRoomId] = useState<string | null>(initialOpenRoomId);
+  const [chatFilter, setChatFilter] = useState<'all' | 'unread'>('all');
   const [inputText, setInputText] = useState('');
   const [blockError, setBlockError] = useState<string | null>(null);
 
@@ -139,69 +143,127 @@ export const DirectChatTab: React.FC<DirectChatTabProps> = ({
     }, 50);
   };
 
-  // 1. 채팅 목록 화면
+  // 1. 채팅 목록 화면 (Figma v2.0 에디토리얼 디자인 적용)
   if (!openRoomId || !activeRoom) {
+    const unreadRoomsCount = chatRooms.filter((r) => r.unreadCount > 0).length;
+    const displayedRooms =
+      chatFilter === 'unread'
+        ? chatRooms.filter((r) => r.unreadCount > 0)
+        : chatRooms;
+
     return (
-      <View style={styles.container}>
-        {/* 안전 사용 안내 배너 */}
-        <View style={styles.safetyBanner}>
-          <Ionicons name="shield-checkmark" size={16} color="#16a34a" />
-          <Text style={styles.safetyBannerText}>
-            HighTime 1:1 채팅은 실시간 안전 메시징입니다. 개인 연락처 요구 및 욕설/비방은 자동 검열·차단됩니다.
-          </Text>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 안심 채팅 안내 */}
+        <View style={styles.safetyRow}>
+          <Ionicons name="lock-closed-outline" size={16} color={COLORS.muted} />
+          <Text style={styles.safetyText}>안심 1:1 멘토링 채팅</Text>
         </View>
 
-        {/* 목록 헤더 */}
-        <View style={styles.listTopBar}>
-          <Text style={styles.listTopTitle}>대화 목록 ({chatRooms.length})</Text>
-          <Text style={{ fontSize: 11, color: '#94a3b8', fontWeight: '600' }}>
-            전공게시판 1:1 신청 전용
-          </Text>
+        {/* 대화 필터 (전체 / 안 읽음) */}
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterChip, chatFilter === 'all' && styles.filterChipActive]}
+            onPress={() => setChatFilter('all')}
+            activeOpacity={0.75}
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                chatFilter === 'all' && styles.filterChipTextActive,
+              ]}
+            >
+              전체 {chatRooms.length}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, chatFilter === 'unread' && styles.filterChipActive]}
+            onPress={() => setChatFilter('unread')}
+            activeOpacity={0.75}
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                chatFilter === 'unread' && styles.filterChipTextActive,
+              ]}
+            >
+              안 읽음 {unreadRoomsCount}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <ScrollView
-          style={styles.roomList}
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {chatRooms.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Ionicons name="chatbubbles-outline" size={44} color="#cbd5e1" />
-              <Text style={styles.emptyText}>진행 중인 1:1 대화가 없습니다.</Text>
-              <Text style={styles.emptySubText}>
-                전공게시판에서 작성자에게 [1:1 채팅 신청]을 보내면 대화가 시작됩니다.
-              </Text>
-            </View>
-          ) : (
-            chatRooms.map((room) => (
-              <TouchableOpacity
-                key={room.id}
-                style={styles.roomCard}
-                onPress={() => {
-                  setOpenRoomId(room.id);
-                  onMarkRoomRead?.(room.id);
-                }}
-                activeOpacity={0.75}
-              >
-                {/* 상대방 아바타 */}
-                <View style={[styles.peerAvatar, { backgroundColor: room.avatarBg || '#dc2626' }]}>
-                  <Text style={styles.peerAvatarText}>
-                    {room.peerName.slice(0, 1)}
-                  </Text>
-                </View>
+        {/* 대화 목록 */}
+        {displayedRooms.length === 0 ? (
+          <View style={styles.emptyWrap}>
+            <Ionicons name="chatbubbles-outline" size={40} color={COLORS.muted} />
+            <Text style={styles.emptyText}>
+              {chatFilter === 'unread'
+                ? '안 읽은 대화가 없습니다.'
+                : '진행 중인 1:1 대화가 없습니다.'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.roomListWrap}>
+            {displayedRooms.map((room, idx) => {
+              const isWarm = idx % 2 === 1;
+              return (
+                <TouchableOpacity
+                  key={room.id}
+                  style={styles.roomCard}
+                  onPress={() => {
+                    setOpenRoomId(room.id);
+                    onMarkRoomRead?.(room.id);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.roomTop}>
+                    <View
+                      style={[
+                        styles.peerAvatar,
+                        {
+                          backgroundColor: isWarm
+                            ? COLORS.avatarWarmBg
+                            : COLORS.avatarGreenBg,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.peerAvatarText,
+                          {
+                            color: isWarm ? COLORS.avatarWarmInk : COLORS.success,
+                          },
+                        ]}
+                      >
+                        {room.peerName.slice(0, 1)}
+                      </Text>
+                    </View>
 
-                <View style={styles.roomInfo}>
-                  <View style={styles.roomInfoTop}>
-                    <View style={styles.roomNameRow}>
-                      <Text style={styles.roomPeerName}>{room.peerName}</Text>
+                    <View style={styles.roomMetaCol}>
+                      <Text style={styles.roomPeerName} numberOfLines={1}>
+                        {room.peerName}
+                      </Text>
                       {room.peerSchool ? (
-                        <Text style={styles.roomPeerSchool}>· {room.peerSchool}</Text>
+                        <Text style={styles.roomPeerSchool} numberOfLines={1}>
+                          {room.peerSchool}
+                        </Text>
                       ) : null}
                     </View>
+
                     <Text style={styles.roomTime}>{room.lastTime}</Text>
                   </View>
-                  <View style={styles.roomInfoBottom}>
-                    <Text style={styles.roomLastMsg} numberOfLines={1}>
+
+                  <View style={styles.roomBottom}>
+                    <Text
+                      style={[
+                        styles.roomLastMsg,
+                        room.unreadCount > 0 && styles.roomLastMsgUnread,
+                      ]}
+                      numberOfLines={1}
+                    >
                       {room.lastMessage}
                     </Text>
                     {room.unreadCount > 0 && (
@@ -210,12 +272,28 @@ export const DirectChatTab: React.FC<DirectChatTabProps> = ({
                       </View>
                     )}
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </ScrollView>
-      </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {/* 새로운 대화 시작 안내 카드 */}
+        <TouchableOpacity
+          style={styles.guideCard}
+          onPress={onNavigateBoard}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.guideTitle}>궁금한 이야기는, 대화로 이어가요.</Text>
+          <Text style={styles.guideDesc}>
+            게시판에서 관심 있는 글을 찾고{'\n'}작성자의 ‘1:1 채팅’을 눌러보세요.
+          </Text>
+          <View style={styles.guideActionRow}>
+            <Text style={styles.guideActionText}>게시판 둘러보기</Text>
+            <Text style={styles.guideActionArrow}>→</Text>
+          </View>
+        </TouchableOpacity>
+      </ScrollView>
     );
   }
 
@@ -373,148 +451,173 @@ export const DirectChatTab: React.FC<DirectChatTabProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.bg,
   },
-  safetyBanner: {
+  listContent: {
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 28,
+    gap: 20,
+    flexGrow: 1,
+  },
+  safetyRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 8,
-    backgroundColor: '#f0fdf4',
-    borderBottomWidth: 1,
-    borderBottomColor: '#bbf7d0',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
   },
-  safetyBannerText: {
-    fontSize: 11,
-    color: '#15803d',
-    flex: 1,
-    lineHeight: 16,
+  safetyText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.24,
   },
-  listTopBar: {
+  filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    gap: 8,
   },
-  listTopTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#0f172a',
-  },
-  newChatBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  newChatBtnText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#ffffff',
-  },
-  roomList: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  emptyWrap: {
-    flex: 1,
+  filterChip: {
+    backgroundColor: COLORS.sageButton,
+    borderRadius: 8,
+    paddingHorizontal: 13,
+    minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 24,
-    gap: 8,
+  },
+  filterChipActive: {
+    backgroundColor: COLORS.ink,
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.26,
+  },
+  filterChipTextActive: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 44,
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
   emptyText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.muted,
   },
-  emptySubText: {
-    fontSize: 12,
-    color: '#94a3b8',
-    textAlign: 'center',
-    lineHeight: 17,
+  roomListWrap: {
+    width: '100%',
   },
   roomCard: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 18,
+    paddingBottom: 22,
+    gap: 12,
+  },
+  roomTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   peerAvatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   peerAvatarText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '700',
   },
-  roomInfo: {
+  roomMetaCol: {
     flex: 1,
-  },
-  roomInfoTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  roomNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    gap: 3,
   },
   roomPeerName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.ink,
+    letterSpacing: -0.32,
   },
   roomPeerSchool: {
     fontSize: 11,
-    color: '#64748b',
+    color: COLORS.muted,
+    letterSpacing: -0.22,
   },
   roomTime: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 11,
+    color: COLORS.muted,
   },
-  roomInfoBottom: {
+  roomBottom: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    gap: 12,
   },
   roomLastMsg: {
-    fontSize: 12,
-    color: '#475569',
     flex: 1,
+    fontSize: 14,
+    fontWeight: '400',
+    color: COLORS.muted,
+    letterSpacing: -0.28,
+  },
+  roomLastMsgUnread: {
+    fontWeight: '600',
+    color: COLORS.ink,
   },
   unreadBadge: {
-    backgroundColor: '#dc2626',
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
+    backgroundColor: COLORS.accent,
+    borderRadius: 11,
+    minWidth: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
   },
   unreadBadgeText: {
     color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  guideCard: {
+    backgroundColor: COLORS.sageSurface,
+    borderRadius: 14,
+    padding: 20,
+    gap: 10,
+  },
+  guideTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.ink,
+    letterSpacing: -0.34,
+  },
+  guideDesc: {
+    fontSize: 13,
+    color: COLORS.muted,
+    lineHeight: 20,
+    letterSpacing: -0.26,
+  },
+  guideActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  guideActionText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.ink,
+  },
+  guideActionArrow: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: COLORS.ink,
   },
   peerModalOverlay: {
     flex: 1,
@@ -559,16 +662,16 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: COLORS.bg,
   },
   chatHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    backgroundColor: COLORS.bg,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: COLORS.border,
   },
   backBtn: {
     marginRight: 10,
@@ -577,61 +680,59 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatPeerTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.ink,
   },
   chatPeerSub: {
     fontSize: 11,
-    color: '#64748b',
+    color: COLORS.muted,
   },
   liveTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
+    backgroundColor: COLORS.accentSoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 6,
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.accent,
   },
   liveTagText: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#dc2626',
+    fontWeight: '700',
+    color: COLORS.accent,
   },
   roomSafetyBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#fff1f2',
+    backgroundColor: COLORS.sageSurface,
     borderBottomWidth: 1,
-    borderBottomColor: '#ffe4e6',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    borderBottomColor: COLORS.border,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
   },
   roomSafetyText: {
-    fontSize: 10,
-    color: '#9f1239',
+    fontSize: 11,
+    color: COLORS.muted,
     flex: 1,
   },
   messagesArea: {
     flex: 1,
   },
   messagesContent: {
-    padding: 14,
+    padding: 16,
     gap: 10,
   },
   datePill: {
     alignSelf: 'center',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: COLORS.sageCard,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -639,8 +740,8 @@ const styles = StyleSheet.create({
   },
   datePillText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#475569',
+    fontWeight: '600',
+    color: COLORS.muted,
   },
   msgRow: {
     flexDirection: 'row',
@@ -688,82 +789,82 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   readStatusDone: {
-    color: '#dc2626',
+    color: COLORS.accent,
   },
   readStatusSent: {
-    color: '#94a3b8',
+    color: COLORS.muted,
   },
   bubble: {
-    paddingHorizontal: 13,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 16,
     maxWidth: '82%',
   },
   bubbleHighTimeMe: {
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.ink,
     borderBottomRightRadius: 4,
   },
   bubbleHighTimePeer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: COLORS.border,
     borderBottomLeftRadius: 4,
   },
   msgText: {
-    fontSize: 13,
+    fontSize: 13.5,
     lineHeight: 19,
   },
   msgTextHighTimeMe: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   msgTextPeer: {
-    color: '#1e293b',
+    color: COLORS.ink,
   },
   msgTime: {
     fontSize: 9,
-    color: '#94a3b8',
+    color: COLORS.muted,
   },
   blockErrorBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#fef2f2',
+    backgroundColor: COLORS.accentSoft,
     borderTopWidth: 1,
-    borderTopColor: '#fecaca',
+    borderTopColor: COLORS.border,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   blockErrorText: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#dc2626',
+    fontWeight: '700',
+    color: COLORS.accent,
     flex: 1,
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: COLORS.border,
   },
   chatInput: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.searchBg,
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 9,
     fontSize: 13,
-    color: '#1e293b',
+    color: COLORS.ink,
   },
   sendBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },

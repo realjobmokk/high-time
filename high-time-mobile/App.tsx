@@ -44,6 +44,7 @@ import {
 // 컴포넌트 임포트
 import { Header } from './src/components/Header';
 import { BottomNav, TabType } from './src/components/BottomNav';
+import { COLORS } from './src/theme/colors';
 import { HomeTab } from './src/components/tabs/HomeTab';
 import { MajorBoardTab } from './src/components/tabs/MajorBoardTab';
 import { SchoolBoardTab } from './src/components/tabs/SchoolBoardTab';
@@ -1054,13 +1055,14 @@ export default function App() {
                 return (
                   <TouchableOpacity
                     key={item.id}
-                    style={[styles.boardHubBtn, isActive && styles.boardHubBtnActive]}
+                    style={styles.boardHubBtn}
                     onPress={() => setBoardSubTab(item.id)}
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.boardHubText, isActive && styles.boardHubTextActive]}>
                       {item.label}
                     </Text>
+                    {isActive && <View style={styles.boardHubUnderline} />}
                   </TouchableOpacity>
                 );
               })}
@@ -1118,6 +1120,7 @@ export default function App() {
               setIsChatRoomFullOpen(isOpen);
               if (!isOpen) setActiveChatRoomId(null);
             }}
+            onNavigateBoard={() => setActiveTab('board')}
           />
         );
       case 'profile':
@@ -1141,8 +1144,15 @@ export default function App() {
                   (Boolean(currentUser.nickname) && p.author === currentUser.nickname)
               ).length
             }
+            myCommentCount={majorPosts.reduce((acc, p) => acc + p.commentCount, 0)}
+            chatRoomCount={chatRooms.length}
             onUpdateProfile={handleUpdateProfile}
             onOpenReAuthModal={() => setIsAuthModalOpen(true)}
+            onOpenAdmissionConsult={() => {
+              setCounselingSubTab('admission');
+              setBoardSubTab('counseling');
+              setActiveTab('board');
+            }}
             onLogout={handleLogout}
           />
         );
@@ -1193,6 +1203,7 @@ export default function App() {
       {/* 상단 고정 헤더 (1:1 채팅방 전체화면 진입 시 숨김) */}
       {!(activeTab === 'chat' && isChatRoomFullOpen) && (
         <Header
+          activeTab={activeTab}
           currentUser={currentUser}
           currentSchool={currentSchool}
           unreadNotiCount={unreadNotiCount}
@@ -1395,39 +1406,38 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.bg,
   },
   body: {
     flex: 1,
+    backgroundColor: COLORS.bg,
   },
   boardHubBar: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    backgroundColor: COLORS.bg,
+    paddingHorizontal: 22,
+    paddingTop: 8,
+    gap: 22,
   },
   boardHubBtn: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boardHubBtnActive: {
-    backgroundColor: '#dc2626',
+    alignItems: 'flex-start',
+    paddingBottom: 6,
+    gap: 9,
   },
   boardHubText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.muted,
+    letterSpacing: -0.3,
   },
   boardHubTextActive: {
-    color: '#ffffff',
-    fontWeight: '900',
+    color: COLORS.ink,
+    fontWeight: '700',
+  },
+  boardHubUnderline: {
+    height: 2,
+    width: '100%',
+    backgroundColor: COLORS.ink,
   },
   confirmOverlay: {
     flex: 1,
