@@ -136,7 +136,20 @@ export default function App() {
   //  2. 탭 & UI 상태
   // =========================================================
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [boardSubTab, setBoardSubTab] = useState<'major' | 'school' | 'counseling'>('major');
   const [counselingSubTab, setCounselingSubTab] = useState<'direct' | 'admission'>('direct');
+
+  // 통합 게시판 세부 탭(major/school/counseling) 이동도 함께 처리하는 내비게이션 헬퍼
+  const handleNavigateTab = (
+    tab: TabType | 'major' | 'school' | 'counseling'
+  ) => {
+    if (tab === 'major' || tab === 'school' || tab === 'counseling') {
+      setBoardSubTab(tab);
+      setActiveTab('board');
+    } else {
+      setActiveTab(tab);
+    }
+  };
   const [isChatRoomFullOpen, setIsChatRoomFullOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -1014,52 +1027,82 @@ export default function App() {
             customTimetable={customTimetable}
             onAddOrUpdateTimetableBlock={handleAddOrUpdateTimetableBlock}
             onDeleteTimetableBlock={handleDeleteTimetableBlock}
-            onNavigateTab={setActiveTab}
+            onNavigateTab={handleNavigateTab}
             onOpenWriteModal={handleOpenWriteModal}
             onSelectPost={handleSelectPost}
             onOpenAskModal={() => handleOpenAskModal('direct')}
             onOpenAdmissionConsult={() => {
               setCounselingSubTab('admission');
-              setActiveTab('counseling');
+              setBoardSubTab('counseling');
+              setActiveTab('board');
             }}
           />
         );
-      case 'major':
+      case 'board':
         return (
-          <MajorBoardTab
-            posts={majorPosts}
-            currentUser={currentUser}
-            currentSchool={currentSchool}
-            onSelectPost={handleSelectPost}
-            onDeletePost={handleDeleteMajorPost}
-            onOpenWriteModal={() => handleOpenWriteModal('major')}
-            onToggleLike={handleToggleLike}
-            onStartDirectChat={handleStartDirectChatFromPost}
-          />
-        );
-      case 'school':
-        return (
-          <SchoolBoardTab
-            currentSchool={currentSchool}
-            currentUser={currentUser}
-            posts={schoolPosts}
-            onDeletePost={handleDeleteSchoolPost}
-            onOpenWriteModal={(cat) => handleOpenWriteModal('school', cat)}
-            onToggleLike={handleToggleSchoolLike}
-            onAddComment={handleAddSchoolComment}
-            onDeleteComment={handleDeleteSchoolComment}
-          />
-        );
-      case 'counseling':
-        return (
-          <CounselingTab
-            directQuestions={directQuestions}
-            admissionConsults={admissionConsults}
-            initialSubTab={counselingSubTab}
-            onOpenAskDirect={() => handleOpenAskModal('direct')}
-            onOpenAskAdmission={() => handleOpenAskModal('admission')}
-            onAddQuestionComment={handleAddQuestionComment}
-          />
+          <View style={{ flex: 1 }}>
+            {/* 통합 게시판 상단 세부 전환 바 (전공게시판 | 우리학교 | 입시·질문) */}
+            <View style={styles.boardHubBar}>
+              {(
+                [
+                  { id: 'major', label: '전공게시판' },
+                  { id: 'school', label: '우리학교' },
+                  { id: 'counseling', label: '입시·질문' },
+                ] as const
+              ).map((item) => {
+                const isActive = boardSubTab === item.id;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.boardHubBtn, isActive && styles.boardHubBtnActive]}
+                    onPress={() => setBoardSubTab(item.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.boardHubText, isActive && styles.boardHubTextActive]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={{ flex: 1 }}>
+              {boardSubTab === 'major' && (
+                <MajorBoardTab
+                  posts={majorPosts}
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
+                  onSelectPost={handleSelectPost}
+                  onDeletePost={handleDeleteMajorPost}
+                  onOpenWriteModal={() => handleOpenWriteModal('major')}
+                  onToggleLike={handleToggleLike}
+                  onStartDirectChat={handleStartDirectChatFromPost}
+                />
+              )}
+              {boardSubTab === 'school' && (
+                <SchoolBoardTab
+                  currentSchool={currentSchool}
+                  currentUser={currentUser}
+                  posts={schoolPosts}
+                  onDeletePost={handleDeleteSchoolPost}
+                  onOpenWriteModal={(cat) => handleOpenWriteModal('school', cat)}
+                  onToggleLike={handleToggleSchoolLike}
+                  onAddComment={handleAddSchoolComment}
+                  onDeleteComment={handleDeleteSchoolComment}
+                />
+              )}
+              {boardSubTab === 'counseling' && (
+                <CounselingTab
+                  directQuestions={directQuestions}
+                  admissionConsults={admissionConsults}
+                  initialSubTab={counselingSubTab}
+                  onOpenAskDirect={() => handleOpenAskModal('direct')}
+                  onOpenAskAdmission={() => handleOpenAskModal('admission')}
+                  onAddQuestionComment={handleAddQuestionComment}
+                />
+              )}
+            </View>
+          </View>
         );
       case 'chat':
         return (
@@ -1356,6 +1399,35 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  boardHubBar: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  boardHubBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boardHubBtnActive: {
+    backgroundColor: '#dc2626',
+  },
+  boardHubText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  boardHubTextActive: {
+    color: '#ffffff',
+    fontWeight: '900',
   },
   confirmOverlay: {
     flex: 1,

@@ -64,8 +64,9 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(true);
 
-  // 4. 활성 탭 상태 ('home' | 'major' | 'school' | 'counseling' | 'chat')
+  // 4. 활성 탭 상태 ('home' | 'board' | 'chat' | 'profile') 및 통합 게시판 세부 탭
   const [activeTab, setActiveTab] = useState('home');
+  const [boardSubTab, setBoardSubTab] = useState('major');
   const [counselingSubTab, setCounselingSubTab] = useState('direct');
 
   // 3. 전국 전공 게시판 글 목록 상태 (더미 데이터 제거된 새 스토리지 키 사용)
@@ -671,50 +672,80 @@ export default function App() {
               schoolPosts={schoolPosts}
               onSelectPost={(post) => setSelectedPost(post)}
               onNavigateTab={(tab, sub) => {
-                if (tab === 'counseling' && sub) setCounselingSubTab(sub);
-                setActiveTab(tab);
+                if (tab === 'major' || tab === 'school' || tab === 'counseling') {
+                  if (tab === 'counseling' && sub) setCounselingSubTab(sub);
+                  setBoardSubTab(tab);
+                  setActiveTab('board');
+                } else {
+                  setActiveTab(tab);
+                }
               }}
               onOpenWriteModal={() => setIsWriteModalOpen(true)}
             />
           )}
 
-          {activeTab === 'major' && (
-            <MajorBoard
-              posts={majorPosts}
-              onSelectPost={(post) => setSelectedPost(post)}
-              onOpenWriteModal={() => setIsWriteModalOpen(true)}
-              onQuickAsk={handleQuickAsk}
-              onToggleLike={handleToggleLike}
-              onDeletePost={handleDeleteMajorPost}
-            />
-          )}
+          {/* 통합 게시판 탭 (전공게시판 | 우리학교 | 입시·질문) */}
+          {activeTab === 'board' && (
+            <div className="flex flex-col min-h-full">
+              <div className="sticky top-0 z-20 bg-white border-b border-slate-100 px-3 py-2 grid grid-cols-3 gap-2">
+                {[
+                  { id: 'major', label: '전공게시판' },
+                  { id: 'school', label: '우리학교' },
+                  { id: 'counseling', label: '입시·질문' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setBoardSubTab(item.id)}
+                    className={`py-1.5 rounded-xl text-xs font-extrabold transition ${
+                      boardSubTab === item.id
+                        ? 'bg-red-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
 
-          {activeTab === 'school' && (
-            <SchoolBoard
-              currentSchool={currentSchool}
-              currentUser={currentUser}
-              schoolPosts={schoolPosts}
-              onAddSchoolPost={handleAddSchoolPost}
-              onDeleteSchoolPost={handleDeleteSchoolPost}
-              onToggleSchoolLike={handleToggleSchoolLike}
-              onAddSchoolComment={handleAddSchoolComment}
-              onDeleteSchoolComment={handleDeleteSchoolComment}
-              externalWriteOpen={isSchoolWriteOpen}
-              onCloseExternalWrite={() => setIsSchoolWriteOpen(false)}
-            />
-          )}
+              {boardSubTab === 'major' && (
+                <MajorBoard
+                  posts={majorPosts}
+                  onSelectPost={(post) => setSelectedPost(post)}
+                  onOpenWriteModal={() => setIsWriteModalOpen(true)}
+                  onQuickAsk={handleQuickAsk}
+                  onToggleLike={handleToggleLike}
+                  onDeletePost={handleDeleteMajorPost}
+                />
+              )}
 
-          {/* 입시·1:1질문 탭 (기존 중간에서 4번째 탭으로 이동) */}
-          {activeTab === 'counseling' && (
-            <CounselingAndQA
-              counselingData={counselingData}
-              initialSubTab={counselingSubTab}
-              onAddQuestion={handleAddQuestion}
-              onAddQuestionComment={handleAddQuestionComment}
-              onAddConsult={handleAddConsult}
-              onNavigateToChat={() => setActiveTab('chat')}
-              externalWriteTrigger={counselingWriteTrigger}
-            />
+              {boardSubTab === 'school' && (
+                <SchoolBoard
+                  currentSchool={currentSchool}
+                  currentUser={currentUser}
+                  schoolPosts={schoolPosts}
+                  onAddSchoolPost={handleAddSchoolPost}
+                  onDeleteSchoolPost={handleDeleteSchoolPost}
+                  onToggleSchoolLike={handleToggleSchoolLike}
+                  onAddSchoolComment={handleAddSchoolComment}
+                  onDeleteSchoolComment={handleDeleteSchoolComment}
+                  externalWriteOpen={isSchoolWriteOpen}
+                  onCloseExternalWrite={() => setIsSchoolWriteOpen(false)}
+                />
+              )}
+
+              {boardSubTab === 'counseling' && (
+                <CounselingAndQA
+                  counselingData={counselingData}
+                  initialSubTab={counselingSubTab}
+                  onAddQuestion={handleAddQuestion}
+                  onAddQuestionComment={handleAddQuestionComment}
+                  onAddConsult={handleAddConsult}
+                  onNavigateToChat={() => setActiveTab('chat')}
+                  externalWriteTrigger={counselingWriteTrigger}
+                />
+              )}
+            </div>
           )}
 
           {activeTab === 'chat' && (
@@ -738,14 +769,14 @@ export default function App() {
           )}
         </main>
 
-        {/* 폰 프레임 안 오른쪽 밑 플로팅 + 글쓰기 버튼 (전공게시판 / 우리학교 / 입시·질문) */}
-        {(activeTab === 'major' || activeTab === 'school' || activeTab === 'counseling') && (
+        {/* 폰 프레임 안 오른쪽 밑 플로팅 + 글쓰기 버튼 (통합 게시판 내 전공/우리학교/입시·질문) */}
+        {activeTab === 'board' && (
           <button
             type="button"
             onClick={() => {
-              if (activeTab === 'school') {
+              if (boardSubTab === 'school') {
                 setIsSchoolWriteOpen(true);
-              } else if (activeTab === 'counseling') {
+              } else if (boardSubTab === 'counseling') {
                 setCounselingWriteTrigger((c) => c + 1);
               } else {
                 setIsWriteModalOpen(true);

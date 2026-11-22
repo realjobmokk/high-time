@@ -1,9 +1,9 @@
-// 하단 6개 탭 내비게이션 바 컴포넌트 (선택된 탭만 동그랗게 위로 올라오며 강조)
+// 하단 4개 핵심 탭 내비게이션 바 컴포넌트 (선택된 탭만 동그랗게 위로 올라오며 강조)
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export type TabType = 'major' | 'school' | 'home' | 'counseling' | 'chat' | 'profile';
+export type TabType = 'home' | 'board' | 'chat' | 'profile';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -18,14 +18,7 @@ const TABS: {
   inactiveIcon: keyof typeof Ionicons.glyphMap;
 }[] = [
   { id: 'home', label: '홈', activeIcon: 'home', inactiveIcon: 'home-outline' },
-  { id: 'major', label: '전공게시판', activeIcon: 'layers', inactiveIcon: 'layers-outline' },
-  { id: 'school', label: '우리학교', activeIcon: 'school', inactiveIcon: 'school-outline' },
-  {
-    id: 'counseling',
-    label: '입시·질문',
-    activeIcon: 'heart-circle',
-    inactiveIcon: 'heart-circle-outline',
-  },
+  { id: 'board', label: '게시판', activeIcon: 'layers', inactiveIcon: 'layers-outline' },
   {
     id: 'chat',
     label: '1:1채팅',

@@ -36,7 +36,7 @@ interface HomeTabProps {
   customTimetable: CustomTimetableBlock[];
   onAddOrUpdateTimetableBlock: (block: CustomTimetableBlock) => void;
   onDeleteTimetableBlock: (blockId: string) => void;
-  onNavigateTab: (tab: 'major' | 'school' | 'home' | 'counseling' | 'chat' | 'profile') => void;
+  onNavigateTab: (tab: 'board' | 'major' | 'school' | 'home' | 'counseling' | 'chat' | 'profile') => void;
   onOpenWriteModal: (targetBoard: 'major' | 'school') => void;
   onSelectPost: (post: MajorPost) => void;
   onOpenAskModal: () => void;
