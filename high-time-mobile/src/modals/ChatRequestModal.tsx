@@ -119,14 +119,14 @@ export const ChatRequestModal: React.FC<ChatRequestModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: 'rgba(34, 39, 34, 0.45)',
     justifyContent: 'center',
     padding: 18,
   },
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fafaf6',
     borderRadius: 20,
-    padding: 18,
+    padding: 20,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#e2e5dd',
     marginBottom: 14,
   },
   headerLeft: {
@@ -146,36 +146,34 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#222722',
   },
   closeBtn: {
     padding: 4,
   },
   targetBox: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#edf0e6',
     borderRadius: 12,
     padding: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
     marginBottom: 14,
   },
   targetLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#64748b',
+    color: '#6d746a',
     marginBottom: 2,
   },
   targetName: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#222722',
     marginBottom: 4,
   },
   postTitle: {
     fontSize: 11,
-    color: '#dc2626',
+    color: '#b64832',
     fontWeight: '600',
   },
   inputLabel: {
