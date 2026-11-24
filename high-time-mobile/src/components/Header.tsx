@@ -38,10 +38,15 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={styles.header}>
       {/* 좌측 화면 제목 */}
       {isHome ? (
-        <Text style={[styles.title, styles.homeTitle]}>
-          <Text style={styles.brandAccent}>H</Text>igh
-          <Text style={styles.brandAccent}>T</Text>ime
-        </Text>
+        <View style={styles.brandRow}>
+          <View style={styles.brandIconBadge}>
+            <Ionicons name="school" size={16} color="#ffffff" />
+          </View>
+          <Text style={[styles.title, styles.homeTitle]}>
+            <Text style={styles.brandAccent}>H</Text>igh
+            <Text style={styles.brandAccent}>T</Text>ime
+          </Text>
+        </View>
       ) : (
         <Text style={styles.title}>{TAB_TITLES[activeTab]}</Text>
       )}
@@ -107,6 +112,19 @@ const styles = StyleSheet.create({
   },
   homeTitle: {
     fontSize: 24,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandIconBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: COLORS.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brandAccent: {
     color: COLORS.accent,
