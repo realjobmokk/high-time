@@ -592,6 +592,33 @@ export default function App() {
       if (!isMounted || !gUser) return;
 
       const googleUsername = `google_${gUser.email || gUser.id}`;
+
+      // 기존에 인증된 학교 정보가 DB에 있으면 함께 불러오고, 없으면 기본 학교(대현고등학교) 설정
+      let resolvedSchool: School | null = null;
+      const latestDbUser = await fetchLatestVerifiedUserFromDb();
+      if (latestDbUser?.schoolName) {
+        const neisList = await searchNeisHighSchools(latestDbUser.schoolName);
+        resolvedSchool =
+          neisList.find((s) => s.name === latestDbUser.schoolName) ||
+          neisList[0] || {
+            id: latestDbUser.schoolId || 'daehyeon',
+            name: latestDbUser.schoolName,
+            region: '울산',
+          };
+      } else {
+        const defaultNeis = await searchNeisHighSchools('대현고등학교');
+        resolvedSchool = defaultNeis[0] || {
+          id: 'daehyeon',
+          name: '대현고등학교',
+          region: '울산',
+          officeCode: 'H10',
+          schoolCode: '7480034',
+        };
+      }
+
+      if (!isMounted) return;
+
+      setCurrentSchool((prev) => (prev.name ? prev : resolvedSchool!));
       setCurrentUser((prev) => ({
         ...prev,
         id: gUser.id,
