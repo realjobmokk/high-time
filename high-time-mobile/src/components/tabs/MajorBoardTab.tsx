@@ -231,8 +231,10 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
             })}
           </View>
         )}
+      </ScrollView>
 
-        {/* 하단 글쓰기 버튼 */}
+      {/* 하단 고정 글쓰기 바 */}
+      <View style={styles.bottomActionBar}>
         <TouchableOpacity
           style={styles.writeBtn}
           onPress={onOpenWriteModal}
@@ -241,7 +243,7 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
           <Ionicons name="pencil" size={16} color="#ffffff" />
           <Text style={styles.writeBtnText}>글쓰기</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -448,7 +450,15 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
   },
 
-  // 하단 글쓰기 버튼
+  // 하단 고정 글쓰기 바
+  bottomActionBar: {
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingHorizontal: 22,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
   writeBtn: {
     backgroundColor: COLORS.ink,
     borderRadius: 10,
@@ -457,7 +467,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 4,
   },
   writeBtnText: {
     fontSize: 14,

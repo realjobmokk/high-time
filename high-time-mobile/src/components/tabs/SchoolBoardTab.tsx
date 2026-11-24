@@ -204,8 +204,10 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
             })}
           </View>
         )}
+      </ScrollView>
 
-        {/* 하단 글쓰기 버튼 */}
+      {/* 하단 고정 글쓰기 바 */}
+      <View style={styles.bottomActionBar}>
         <TouchableOpacity
           style={styles.writeBtn}
           onPress={() =>
@@ -216,7 +218,7 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
           <Ionicons name="pencil" size={16} color="#ffffff" />
           <Text style={styles.writeBtnText}>글쓰기</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       {/* 우리학교 게시글 상세 & 좋아요/댓글 모달 */}
       <PhoneModal visible={Boolean(selectedPost)} animationType="slide" transparent>
@@ -547,6 +549,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.muted,
   },
+  bottomActionBar: {
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingHorizontal: 22,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
   writeBtn: {
     backgroundColor: COLORS.ink,
     borderRadius: 10,
@@ -555,7 +565,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 4,
   },
   writeBtnText: {
     fontSize: 14,

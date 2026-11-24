@@ -295,7 +295,10 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
             )}
           </View>
         )}
-        {/* 하단 글쓰기 / 신청하기 CTA 버튼 */}
+      </ScrollView>
+
+      {/* 하단 고정 글쓰기 / 신청하기 바 */}
+      <View style={styles.bottomActionBar}>
         <TouchableOpacity
           style={styles.ctaBtn}
           onPress={subTab === 'direct' ? onOpenAskDirect : onOpenAskAdmission}
@@ -306,7 +309,7 @@ export const CounselingTab: React.FC<CounselingTabProps> = ({
             {subTab === 'direct' ? '입시 질문 올리기' : '입시 컨설팅 신청하기'}
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       {/* 입시질문 상세 & 댓글 모달 (전공게시판 PostDetailModal 스타일) */}
       <PhoneModal visible={Boolean(selectedQuestion)} animationType="slide" transparent>
@@ -520,6 +523,14 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     gap: 8,
   },
+  bottomActionBar: {
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingHorizontal: 22,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
   ctaBtn: {
     backgroundColor: COLORS.ink,
     borderRadius: 10,
@@ -528,7 +539,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 4,
   },
   ctaBtnText: {
     fontSize: 14,
