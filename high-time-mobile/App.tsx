@@ -87,6 +87,9 @@ import {
   subscribePostsRealtime,
   buildUserChatKey,
   buildPairRoomId,
+  supabase,
+  getGoogleSessionUser,
+  signOutSupabaseAuth,
 } from './src/services/supabaseService';
 import { searchNeisHighSchools } from './src/services/neisService';
 
@@ -580,8 +583,54 @@ export default function App() {
     await saveVerifiedUserToDb(nextUser, currentSchool);
   };
 
+  // Google OAuth 로그인 후 리디렉션 복귀 시 자동으로 세션 감지하여 로그인 처리
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncGoogleUser = async () => {
+      const gUser = await getGoogleSessionUser();
+      if (!isMounted || !gUser) return;
+
+      const googleUsername = `google_${gUser.email || gUser.id}`;
+      setCurrentUser((prev) => ({
+        ...prev,
+        id: gUser.id,
+        username: prev.username || googleUsername,
+        socialProvider: 'google',
+        email: gUser.email,
+        name: prev.name || gUser.name,
+        nickname: prev.nickname || gUser.name,
+        profileImage: prev.profileImage || gUser.avatarUrl,
+        isVerified: true,
+        passVerified: true,
+        certVerified: prev.certVerified,
+        verifiedAt: prev.verifiedAt || new Date().toISOString().slice(0, 10),
+      }));
+      setIsLoggedIn(true);
+    };
+
+    syncGoogleUser();
+
+    if (supabase) {
+      const { data: authSub } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') {
+          syncGoogleUser();
+        }
+      });
+      return () => {
+        isMounted = false;
+        authSub.subscription.unsubscribe();
+      };
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   /** 로그아웃 (처음 4단계 로그인 화면으로 돌아가기) */
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOutSupabaseAuth();
     setIsLoggedIn(false);
     setActiveTab('home');
   };

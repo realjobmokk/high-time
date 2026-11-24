@@ -32,6 +32,7 @@ import {
   checkUsernameAvailable,
   registerAccountToDb,
   loginWithUsernamePassword,
+  signInWithGoogleOAuth,
 } from '../services/supabaseService';
 
 interface LoginScreenProps {
@@ -120,7 +121,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [loginId, setLoginId] = useState<string>('');
   const [loginPassword, setLoginPassword] = useState<string>('');
   const [isCheckingDb, setIsCheckingDb] = useState<boolean>(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [loginErrorMsg, setLoginErrorMsg] = useState<string | null>(null);
+
+  const handleGoogleLogin = async () => {
+    setLoginErrorMsg(null);
+    setIsGoogleLoading(true);
+    const res = await signInWithGoogleOAuth();
+    if (!res.ok) {
+      setIsGoogleLoading(false);
+      setLoginErrorMsg(
+        res.errorMessage || 'Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+      );
+    }
+  };
 
   const handleDbLogin = async () => {
     setLoginErrorMsg(null);
@@ -638,6 +652,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   <>
                     <Text style={styles.finishBtnText}>로그인</Text>
                     <Ionicons name="log-in-outline" size={18} color="#ffffff" />
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* 구분선 & Google 소셜 로그인 */}
+              <View style={styles.orDividerRow}>
+                <View style={styles.orDividerLine} />
+                <Text style={styles.orDividerText}>또는</Text>
+                <View style={styles.orDividerLine} />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.googleBtn, isGoogleLoading && { opacity: 0.6 }]}
+                onPress={handleGoogleLogin}
+                disabled={isGoogleLoading}
+                activeOpacity={0.85}
+              >
+                {isGoogleLoading ? (
+                  <ActivityIndicator color={COLORS.ink} />
+                ) : (
+                  <>
+                    <View style={styles.googleGBadge}>
+                      <Text style={styles.googleGText}>G</Text>
+                    </View>
+                    <Text style={styles.googleBtnText}>Google 계정으로 계속하기</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -1685,17 +1724,63 @@ const styles = StyleSheet.create({
   },
   finishBtn: {
     marginTop: 14,
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.ink,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   finishBtnText: {
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '800',
+  },
+  orDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  orDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  orDividerText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.muted,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingVertical: 13,
+  },
+  googleGBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.sageCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleGText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: COLORS.ink,
+  },
+  googleBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.ink,
   },
 });

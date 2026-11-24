@@ -1012,4 +1012,72 @@ export async function verifyRegisteredUserInDb(
   };
 }
 
+// =============================================================================
+// 6. Supabase Google OAuth 소셜 로그인 / 세션 조회 / 로그아웃
+// =============================================================================
+
+export interface GoogleOAuthUserInfo {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+}
+
+/** Google OAuth 로그인 시작 (브라우저에서 구글 계정 선택 창으로 이동) */
+export async function signInWithGoogleOAuth(): Promise<{
+  ok: boolean;
+  errorMessage?: string;
+}> {
+  if (!supabase) {
+    return { ok: false, errorMessage: 'Supabase 연결 설정이 되어 있지 않습니다.' };
+  }
+
+  const redirectTo =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : undefined;
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+      queryParams: {
+        prompt: 'select_account',
+      },
+    },
+  });
+
+  if (error) {
+    return { ok: false, errorMessage: error.message };
+  }
+  return { ok: true };
+}
+
+/** 현재 Supabase Auth 세션에서 Google 로그인 유저 정보 읽기 */
+export async function getGoogleSessionUser(): Promise<GoogleOAuthUserInfo | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.user) return null;
+
+  const u = data.session.user;
+  const meta = u.user_metadata || {};
+  const displayName =
+    meta.full_name ||
+    meta.name ||
+    (u.email ? u.email.split('@')[0] : '구글학생');
+
+  return {
+    id: u.id,
+    email: u.email || '',
+    name: String(displayName),
+    avatarUrl: meta.avatar_url || meta.picture || undefined,
+  };
+}
+
+/** Supabase Auth 로그아웃 */
+export async function signOutSupabaseAuth(): Promise<void> {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+}
+
 
