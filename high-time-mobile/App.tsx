@@ -95,10 +95,16 @@ import {
 import { searchNeisHighSchools } from './src/services/neisService';
 
 export default function App() {
+  // 랜딩페이지 임베드(?preview=1) 시 로그인 화면 없이 바로 체험 모드로 진입
+  const isPreviewMode =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('preview') === '1';
+
   // =========================================================
   //  1. 로그인 여부 & 사용자 · 소속 학교 상태
   // =========================================================
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(isPreviewMode);
   const [googlePendingUser, setGooglePendingUser] = useState<{
     email: string;
     name: string;
@@ -136,25 +142,27 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
     socialProvider: 'kakao',
     email: '',
-    name: '',
-    nickname: '',
-    bio: '',
+    name: isPreviewMode ? '서정윤' : '',
+    nickname: isPreviewMode ? '서정윤학생' : '',
+    bio: isPreviewMode ? '대현고등학교 재학 중인 고2 학생입니다.' : '',
     targetMajor: '컴퓨터·IT·인공지능',
     birthDate: '',
     telecom: 'SKT',
     phone: '',
     grade: '고2',
     certFileName: '',
-    isVerified: false,
-    passVerified: false,
-    certVerified: false,
-    verifiedAt: '',
+    isVerified: isPreviewMode,
+    passVerified: isPreviewMode,
+    certVerified: isPreviewMode,
+    verifiedAt: isPreviewMode ? '2026. 11. 24' : '',
   });
 
   const [currentSchool, setCurrentSchool] = useState<School>({
-    id: '',
-    name: '',
-    region: '',
+    id: isPreviewMode ? 'daehyeon' : '',
+    name: isPreviewMode ? '대현고등학교' : '',
+    region: isPreviewMode ? '울산' : '',
+    officeCode: isPreviewMode ? 'H10' : undefined,
+    schoolCode: isPreviewMode ? '7480034' : undefined,
   });
 
   // =========================================================
