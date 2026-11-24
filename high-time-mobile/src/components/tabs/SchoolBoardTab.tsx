@@ -123,10 +123,6 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
               재학증명서 인증 완료 · 외부 열람 차단
             </Text>
           </View>
-          <View style={styles.lockBadge}>
-            <Ionicons name="lock-closed" size={12} color={COLORS.accent} />
-            <Text style={styles.lockBadgeText}>비공개</Text>
-          </View>
         </View>
 
         {/* 게시글 목록 */}
