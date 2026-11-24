@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import {
   CurrentUser,
@@ -196,9 +197,27 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       <View style={styles.greetingSection}>
         <Text style={styles.dateText}>{fullDateLabel}</Text>
         <View style={styles.greetingRow}>
-          <Text style={styles.greetingTitle} numberOfLines={1}>
-            {displayName}님, 반가워요.
-          </Text>
+          <TouchableOpacity
+            style={styles.greetingUserWrap}
+            onPress={() => onNavigateTab('profile')}
+            activeOpacity={0.75}
+          >
+            {currentUser.profileImage ? (
+              <Image
+                source={{ uri: currentUser.profileImage }}
+                style={styles.homeAvatarImg}
+              />
+            ) : (
+              <View style={styles.homeAvatarPlaceholder}>
+                <Text style={styles.homeAvatarInitial}>
+                  {displayName.slice(0, 1)}
+                </Text>
+              </View>
+            )}
+            <Text style={styles.greetingTitle} numberOfLines={1}>
+              {displayName}님, 반가워요.
+            </Text>
+          </TouchableOpacity>
           <View style={styles.suneungBadge}>
             <Text style={styles.suneungBadgeText}>{suneungDDayLabel}</Text>
           </View>
@@ -422,12 +441,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
+  greetingUserWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  homeAvatarImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  homeAvatarPlaceholder: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: COLORS.avatarGreenBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  homeAvatarInitial: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.success,
+  },
   greetingTitle: {
     flex: 1,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     color: COLORS.ink,
-    letterSpacing: -0.48,
+    letterSpacing: -0.44,
   },
   suneungBadge: {
     backgroundColor: COLORS.accentSoft,

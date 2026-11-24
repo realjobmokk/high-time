@@ -155,12 +155,23 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             onPress={handleRequestGalleryAccess}
             activeOpacity={0.8}
           >
-            {currentUser.profileImage ? (
-              <Image
-                source={{ uri: currentUser.profileImage }}
-                style={styles.avatarImage}
-              />
-            ) : null}
+            <View style={styles.avatarWrap}>
+              {currentUser.profileImage ? (
+                <Image
+                  source={{ uri: currentUser.profileImage }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitial}>
+                    {(currentUser.name || currentUser.nickname || '학').slice(0, 1)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.cameraBadge}>
+                <Ionicons name="camera" size={11} color="#ffffff" />
+              </View>
+            </View>
             <Text style={styles.userName} numberOfLines={1}>
               {currentUser.name || currentUser.nickname || '학생'}
             </Text>
@@ -394,12 +405,45 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+  },
+  avatarWrap: {
+    position: 'relative',
+    width: 52,
+    height: 52,
   },
   avatarImage: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  avatarPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: COLORS.avatarGreenBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.success,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    right: -3,
+    bottom: -3,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.ink,
+    borderWidth: 2,
+    borderColor: COLORS.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userName: {
     fontSize: 30,

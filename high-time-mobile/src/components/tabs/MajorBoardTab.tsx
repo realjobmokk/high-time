@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MajorPost, CurrentUser, School } from '../../types';
@@ -172,10 +173,24 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
 
                   {/* 작성자 + 1:1 채팅 버튼 */}
                   <View style={styles.authorChatRow}>
-                    <Text style={styles.authorText} numberOfLines={1}>
-                      {post.author.isAnonymous ? '익명' : post.author.nickname} ·{' '}
-                      {shortSchool} {post.author.grade}
-                    </Text>
+                    <View style={styles.authorLeft}>
+                      {mine && !post.author.isAnonymous && currentUser.profileImage ? (
+                        <Image
+                          source={{ uri: currentUser.profileImage }}
+                          style={styles.authorAvatarImg}
+                        />
+                      ) : (
+                        <View style={styles.authorAvatar}>
+                          <Text style={styles.authorAvatarText}>
+                            {(post.author.isAnonymous ? '익' : post.author.nickname).slice(0, 1)}
+                          </Text>
+                        </View>
+                      )}
+                      <Text style={styles.authorText} numberOfLines={1}>
+                        {post.author.isAnonymous ? '익명' : post.author.nickname} ·{' '}
+                        {shortSchool} {post.author.grade}
+                      </Text>
+                    </View>
                     {!mine && (
                       <TouchableOpacity
                         style={styles.chatBtn}
@@ -358,6 +373,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
     marginTop: 2,
+  },
+  authorLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  authorAvatarImg: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+  },
+  authorAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    backgroundColor: COLORS.avatarGreenBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authorAvatarText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.success,
   },
   authorText: {
     flex: 1,
