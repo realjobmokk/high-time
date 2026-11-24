@@ -607,84 +607,91 @@ export default function App() {
   // Google OAuth 로그인 후 리디렉션 복귀 시 자동으로 세션 감지하여 로그인 처리
   useEffect(() => {
     let isMounted = true;
+    let isSyncing = false;
 
     const syncGoogleUser = async () => {
-      const gUser = await getGoogleSessionUser();
-      if (!isMounted || !gUser) return;
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        const gUser = await getGoogleSessionUser();
+        if (!isMounted || !gUser) return;
 
-      const googleUsername = `google_${(gUser.email || gUser.id).trim().toLowerCase()}`;
-      const existingDbUser = await fetchUserByLoginId(googleUsername);
-
-      if (!isMounted) return;
-
-      // 1) 이미 학생 인증까지 마친 Google 기존 회원 -> DB 정보 불러와서 바로 로그인
-      if (existingDbUser && existingDbUser.schoolName) {
-        const neisList = await searchNeisHighSchools(existingDbUser.schoolName);
-        const matchedSchool: School =
-          neisList.find((s) => s.name === existingDbUser.schoolName) ||
-          neisList[0] || {
-            id: existingDbUser.schoolId || 'school',
-            name: existingDbUser.schoolName,
-            region: '대한민국',
-          };
+        const googleUsername = `google_${(gUser.email || gUser.id).trim().toLowerCase()}`;
+        const existingDbUser = await fetchUserByLoginId(googleUsername);
 
         if (!isMounted) return;
+
+        // 1) 이미 학생 인증까지 마친 Google 기존 회원 -> DB 정보 불러와서 바로 로그인
+        if (existingDbUser && existingDbUser.schoolName) {
+          const neisList = await searchNeisHighSchools(existingDbUser.schoolName);
+          const matchedSchool: School =
+            neisList.find((s) => s.name === existingDbUser.schoolName) ||
+            neisList[0] || {
+              id: existingDbUser.schoolId || 'school',
+              name: existingDbUser.schoolName,
+              region: '대한민국',
+            };
+
+          if (!isMounted) return;
+          try {
+            if (typeof localStorage !== 'undefined') {
+              localStorage.removeItem('hightime_google_oauth_intent');
+            }
+          } catch {}
+          setGoogleLoginError(null);
+          setGooglePendingUser(null);
+          setCurrentSchool(matchedSchool);
+          setCurrentUser((prev) => ({
+            ...prev,
+            id: gUser.id,
+            username: existingDbUser.username,
+            socialProvider: 'google',
+            email: gUser.email,
+            name: existingDbUser.name || gUser.name,
+            nickname: `${existingDbUser.name || gUser.name}학생`,
+            grade: existingDbUser.grade || '고2',
+            profileImage: prev.profileImage || gUser.avatarUrl,
+            isVerified: true,
+            passVerified: existingDbUser.passVerified,
+            certVerified: existingDbUser.certVerified,
+            verifiedAt: existingDbUser.verifiedAt,
+          }));
+          setIsLoggedIn(true);
+          return;
+        }
+
+        // 2) 미가입 Google 계정인 경우:
+        // - [로그인] 화면에서 시도했으면 -> Google 세션 정리 후 다시 로그인 창으로 돌려보내고 안내 알림 표시
+        // - [회원가입] 화면에서 시도했으면 -> 아이디/비밀번호 생성 및 학생 인증 진행
+        let oauthIntent = 'login';
         try {
           if (typeof localStorage !== 'undefined') {
+            oauthIntent = localStorage.getItem('hightime_google_oauth_intent') || 'login';
             localStorage.removeItem('hightime_google_oauth_intent');
           }
         } catch {}
-        setGoogleLoginError(null);
-        setGooglePendingUser(null);
-        setCurrentSchool(matchedSchool);
-        setCurrentUser((prev) => ({
-          ...prev,
-          id: gUser.id,
-          username: existingDbUser.username,
-          socialProvider: 'google',
-          email: gUser.email,
-          name: existingDbUser.name || gUser.name,
-          nickname: `${existingDbUser.name || gUser.name}학생`,
-          grade: existingDbUser.grade || '고2',
-          profileImage: prev.profileImage || gUser.avatarUrl,
-          isVerified: true,
-          passVerified: existingDbUser.passVerified,
-          certVerified: existingDbUser.certVerified,
-          verifiedAt: existingDbUser.verifiedAt,
-        }));
-        setIsLoggedIn(true);
-        return;
-      }
 
-      // 2) 미가입 Google 계정인 경우:
-      // - [로그인] 화면에서 시도했으면 -> Google 세션 정리 후 다시 로그인 창으로 돌려보내고 안내 알림 표시
-      // - [회원가입] 화면에서 시도했으면 -> 아이디/비밀번호 생성 및 학생 인증 진행
-      let oauthIntent = 'login';
-      try {
-        if (typeof localStorage !== 'undefined') {
-          oauthIntent = localStorage.getItem('hightime_google_oauth_intent') || 'login';
-          localStorage.removeItem('hightime_google_oauth_intent');
+        if (oauthIntent !== 'signup') {
+          await signOutSupabaseAuth();
+          if (!isMounted) return;
+          const errText = `가입된 Google 계정(${gUser.email}) 정보가 없습니다. 먼저 회원가입에서 Google 계정을 연동해 주세요.`;
+          setGooglePendingUser(null);
+          setGoogleLoginError(errText);
+          setIsLoggedIn(false);
+          Alert.alert('로그인 정보 없음', errText);
+          return;
         }
-      } catch {}
 
-      if (oauthIntent !== 'signup') {
-        await signOutSupabaseAuth();
-        if (!isMounted) return;
-        setGooglePendingUser(null);
-        setGoogleLoginError(
-          `가입된 Google 계정(${gUser.email}) 정보가 없습니다. 먼저 회원가입에서 Google 계정을 연동해 주세요.`
-        );
+        setGoogleLoginError(null);
+        setGooglePendingUser({
+          email: gUser.email,
+          name: gUser.name,
+          avatarUrl: gUser.avatarUrl,
+        });
         setIsLoggedIn(false);
-        return;
+      } finally {
+        isSyncing = false;
       }
-
-      setGoogleLoginError(null);
-      setGooglePendingUser({
-        email: gUser.email,
-        name: gUser.name,
-        avatarUrl: gUser.avatarUrl,
-      });
-      setIsLoggedIn(false);
     };
 
     syncGoogleUser();
