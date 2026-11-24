@@ -40,6 +40,7 @@ interface LoginScreenProps {
   initialUser: CurrentUser;
   initialSchool: School;
   googlePendingUser?: { email: string; name: string; avatarUrl?: string } | null;
+  googleLoginError?: string | null;
   onLoginSuccess: (
     authData: {
       username: string;
@@ -113,6 +114,7 @@ const TELECOM_LIST = ['SKT', 'KT', 'LG U+', '알뜰폰'];
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   initialUser,
   googlePendingUser = null,
+  googleLoginError = null,
   onLoginSuccess,
 }) => {
   // 상단 탭 모드: 'login' vs 'signup'
@@ -127,11 +129,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [loginPassword, setLoginPassword] = useState<string>('');
   const [isCheckingDb, setIsCheckingDb] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
-  const [loginErrorMsg, setLoginErrorMsg] = useState<string | null>(null);
+  const [loginErrorMsg, setLoginErrorMsg] = useState<string | null>(googleLoginError);
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (intent: 'login' | 'signup' = 'login') => {
     setLoginErrorMsg(null);
     setIsGoogleLoading(true);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('hightime_google_oauth_intent', intent);
+      }
+    } catch {}
     const res = await signInWithGoogleOAuth();
     if (!res.ok) {
       setIsGoogleLoading(false);
@@ -460,6 +467,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }, 900);
   };
 
+  // 미가입 Google 계정으로 로그인 시도 후 돌아온 경우 로그인 탭에서 안내 메시지 + 흔들림 표시
+  React.useEffect(() => {
+    if (googleLoginError) {
+      setAuthMode('login');
+      setLoginErrorMsg(googleLoginError);
+      triggerShake();
+    }
+  }, [googleLoginError]);
+
   // Google OAuth로 신규 가입 진입 시 1단계(아이디·비밀번호 생성 창)로 이동하여 연결된 Google 계정 표시
   React.useEffect(() => {
     if (googlePendingUser) {
@@ -689,7 +705,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.googleBtn, isGoogleLoading && { opacity: 0.6 }]}
-                onPress={handleGoogleLogin}
+                onPress={() => handleGoogleLogin('login')}
                 disabled={isGoogleLoading}
                 activeOpacity={0.85}
               >
@@ -771,7 +787,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     <>
                       <TouchableOpacity
                         style={[styles.googleBtn, { marginBottom: 14 }, isGoogleLoading && { opacity: 0.6 }]}
-                        onPress={handleGoogleLogin}
+                        onPress={() => handleGoogleLogin('signup')}
                         disabled={isGoogleLoading}
                         activeOpacity={0.85}
                       >

@@ -104,6 +104,7 @@ export default function App() {
     name: string;
     avatarUrl?: string;
   } | null>(null);
+  const [googleLoginError, setGoogleLoginError] = useState<string | null>(null);
   const { width: windowWidth } = useWindowDimensions();
   const isSmallMobileWeb = Platform.OS === 'web' && windowWidth <= 520;
 
@@ -628,6 +629,12 @@ export default function App() {
           };
 
         if (!isMounted) return;
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('hightime_google_oauth_intent');
+          }
+        } catch {}
+        setGoogleLoginError(null);
         setGooglePendingUser(null);
         setCurrentSchool(matchedSchool);
         setCurrentUser((prev) => ({
@@ -649,7 +656,29 @@ export default function App() {
         return;
       }
 
-      // 2) 처음 Google로 가입하는 신규 회원 -> 회원가입 2단계(PASS·재학증명서 인증)로 안내
+      // 2) 미가입 Google 계정인 경우:
+      // - [로그인] 화면에서 시도했으면 -> Google 세션 정리 후 다시 로그인 창으로 돌려보내고 안내 알림 표시
+      // - [회원가입] 화면에서 시도했으면 -> 아이디/비밀번호 생성 및 학생 인증 진행
+      let oauthIntent = 'login';
+      try {
+        if (typeof localStorage !== 'undefined') {
+          oauthIntent = localStorage.getItem('hightime_google_oauth_intent') || 'login';
+          localStorage.removeItem('hightime_google_oauth_intent');
+        }
+      } catch {}
+
+      if (oauthIntent !== 'signup') {
+        await signOutSupabaseAuth();
+        if (!isMounted) return;
+        setGooglePendingUser(null);
+        setGoogleLoginError(
+          `가입된 Google 계정(${gUser.email}) 정보가 없습니다. 먼저 회원가입에서 Google 계정을 연동해 주세요.`
+        );
+        setIsLoggedIn(false);
+        return;
+      }
+
+      setGoogleLoginError(null);
       setGooglePendingUser({
         email: gUser.email,
         name: gUser.name,
@@ -1291,6 +1320,7 @@ export default function App() {
         initialUser={currentUser}
         initialSchool={currentSchool}
         googlePendingUser={googlePendingUser}
+        googleLoginError={googleLoginError}
         onLoginSuccess={handleCompleteAuth}
       />
     );
