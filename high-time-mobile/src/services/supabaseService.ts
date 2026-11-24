@@ -1080,4 +1080,74 @@ export async function signOutSupabaseAuth(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+/** login_id(예: google_user@gmail.com)로 DB에서 기존 인증 회원 조회 */
+export async function fetchUserByLoginId(loginId: string): Promise<{
+  username: string;
+  name: string;
+  grade: string;
+  schoolId: string;
+  schoolName: string;
+  passVerified: boolean;
+  certVerified: boolean;
+  verifiedAt: string;
+} | null> {
+  if (!supabase) return null;
+  const trimmed = loginId.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('login_id', trimmed)
+    .limit(1);
+
+  if (error || !data || data.length === 0) return null;
+
+  const row = data[0];
+  return {
+    username: row.login_id,
+    name: row.name,
+    grade: row.grade,
+    schoolId: row.school_id,
+    schoolName: row.school_name,
+    passVerified: row.pass_verified,
+    certVerified: row.cert_verified,
+    verifiedAt: row.verified_at,
+  };
+}
+
+/** Google OAuth 회원가입 완료 시 DB에 저장 */
+export async function registerGoogleAccountToDb(
+  user: CurrentUser,
+  school: School,
+  googleEmail: string
+): Promise<{ success: boolean; message?: string }> {
+  if (!supabase) {
+    return { success: false, message: 'Supabase 연결이 설정되어 있지 않습니다.' };
+  }
+
+  const googleLoginId = `google_${googleEmail.trim().toLowerCase()}`;
+  const existing = await fetchUserByLoginId(googleLoginId);
+  if (existing) {
+    return { success: true };
+  }
+
+  const { error } = await supabase.from('users').insert({
+    login_id: googleLoginId,
+    password: 'google_oauth_verified',
+    name: user.name,
+    grade: user.grade,
+    school_id: school.id,
+    school_name: school.name,
+    pass_verified: user.passVerified,
+    cert_verified: user.certVerified,
+    verified_at: user.verifiedAt,
+  });
+
+  if (error && error.code !== '23505') {
+    return { success: false, message: `Google 회원 저장 오류: ${error.message}` };
+  }
+  return { success: true };
+}
+
 

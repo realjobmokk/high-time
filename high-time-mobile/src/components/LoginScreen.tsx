@@ -31,6 +31,7 @@ import { COLORS } from '../theme/colors';
 import {
   checkUsernameAvailable,
   registerAccountToDb,
+  registerGoogleAccountToDb,
   loginWithUsernamePassword,
   signInWithGoogleOAuth,
 } from '../services/supabaseService';
@@ -38,6 +39,7 @@ import {
 interface LoginScreenProps {
   initialUser: CurrentUser;
   initialSchool: School;
+  googlePendingUser?: { email: string; name: string; avatarUrl?: string } | null;
   onLoginSuccess: (
     authData: {
       username: string;
@@ -110,10 +112,13 @@ const TELECOM_LIST = ['SKT', 'KT', 'LG U+', '알뜰폰'];
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   initialUser,
+  googlePendingUser = null,
   onLoginSuccess,
 }) => {
   // 상단 탭 모드: 'login' vs 'signup'
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>(
+    googlePendingUser ? 'signup' : 'login'
+  );
 
   // =========================================================================
   // [A] 로그인(Login) 탭 상태 — 아이디 & 비밀번호 검증
@@ -455,7 +460,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }, 900);
   };
 
-  // 회원가입 4단계 완료 -> DB에 아이디/비밀번호 및 학생 정보 저장 후 로그인
+  // Google OAuth로 신규 가입 진입 시 자동으로 2단계(PASS 본인인증)부터 이어서 진행
+  React.useEffect(() => {
+    if (googlePendingUser) {
+      setAuthMode('signup');
+      setStep(2);
+      setSocialProvider('google');
+      setSocialEmail(googlePendingUser.email);
+      setSignupUsername(`google_${googlePendingUser.email.trim().toLowerCase()}`);
+      if (googlePendingUser.name) {
+        setPassName(googlePendingUser.name.replace(/\s+/g, ''));
+      }
+    }
+  }, [googlePendingUser]);
+
+  // 회원가입 4단계 완료 -> DB에 아이디/비밀번호(또는 Google 연동 계정) 및 학생 정보 저장 후 로그인
   const handleFinishSignup = async () => {
     if (!verificationResult?.isMatch || !selectedSchool) return;
 
@@ -465,20 +484,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       '0'
     )}. ${String(today.getDate()).padStart(2, '0')}`;
 
-    const trimmedId = signupUsername.trim().toLowerCase();
+    const isGoogleSignup = Boolean(googlePendingUser);
+    const trimmedId = isGoogleSignup
+      ? `google_${googlePendingUser!.email.trim().toLowerCase()}`
+      : signupUsername.trim().toLowerCase();
 
     const cleanName = passName.replace(/\s+/g, '');
 
     const newUserObj: CurrentUser = {
       username: trimmedId,
-      socialProvider,
-      email: socialEmail,
+      socialProvider: isGoogleSignup ? 'google' : socialProvider,
+      email: isGoogleSignup ? googlePendingUser!.email : socialEmail,
       name: cleanName,
       nickname: `${cleanName}학생`,
       birthDate: passBirth.trim(),
       telecom,
       phone: passPhone.trim(),
       grade: certGrade,
+      profileImage: googlePendingUser?.avatarUrl,
       certFileName,
       isVerified: true,
       passVerified: true,
@@ -486,25 +509,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       verifiedAt,
     };
 
-    const res = await registerAccountToDb(
-      newUserObj,
-      selectedSchool,
-      trimmedId,
-      signupPassword
-    );
+    const res = isGoogleSignup
+      ? await registerGoogleAccountToDb(newUserObj, selectedSchool, googlePendingUser!.email)
+      : await registerAccountToDb(newUserObj, selectedSchool, trimmedId, signupPassword);
 
     if (!res.success) {
       Alert.alert('회원가입 오류', res.message || '이미 사용 중인 아이디입니다.');
-      setStep(1);
-      setUsernameCheckStatus('duplicate');
+      if (!isGoogleSignup) {
+        setStep(1);
+        setUsernameCheckStatus('duplicate');
+      }
       return;
     }
 
     onLoginSuccess(
       {
         username: trimmedId,
-        socialProvider,
-        email: socialEmail,
+        socialProvider: isGoogleSignup ? 'google' : socialProvider,
+        email: isGoogleSignup ? googlePendingUser!.email : socialEmail,
         name: cleanName,
         nickname: `${cleanName}학생`,
         birthDate: passBirth.trim(),
@@ -517,7 +539,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         certVerified: true,
         verifiedAt,
       },
-      false // registerAccountToDb에서 이미 저장 완료
+      false // DB 저장 완료
     );
   };
 
@@ -726,13 +748,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 ))}
               </View>
 
-              {/* STEP 1: 아이디(중복 불가) & 비밀번호 생성 */}
+              {/* STEP 1: Google 빠른 가입 또는 아이디 & 비밀번호 생성 */}
               {step === 1 && (
                 <View>
-                  <Text style={styles.stepTitle}>1단계: 아이디 및 비밀번호 만들기</Text>
+                  <Text style={styles.stepTitle}>1단계: 계정 만들기</Text>
                   <Text style={styles.stepDesc}>
-                    HighTime에서 사용할 고유 아이디(중복 불가)와 비밀번호를 만들어 주세요.
+                    Google 계정으로 간편하게 가입·연동하거나, HighTime 전용 아이디를 만들어 주세요. (가입 후에는 로그인 화면에서 Google 로그인도 바로 이용 가능합니다.)
                   </Text>
+
+                  <TouchableOpacity
+                    style={[styles.googleBtn, { marginBottom: 14 }, isGoogleLoading && { opacity: 0.6 }]}
+                    onPress={handleGoogleLogin}
+                    disabled={isGoogleLoading}
+                    activeOpacity={0.85}
+                  >
+                    {isGoogleLoading ? (
+                      <ActivityIndicator color={COLORS.ink} />
+                    ) : (
+                      <>
+                        <View style={styles.googleGBadge}>
+                          <Text style={styles.googleGText}>G</Text>
+                        </View>
+                        <Text style={styles.googleBtnText}>Google 계정으로 가입 / 연동하기</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={[styles.orDividerRow, { marginTop: 2, marginBottom: 14 }]}>
+                    <View style={styles.orDividerLine} />
+                    <Text style={styles.orDividerText}>또는 아이디로 직접 가입</Text>
+                    <View style={styles.orDividerLine} />
+                  </View>
 
                   <Text style={styles.inputLabel}>아이디 (중복 불가 · 영문/숫자 3자 이상)</Text>
                   <View style={styles.searchRow}>

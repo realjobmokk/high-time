@@ -90,6 +90,7 @@ import {
   supabase,
   getGoogleSessionUser,
   signOutSupabaseAuth,
+  fetchUserByLoginId,
 } from './src/services/supabaseService';
 import { searchNeisHighSchools } from './src/services/neisService';
 
@@ -98,6 +99,11 @@ export default function App() {
   //  1. 로그인 여부 & 사용자 · 소속 학교 상태
   // =========================================================
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [googlePendingUser, setGooglePendingUser] = useState<{
+    email: string;
+    name: string;
+    avatarUrl?: string;
+  } | null>(null);
   const { width: windowWidth } = useWindowDimensions();
   const isSmallMobileWeb = Platform.OS === 'web' && windowWidth <= 520;
 
@@ -605,49 +611,51 @@ export default function App() {
       const gUser = await getGoogleSessionUser();
       if (!isMounted || !gUser) return;
 
-      const googleUsername = `google_${gUser.email || gUser.id}`;
-
-      // 기존에 인증된 학교 정보가 DB에 있으면 함께 불러오고, 없으면 기본 학교(대현고등학교) 설정
-      let resolvedSchool: School | null = null;
-      const latestDbUser = await fetchLatestVerifiedUserFromDb();
-      if (latestDbUser?.schoolName) {
-        const neisList = await searchNeisHighSchools(latestDbUser.schoolName);
-        resolvedSchool =
-          neisList.find((s) => s.name === latestDbUser.schoolName) ||
-          neisList[0] || {
-            id: latestDbUser.schoolId || 'daehyeon',
-            name: latestDbUser.schoolName,
-            region: '울산',
-          };
-      } else {
-        const defaultNeis = await searchNeisHighSchools('대현고등학교');
-        resolvedSchool = defaultNeis[0] || {
-          id: 'daehyeon',
-          name: '대현고등학교',
-          region: '울산',
-          officeCode: 'H10',
-          schoolCode: '7480034',
-        };
-      }
+      const googleUsername = `google_${(gUser.email || gUser.id).trim().toLowerCase()}`;
+      const existingDbUser = await fetchUserByLoginId(googleUsername);
 
       if (!isMounted) return;
 
-      setCurrentSchool((prev) => (prev.name ? prev : resolvedSchool!));
-      setCurrentUser((prev) => ({
-        ...prev,
-        id: gUser.id,
-        username: prev.username || googleUsername,
-        socialProvider: 'google',
+      // 1) 이미 학생 인증까지 마친 Google 기존 회원 -> DB 정보 불러와서 바로 로그인
+      if (existingDbUser && existingDbUser.schoolName) {
+        const neisList = await searchNeisHighSchools(existingDbUser.schoolName);
+        const matchedSchool: School =
+          neisList.find((s) => s.name === existingDbUser.schoolName) ||
+          neisList[0] || {
+            id: existingDbUser.schoolId || 'school',
+            name: existingDbUser.schoolName,
+            region: '대한민국',
+          };
+
+        if (!isMounted) return;
+        setGooglePendingUser(null);
+        setCurrentSchool(matchedSchool);
+        setCurrentUser((prev) => ({
+          ...prev,
+          id: gUser.id,
+          username: existingDbUser.username,
+          socialProvider: 'google',
+          email: gUser.email,
+          name: existingDbUser.name || gUser.name,
+          nickname: `${existingDbUser.name || gUser.name}학생`,
+          grade: existingDbUser.grade || '고2',
+          profileImage: prev.profileImage || gUser.avatarUrl,
+          isVerified: true,
+          passVerified: existingDbUser.passVerified,
+          certVerified: existingDbUser.certVerified,
+          verifiedAt: existingDbUser.verifiedAt,
+        }));
+        setIsLoggedIn(true);
+        return;
+      }
+
+      // 2) 처음 Google로 가입하는 신규 회원 -> 회원가입 2단계(PASS·재학증명서 인증)로 안내
+      setGooglePendingUser({
         email: gUser.email,
-        name: prev.name || gUser.name,
-        nickname: prev.nickname || gUser.name,
-        profileImage: prev.profileImage || gUser.avatarUrl,
-        isVerified: true,
-        passVerified: true,
-        certVerified: prev.certVerified,
-        verifiedAt: prev.verifiedAt || new Date().toISOString().slice(0, 10),
-      }));
-      setIsLoggedIn(true);
+        name: gUser.name,
+        avatarUrl: gUser.avatarUrl,
+      });
+      setIsLoggedIn(false);
     };
 
     syncGoogleUser();
@@ -672,6 +680,7 @@ export default function App() {
   /** 로그아웃 (처음 4단계 로그인 화면으로 돌아가기) */
   const handleLogout = async () => {
     await signOutSupabaseAuth();
+    setGooglePendingUser(null);
     setIsLoggedIn(false);
     setActiveTab('home');
   };
@@ -1281,6 +1290,7 @@ export default function App() {
       <LoginScreen
         initialUser={currentUser}
         initialSchool={currentSchool}
+        googlePendingUser={googlePendingUser}
         onLoginSuccess={handleCompleteAuth}
       />
     );
