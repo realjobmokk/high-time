@@ -264,18 +264,6 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
             </>
           )}
         </ScrollView>
-
-        {/* 하단 고정 글쓰기 바 */}
-        <View style={styles.bottomActionBar}>
-          <TouchableOpacity
-            style={styles.writeBtn}
-            onPress={onOpenWriteModal}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="pencil" size={16} color="#ffffff" />
-            <Text style={styles.writeBtnText}>글쓰기</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     );
   }
