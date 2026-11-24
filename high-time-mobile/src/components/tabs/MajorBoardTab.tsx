@@ -1,4 +1,4 @@
-// 2번 탭(전공게시판): 전국 전공게시판 화면 (Figma v2.0 에디토리얼 디자인 적용)
+// 2번 탭(전공게시판): 2열 전공 카드 그리드 -> 선택 전공 게시글 목록 화면 (Figma v2.0 에디토리얼 디자인)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -35,14 +35,17 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
   onToggleLike,
   onStartDirectChat,
 }) => {
-  const [selectedMajor, setSelectedMajor] = useState<string>('all');
+  // null이면 2열 전공 선택 그리드 화면, 문자열이면 해당 전공 게시글 목록 화면
+  const [activeMajorId, setActiveMajorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const trimmedQuery = searchQuery.trim().toLowerCase();
+  const activeMajorObj = MAJOR_CATEGORIES.find((m) => m.id === activeMajorId) || null;
 
-  // 계열 + 검색어 필터링
+  // 검색어가 있거나 전공을 선택한 경우 게시글 필터링
   const filteredPosts = posts.filter((post) => {
-    const matchMajor = selectedMajor === 'all' || post.majorId === selectedMajor;
+    const matchMajor =
+      !activeMajorId || activeMajorId === 'all' || post.majorId === activeMajorId;
     if (!matchMajor) return false;
     if (!trimmedQuery) return true;
     return (
@@ -58,19 +61,257 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
     (post.author.nickname === currentUser.name ||
       (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname));
 
+  const renderPostList = () => {
+    if (filteredPosts.length === 0) {
+      return (
+        <View style={styles.emptyWrap}>
+          <Ionicons name="documents-outline" size={38} color={COLORS.muted} />
+          <Text style={styles.emptyText}>
+            {trimmedQuery
+              ? `'${searchQuery}'에 대한 검색 결과가 없습니다.`
+              : '이 전공에 아직 게시글이 없습니다.'}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.postList}>
+        {filteredPosts.map((post) => {
+          const mine = isMyPost(post);
+          const shortSchool = post.author.school.replace('고등학교', '고');
+          return (
+            <TouchableOpacity
+              key={post.id}
+              style={styles.postItem}
+              onPress={() => onSelectPost(post)}
+              activeOpacity={0.75}
+            >
+              <View style={styles.postTopRow}>
+                <Text style={styles.postCategory} numberOfLines={1}>
+                  {post.majorName} · {post.tag}
+                </Text>
+                <View style={styles.postTopRight}>
+                  <Text style={styles.postTime}>{post.createdAt}</Text>
+                  {mine && (
+                    <TouchableOpacity
+                      onPress={(e: any) => {
+                        e?.stopPropagation?.();
+                        onDeletePost(post.id);
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons name="trash-outline" size={14} color={COLORS.accent} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              <Text style={styles.postTitle} numberOfLines={2}>
+                {post.title}
+              </Text>
+              <Text style={styles.postBody} numberOfLines={2}>
+                {post.content}
+              </Text>
+
+              <View style={styles.authorChatRow}>
+                <View style={styles.authorLeft}>
+                  {mine && !post.author.isAnonymous && currentUser.profileImage ? (
+                    <Image
+                      source={{ uri: currentUser.profileImage }}
+                      style={styles.authorAvatarImg}
+                    />
+                  ) : (
+                    <View style={styles.authorAvatar}>
+                      <Text style={styles.authorAvatarText}>
+                        {(post.author.isAnonymous ? '익' : post.author.nickname).slice(0, 1)}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={styles.authorText} numberOfLines={1}>
+                    {post.author.isAnonymous ? '익명' : post.author.nickname} ·{' '}
+                    {shortSchool} {post.author.grade}
+                  </Text>
+                </View>
+                {!mine && (
+                  <TouchableOpacity
+                    style={styles.chatBtn}
+                    onPress={(e: any) => {
+                      e?.stopPropagation?.();
+                      onStartDirectChat(post);
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.chatBtnText}>1:1 채팅 ↗</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.metaRow}>
+                <TouchableOpacity
+                  onPress={(e: any) => {
+                    e?.stopPropagation?.();
+                    onToggleLike(post.id);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.metaText,
+                      post.isLikedByUser && styles.metaTextLiked,
+                    ]}
+                  >
+                    좋아요 {post.likes}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.metaDot}>·</Text>
+                <Text style={styles.metaText}>댓글 {post.commentCount}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
+  // 1단계: 전공 카드 2열 그리드 화면 (검색어 입력 시 바로 검색 결과 표시)
+  if (!activeMajorId) {
+    const gridCategories = MAJOR_CATEGORIES.filter((c) => c.id !== 'all');
+    return (
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 검색창 */}
+          <View style={styles.searchBox}>
+            <Ionicons name="search-outline" size={18} color={COLORS.muted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="과목, 세특 주제, 키워드 검색"
+              placeholderTextColor={COLORS.muted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
+                <Ionicons name="close-circle" size={18} color={COLORS.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {trimmedQuery ? (
+            <>
+              <Text style={styles.searchResultLabel}>
+                전체 전공 검색 결과 ({filteredPosts.length}건)
+              </Text>
+              {renderPostList()}
+            </>
+          ) : (
+            <>
+              <View style={styles.gridTopRow}>
+                <View>
+                  <Text style={styles.introTitle}>전공을 선택해 보세요</Text>
+                  <Text style={styles.introSub}>
+                    관심 있는 계열을 누르면 해당 전공 게시글로 바로 들어갑니다.
+                  </Text>
+                </View>
+              </View>
+
+              {/* 전체 글 보기 빠른 카드 */}
+              <TouchableOpacity
+                style={styles.allMajorsBanner}
+                onPress={() => setActiveMajorId('all')}
+                activeOpacity={0.8}
+              >
+                <View style={styles.allMajorsLeft}>
+                  <Ionicons name="sparkles-outline" size={18} color={COLORS.accent} />
+                  <Text style={styles.allMajorsTitle}>전체 전공 글 모아보기</Text>
+                </View>
+                <Text style={styles.allMajorsCount}>{posts.length}개  ›</Text>
+              </TouchableOpacity>
+
+              {/* 2열 전공 카드 그리드 */}
+              <View style={styles.majorGrid}>
+                {gridCategories.map((cat, idx) => {
+                  const count = posts.filter((p) => p.majorId === cat.id).length;
+                  const isSage = idx % 4 === 0 || idx % 4 === 3;
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[
+                        styles.majorGridCard,
+                        isSage ? styles.majorGridCardSage : styles.majorGridCardWhite,
+                      ]}
+                      onPress={() => setActiveMajorId(cat.id)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.majorGridIconWrap}>
+                        <Ionicons
+                          name={cat.icon as any}
+                          size={22}
+                          color={COLORS.ink}
+                        />
+                      </View>
+                      <Text style={styles.majorGridTitle}>{cat.name}</Text>
+                      <Text style={styles.majorGridCount}>게시글 {count}개</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+        </ScrollView>
+
+        {/* 하단 고정 글쓰기 바 */}
+        <View style={styles.bottomActionBar}>
+          <TouchableOpacity
+            style={styles.writeBtn}
+            onPress={onOpenWriteModal}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="pencil" size={16} color="#ffffff" />
+            <Text style={styles.writeBtnText}>글쓰기</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // 2단계: 선택한 전공 게시글 목록 화면 ("← 전공게시판 - 컴퓨터·IT")
   return (
     <View style={styles.container}>
+      {/* 상단 선택 전공 헤더 */}
+      <View style={styles.detailTopBar}>
+        <TouchableOpacity
+          style={styles.backToGridBtn}
+          onPress={() => {
+            setActiveMajorId(null);
+            setSearchQuery('');
+          }}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="chevron-back" size={20} color={COLORS.ink} />
+          <Text style={styles.detailTopTitle}>
+            전공게시판 - {activeMajorObj?.name || '전체 전공'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.detailCountText}>{filteredPosts.length}개</Text>
+      </View>
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* 검색창 */}
+        {/* 해당 전공 내 검색창 */}
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={18} color={COLORS.muted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="과목, 세특 주제, 키워드 검색"
+            placeholder={`${activeMajorObj?.name || '전공'} 내 주제, 키워드 검색`}
             placeholderTextColor={COLORS.muted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -83,154 +324,7 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
           )}
         </View>
 
-        {/* 전공 필터 칩 */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipRow}
-        >
-          {MAJOR_CATEGORIES.map((cat) => {
-            const isSelected = selectedMajor === cat.id;
-            const shortLabel = cat.id === 'all' ? '전체' : cat.name;
-            return (
-              <TouchableOpacity
-                key={cat.id}
-                style={[styles.filterChip, isSelected && styles.filterChipActive]}
-                onPress={() => setSelectedMajor(cat.id)}
-                activeOpacity={0.75}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    isSelected && styles.filterChipTextActive,
-                  ]}
-                >
-                  {shortLabel}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* 에디토리얼 안내 문구 */}
-        <View style={styles.introBlock}>
-          <Text style={styles.introTitle}>같은 관심사, 새로운 힌트.</Text>
-          <Text style={styles.introSub}>
-            탐구 주제와 추천 도서를 친구들과 나눠보세요.
-          </Text>
-        </View>
-
-        {/* 게시글 목록 */}
-        {filteredPosts.length === 0 ? (
-          <View style={styles.emptyWrap}>
-            <Ionicons name="documents-outline" size={38} color={COLORS.muted} />
-            <Text style={styles.emptyText}>
-              {trimmedQuery
-                ? `'${searchQuery}'에 대한 검색 결과가 없습니다.`
-                : '이 전공에 아직 게시글이 없습니다.'}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.postList}>
-            {filteredPosts.map((post) => {
-              const mine = isMyPost(post);
-              const shortSchool = post.author.school.replace('고등학교', '고');
-              return (
-                <TouchableOpacity
-                  key={post.id}
-                  style={styles.postItem}
-                  onPress={() => onSelectPost(post)}
-                  activeOpacity={0.75}
-                >
-                  {/* 상단: 전공 · 태그 | 작성 시간 (+ 내 글 삭제) */}
-                  <View style={styles.postTopRow}>
-                    <Text style={styles.postCategory} numberOfLines={1}>
-                      {post.majorName} · {post.tag}
-                    </Text>
-                    <View style={styles.postTopRight}>
-                      <Text style={styles.postTime}>{post.createdAt}</Text>
-                      {mine && (
-                        <TouchableOpacity
-                          onPress={(e: any) => {
-                            e?.stopPropagation?.();
-                            onDeletePost(post.id);
-                          }}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <Ionicons name="trash-outline" size={14} color={COLORS.accent} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* 제목 & 본문 요약 */}
-                  <Text style={styles.postTitle} numberOfLines={2}>
-                    {post.title}
-                  </Text>
-                  <Text style={styles.postBody} numberOfLines={2}>
-                    {post.content}
-                  </Text>
-
-                  {/* 작성자 + 1:1 채팅 버튼 */}
-                  <View style={styles.authorChatRow}>
-                    <View style={styles.authorLeft}>
-                      {mine && !post.author.isAnonymous && currentUser.profileImage ? (
-                        <Image
-                          source={{ uri: currentUser.profileImage }}
-                          style={styles.authorAvatarImg}
-                        />
-                      ) : (
-                        <View style={styles.authorAvatar}>
-                          <Text style={styles.authorAvatarText}>
-                            {(post.author.isAnonymous ? '익' : post.author.nickname).slice(0, 1)}
-                          </Text>
-                        </View>
-                      )}
-                      <Text style={styles.authorText} numberOfLines={1}>
-                        {post.author.isAnonymous ? '익명' : post.author.nickname} ·{' '}
-                        {shortSchool} {post.author.grade}
-                      </Text>
-                    </View>
-                    {!mine && (
-                      <TouchableOpacity
-                        style={styles.chatBtn}
-                        onPress={(e: any) => {
-                          e?.stopPropagation?.();
-                          onStartDirectChat(post);
-                        }}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={styles.chatBtnText}>1:1 채팅 ↗</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  {/* 하단: 좋아요 · 댓글 */}
-                  <View style={styles.metaRow}>
-                    <TouchableOpacity
-                      onPress={(e: any) => {
-                        e?.stopPropagation?.();
-                        onToggleLike(post.id);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.metaText,
-                          post.isLikedByUser && styles.metaTextLiked,
-                        ]}
-                      >
-                        좋아요 {post.likes}
-                      </Text>
-                    </TouchableOpacity>
-                    <Text style={styles.metaDot}>·</Text>
-                    <Text style={styles.metaText}>댓글 {post.commentCount}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+        {renderPostList()}
       </ScrollView>
 
       {/* 하단 고정 글쓰기 바 */}
@@ -259,8 +353,8 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 22,
     paddingTop: 14,
-    paddingBottom: 28,
-    gap: 18,
+    paddingBottom: 24,
+    gap: 16,
   },
 
   // 검색창
@@ -279,48 +373,122 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     paddingVertical: 2,
   },
-
-  // 필터 칩
-  chipRow: {
-    gap: 7,
-    alignItems: 'center',
-  },
-  filterChip: {
-    backgroundColor: COLORS.sageCard,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    minHeight: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterChipActive: {
-    backgroundColor: COLORS.ink,
-  },
-  filterChipText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.muted,
-    letterSpacing: -0.24,
-  },
-  filterChipTextActive: {
-    color: '#ffffff',
-    fontWeight: '600',
+  searchResultLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.ink,
   },
 
-  // 에디토리얼 안내 문구
-  introBlock: {
+  // 2열 전공 카드 그리드
+  gridTopRow: {
     gap: 4,
   },
   introTitle: {
-    fontSize: 21,
+    fontSize: 20,
     fontWeight: '800',
     color: COLORS.ink,
-    letterSpacing: -0.42,
+    letterSpacing: -0.4,
   },
   introSub: {
     fontSize: 12,
     color: COLORS.muted,
-    letterSpacing: -0.24,
+    marginTop: 3,
+  },
+  allMajorsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.sageSurface,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  allMajorsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  allMajorsTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.ink,
+  },
+  allMajorsCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.accent,
+  },
+  majorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  majorGridCard: {
+    width: '48%',
+    minHeight: 118,
+    borderRadius: 16,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  majorGridCardSage: {
+    backgroundColor: COLORS.sageSurface,
+  },
+  majorGridCardWhite: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  majorGridIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 12,
+  },
+  majorGridTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.ink,
+    letterSpacing: -0.3,
+  },
+  majorGridCount: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: COLORS.muted,
+    marginTop: 2,
+  },
+
+  // 2단계 선택 전공 헤더
+  detailTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.bg,
+  },
+  backToGridBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  detailTopTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.ink,
+    letterSpacing: -0.3,
+  },
+  detailCountText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.muted,
   },
 
   // 게시글 리스트
