@@ -37,9 +37,14 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.header}>
       {/* 좌측 화면 제목 */}
-      <Text style={[styles.title, isHome && styles.homeTitle]}>
-        {TAB_TITLES[activeTab]}
-      </Text>
+      {isHome ? (
+        <Text style={[styles.title, styles.homeTitle]}>
+          <Text style={styles.brandAccent}>H</Text>igh
+          <Text style={styles.brandAccent}>T</Text>ime
+        </Text>
+      ) : (
+        <Text style={styles.title}>{TAB_TITLES[activeTab]}</Text>
+      )}
 
       {/* 우측 학교 선택(홈 전용) 및 알림/설정 아이콘 */}
       <View style={styles.headerRight}>
@@ -102,6 +107,9 @@ const styles = StyleSheet.create({
   },
   homeTitle: {
     fontSize: 24,
+  },
+  brandAccent: {
+    color: COLORS.accent,
   },
   headerRight: {
     flexDirection: 'row',
