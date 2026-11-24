@@ -101,8 +101,22 @@ export default function App() {
   const { width: windowWidth } = useWindowDimensions();
   const isSmallMobileWeb = Platform.OS === 'web' && windowWidth <= 520;
 
-  // 웹/모바일 브라우저에서 바깥 배경 동기화
+  // 웹/모바일 브라우저에서 바깥 배경 동기화 + 새 Supabase 프로젝트 전환 시 구 로컬 캐시 1회 초기화
   useEffect(() => {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      try {
+        const ACTIVE_PROJECT_TAG = 'caxkxzlvusyqywdixuhh';
+        if (localStorage.getItem('hightime_db_project_id') !== ACTIVE_PROJECT_TAG) {
+          Object.keys(localStorage).forEach((k) => {
+            if (k.startsWith('hightime_') || k.startsWith('sb-')) {
+              localStorage.removeItem(k);
+            }
+          });
+          localStorage.setItem('hightime_db_project_id', ACTIVE_PROJECT_TAG);
+        }
+      } catch {}
+    }
+
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const bg = isSmallMobileWeb ? '#ffffff' : '#0f172a';
       document.documentElement.style.backgroundColor = bg;

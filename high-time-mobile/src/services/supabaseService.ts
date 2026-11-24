@@ -18,10 +18,10 @@ import {
 // 🔑 [여기에 발급받은 Supabase Project URL과 Publishable API Key를 입력합니다]
 // -----------------------------------------------------------------------------
 export const SUPABASE_URL =
-  process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://sghkaxetnfkmjminjekk.supabase.co';
+  process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://caxkxzlvusyqywdixuhh.supabase.co';
 export const SUPABASE_ANON_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-  'sb_publishable_v6Ttgv7298aUSbGZDDjbbQ_uz1yY7_x';
+  'sb_publishable_4ZkmCO4uigObXWSAbK7Iig_REMHeNhD';
 
 // URL과 Key가 설정되었는지 확인하는 헬퍼 함수
 export function isSupabaseConfigured(): boolean {
