@@ -460,21 +460,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }, 900);
   };
 
-  // Google OAuth로 신규 가입 진입 시 자동으로 2단계(PASS 본인인증)부터 이어서 진행
+  // Google OAuth로 신규 가입 진입 시 1단계(아이디·비밀번호 생성 창)로 이동하여 연결된 Google 계정 표시
   React.useEffect(() => {
     if (googlePendingUser) {
       setAuthMode('signup');
-      setStep(2);
+      setStep(1);
       setSocialProvider('google');
       setSocialEmail(googlePendingUser.email);
-      setSignupUsername(`google_${googlePendingUser.email.trim().toLowerCase()}`);
       if (googlePendingUser.name) {
         setPassName(googlePendingUser.name.replace(/\s+/g, ''));
       }
     }
   }, [googlePendingUser]);
 
-  // 회원가입 4단계 완료 -> DB에 아이디/비밀번호(또는 Google 연동 계정) 및 학생 정보 저장 후 로그인
+  // 회원가입 4단계 완료 -> DB에 아이디/비밀번호 및 Google 연동 정보 저장 후 로그인
   const handleFinishSignup = async () => {
     if (!verificationResult?.isMatch || !selectedSchool) return;
 
@@ -484,17 +483,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       '0'
     )}. ${String(today.getDate()).padStart(2, '0')}`;
 
-    const isGoogleSignup = Boolean(googlePendingUser);
-    const trimmedId = isGoogleSignup
-      ? `google_${googlePendingUser!.email.trim().toLowerCase()}`
-      : signupUsername.trim().toLowerCase();
-
+    const trimmedId = signupUsername.trim().toLowerCase();
     const cleanName = passName.replace(/\s+/g, '');
 
     const newUserObj: CurrentUser = {
       username: trimmedId,
-      socialProvider: isGoogleSignup ? 'google' : socialProvider,
-      email: isGoogleSignup ? googlePendingUser!.email : socialEmail,
+      socialProvider: googlePendingUser ? 'google' : socialProvider,
+      email: googlePendingUser ? googlePendingUser.email : socialEmail,
       name: cleanName,
       nickname: `${cleanName}학생`,
       birthDate: passBirth.trim(),
@@ -509,24 +504,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       verifiedAt,
     };
 
-    const res = isGoogleSignup
-      ? await registerGoogleAccountToDb(newUserObj, selectedSchool, googlePendingUser!.email)
-      : await registerAccountToDb(newUserObj, selectedSchool, trimmedId, signupPassword);
+    // 1) 사용자가 직접 만든 아이디/비밀번호 저장
+    const res = await registerAccountToDb(
+      newUserObj,
+      selectedSchool,
+      trimmedId,
+      signupPassword
+    );
 
     if (!res.success) {
       Alert.alert('회원가입 오류', res.message || '이미 사용 중인 아이디입니다.');
-      if (!isGoogleSignup) {
-        setStep(1);
-        setUsernameCheckStatus('duplicate');
-      }
+      setStep(1);
+      setUsernameCheckStatus('duplicate');
       return;
+    }
+
+    // 2) Google 계정이 연동되어 있으면 추후 Google 로그인으로도 바로 접속 가능하도록 함께 저장
+    if (googlePendingUser?.email) {
+      await registerGoogleAccountToDb(newUserObj, selectedSchool, googlePendingUser.email);
     }
 
     onLoginSuccess(
       {
         username: trimmedId,
-        socialProvider: isGoogleSignup ? 'google' : socialProvider,
-        email: isGoogleSignup ? googlePendingUser!.email : socialEmail,
+        socialProvider: googlePendingUser ? 'google' : socialProvider,
+        email: googlePendingUser ? googlePendingUser.email : socialEmail,
         name: cleanName,
         nickname: `${cleanName}학생`,
         birthDate: passBirth.trim(),
@@ -751,34 +753,47 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               {/* STEP 1: Google 빠른 가입 또는 아이디 & 비밀번호 생성 */}
               {step === 1 && (
                 <View>
-                  <Text style={styles.stepTitle}>1단계: 계정 만들기</Text>
+                  <Text style={styles.stepTitle}>1단계: 아이디 및 비밀번호 만들기</Text>
                   <Text style={styles.stepDesc}>
-                    Google 계정으로 간편하게 가입·연동하거나, HighTime 전용 아이디를 만들어 주세요. (가입 후에는 로그인 화면에서 Google 로그인도 바로 이용 가능합니다.)
+                    {googlePendingUser
+                      ? 'Google 계정이 연결되었습니다! 이제 HighTime에서 사용할 아이디와 비밀번호를 만들어 주세요.'
+                      : 'Google 계정으로 연동하거나, HighTime에서 사용할 고유 아이디와 비밀번호를 만들어 주세요.'}
                   </Text>
 
-                  <TouchableOpacity
-                    style={[styles.googleBtn, { marginBottom: 14 }, isGoogleLoading && { opacity: 0.6 }]}
-                    onPress={handleGoogleLogin}
-                    disabled={isGoogleLoading}
-                    activeOpacity={0.85}
-                  >
-                    {isGoogleLoading ? (
-                      <ActivityIndicator color={COLORS.ink} />
-                    ) : (
-                      <>
-                        <View style={styles.googleGBadge}>
-                          <Text style={styles.googleGText}>G</Text>
-                        </View>
-                        <Text style={styles.googleBtnText}>Google 계정으로 가입 / 연동하기</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                  {googlePendingUser ? (
+                    <View style={styles.selectedInfoBanner}>
+                      <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                      <Text style={styles.selectedInfoText}>
+                        Google 연결 완료: {googlePendingUser.email}
+                      </Text>
+                    </View>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={[styles.googleBtn, { marginBottom: 14 }, isGoogleLoading && { opacity: 0.6 }]}
+                        onPress={handleGoogleLogin}
+                        disabled={isGoogleLoading}
+                        activeOpacity={0.85}
+                      >
+                        {isGoogleLoading ? (
+                          <ActivityIndicator color={COLORS.ink} />
+                        ) : (
+                          <>
+                            <View style={styles.googleGBadge}>
+                              <Text style={styles.googleGText}>G</Text>
+                            </View>
+                            <Text style={styles.googleBtnText}>Google 계정으로 가입 / 연동하기</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
 
-                  <View style={[styles.orDividerRow, { marginTop: 2, marginBottom: 14 }]}>
-                    <View style={styles.orDividerLine} />
-                    <Text style={styles.orDividerText}>또는 아이디로 직접 가입</Text>
-                    <View style={styles.orDividerLine} />
-                  </View>
+                      <View style={[styles.orDividerRow, { marginTop: 2, marginBottom: 14 }]}>
+                        <View style={styles.orDividerLine} />
+                        <Text style={styles.orDividerText}>또는 아이디로 직접 가입</Text>
+                        <View style={styles.orDividerLine} />
+                      </View>
+                    </>
+                  )}
 
                   <Text style={styles.inputLabel}>아이디 (중복 불가 · 영문/숫자 3자 이상)</Text>
                   <View style={styles.searchRow}>
