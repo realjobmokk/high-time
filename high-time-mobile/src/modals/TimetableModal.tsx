@@ -35,7 +35,7 @@ interface TimetableModalProps {
 
 const DAYS: WeekdayKey[] = ['월', '화', '수', '목', '금'];
 
-// 1교시 ~ 7교시 실제 고등학교 일과표 (조례 08:30~08:40, 점심 12:30~13:30, 종례 16:20~16:40)
+// 1교시 ~ 7교시 일과표 (1~4교시 09:00~12:50, 점심 12:50~13:40, 5~7교시 13:40~16:30)
 export interface PeriodScheduleItem {
   hourKey: number;
   period: number;
@@ -45,15 +45,14 @@ export interface PeriodScheduleItem {
   endMin: number;
 }
 
-// 1교시 ~ 7교시 일과표 (1교시 09:00~09:50, 쉬는시간 10분, 4교시 후 점심시간 1시간 12:50~13:50)
 export const HIGH_SCHOOL_PERIODS: PeriodScheduleItem[] = [
   { hourKey: 9, period: 1, label: '1교시', timeRange: '09:00 ~ 09:50', startMin: 9 * 60, endMin: 9 * 60 + 50 },
   { hourKey: 10, period: 2, label: '2교시', timeRange: '10:00 ~ 10:50', startMin: 10 * 60, endMin: 10 * 60 + 50 },
   { hourKey: 11, period: 3, label: '3교시', timeRange: '11:00 ~ 11:50', startMin: 11 * 60, endMin: 11 * 60 + 50 },
   { hourKey: 12, period: 4, label: '4교시', timeRange: '12:00 ~ 12:50', startMin: 12 * 60, endMin: 12 * 60 + 50 },
-  { hourKey: 13, period: 5, label: '5교시', timeRange: '13:50 ~ 14:40', startMin: 13 * 60 + 50, endMin: 14 * 60 + 40 },
-  { hourKey: 14, period: 6, label: '6교시', timeRange: '14:50 ~ 15:40', startMin: 14 * 60 + 50, endMin: 15 * 60 + 40 },
-  { hourKey: 15, period: 7, label: '7교시', timeRange: '15:50 ~ 16:40', startMin: 15 * 60 + 50, endMin: 16 * 60 + 40 },
+  { hourKey: 13, period: 5, label: '5교시', timeRange: '13:40 ~ 14:30', startMin: 13 * 60 + 40, endMin: 14 * 60 + 30 },
+  { hourKey: 14, period: 6, label: '6교시', timeRange: '14:40 ~ 15:30', startMin: 14 * 60 + 40, endMin: 15 * 60 + 30 },
+  { hourKey: 15, period: 7, label: '7교시', timeRange: '15:40 ~ 16:30', startMin: 15 * 60 + 40, endMin: 16 * 60 + 30 },
 ];
 
 export function getPeriodSchedule(hourKey: number): PeriodScheduleItem {

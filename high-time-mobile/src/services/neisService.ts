@@ -20,15 +20,15 @@ export const PERIOD_TIME_SLOTS: Record<
   number,
   { start: string; end: string; startMin: number; endMin: number }
 > = {
-  1: { start: '08:40', end: '09:30', startMin: 8 * 60 + 40, endMin: 9 * 60 + 30 },
-  2: { start: '09:40', end: '10:30', startMin: 9 * 60 + 40, endMin: 10 * 60 + 30 },
-  3: { start: '10:40', end: '11:30', startMin: 10 * 60 + 40, endMin: 11 * 60 + 30 },
-  4: { start: '11:40', end: '12:30', startMin: 11 * 60 + 40, endMin: 12 * 60 + 30 },
-  // 12:30 ~ 13:30 점심시간
-  5: { start: '13:30', end: '14:20', startMin: 13 * 60 + 30, endMin: 14 * 60 + 20 },
-  6: { start: '14:30', end: '15:20', startMin: 14 * 60 + 30, endMin: 15 * 60 + 20 },
-  7: { start: '15:30', end: '16:20', startMin: 15 * 60 + 30, endMin: 16 * 60 + 20 },
-  8: { start: '16:30', end: '17:20', startMin: 16 * 60 + 30, endMin: 17 * 60 + 20 },
+  1: { start: '09:00', end: '09:50', startMin: 9 * 60, endMin: 9 * 60 + 50 },
+  2: { start: '10:00', end: '10:50', startMin: 10 * 60, endMin: 10 * 60 + 50 },
+  3: { start: '11:00', end: '11:50', startMin: 11 * 60, endMin: 11 * 60 + 50 },
+  4: { start: '12:00', end: '12:50', startMin: 12 * 60, endMin: 12 * 60 + 50 },
+  // 12:50 ~ 13:40 점심시간
+  5: { start: '13:40', end: '14:30', startMin: 13 * 60 + 40, endMin: 14 * 60 + 30 },
+  6: { start: '14:40', end: '15:30', startMin: 14 * 60 + 40, endMin: 15 * 60 + 30 },
+  7: { start: '15:40', end: '16:30', startMin: 15 * 60 + 40, endMin: 16 * 60 + 30 },
+  8: { start: '16:40', end: '17:30', startMin: 16 * 60 + 40, endMin: 17 * 60 + 30 },
 };
 
 export interface TimetablePeriodItem {
@@ -101,8 +101,8 @@ export function getRealtimeClassStatus(
     };
   }
 
-  // 3) 점심시간 (12:30 ~ 13:30)
-  if (currentMin > 12 * 60 + 30 && currentMin < 13 * 60 + 30) {
+  // 3) 점심시간 (12:50 ~ 13:40)
+  if (currentMin > 12 * 60 + 50 && currentMin < 13 * 60 + 40) {
     const nextP = periods.find((p) => p.period >= 5) || lastPeriod;
     return {
       currentTimeStr,
@@ -408,7 +408,7 @@ export async function fetchNeisTimetable(
           const periods: TimetablePeriodItem[] = Array.from(periodMap.entries())
             .sort((a, b) => a[0] - b[0])
             .map(([period, subject]) => {
-              const slot = PERIOD_TIME_SLOTS[period] || { start: '08:40', end: '09:30' };
+              const slot = PERIOD_TIME_SLOTS[period] || { start: '09:00', end: '09:50' };
               return {
                 period,
                 subject,
