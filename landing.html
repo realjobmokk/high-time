@@ -527,7 +527,7 @@
         <a href="#preview">화면 미리보기</a>
         <a href="#faq">자주 묻는 질문</a>
       </nav>
-      <a href="http://localhost:8081" target="_blank" class="btn-primary">앱 실행하기 →</a>
+      <a href="https://high-time26.vercel.app/" target="_blank" class="btn-primary">앱 실행하기 →</a>
     </div>
   </header>
 
@@ -546,7 +546,7 @@
             복잡함 없이 한곳에서 깔끔하게 이어지는 고교 생활 플랫폼입니다.
           </p>
           <div class="hero-actions">
-            <a href="http://localhost:8081" target="_blank" class="btn-primary">
+            <a href="https://high-time26.vercel.app/" target="_blank" class="btn-primary">
               HighTime 웹 앱 열기 →
             </a>
             <a href="#features" class="btn-secondary">핵심 기능 살펴보기</a>
@@ -567,12 +567,8 @@
           </div>
         </div>
 
-        <!-- 실제 HighTime 앱 라이브 임베드 목업 -->
-        <div class="phone-wrap" style="flex-direction:column; align-items:center; gap:12px;">
-          <div style="display:flex; gap:6px; background:var(--sage-card); padding:4px; border-radius:10px; border:1px solid var(--border);">
-            <button id="src-local" class="btn-secondary" style="padding:6px 12px; font-size:12px; border:none; border-radius:7px; background:var(--ink); color:#ffffff;">로컬 앱 (8081)</button>
-            <button id="src-vercel" class="btn-secondary" style="padding:6px 12px; font-size:12px; border:none; border-radius:7px; background:transparent; color:var(--muted);">배포 앱 (Vercel)</button>
-          </div>
+        <!-- 실제 HighTime 배포 앱 라이브 임베드 목업 -->
+        <div class="phone-wrap">
           <div class="phone-frame" style="width:368px;">
             <div class="phone-status" style="background:var(--bg); border-bottom:1px solid var(--border);">
               <span>9:41</span>
@@ -580,7 +576,7 @@
             </div>
             <iframe
               id="live-app-frame"
-              src="http://localhost:8081/?preview=1"
+              src="https://high-time26.vercel.app/?preview=1"
               title="HighTime 실제 앱 미리보기"
               style="width:100%; height:620px; border:none; display:block; background:var(--bg);"
               allow="clipboard-read; clipboard-write"
@@ -689,7 +685,7 @@
             <h2>지금 바로 우리 학교 커뮤니티를 시작해 보세요.</h2>
             <p>PC 웹과 모바일 브라우저 어디서든 HighTime v2.0을 체험할 수 있습니다.</p>
           </div>
-          <a href="http://localhost:8081" target="_blank" class="btn-primary">
+          <a href="https://high-time26.vercel.app/" target="_blank" class="btn-primary">
             HighTime 시작하기 →
           </a>
         </div>
@@ -703,32 +699,6 @@
   </main>
 
   <script>
-    // 실제 HighTime 앱(8081 로컬 / Vercel 배포) 전환 스크립트
-    const frameEl = document.getElementById('live-app-frame');
-    const btnLocal = document.getElementById('src-local');
-    const btnVercel = document.getElementById('src-vercel');
-
-    function setAppSource(mode) {
-      const isLocal = mode === 'local';
-      frameEl.src = isLocal
-        ? 'http://localhost:8081/?preview=1'
-        : 'https://h-time26.vercel.app/?preview=1';
-      btnLocal.style.background = isLocal ? 'var(--ink)' : 'transparent';
-      btnLocal.style.color = isLocal ? '#ffffff' : 'var(--muted)';
-      btnVercel.style.background = !isLocal ? 'var(--ink)' : 'transparent';
-      btnVercel.style.color = !isLocal ? '#ffffff' : 'var(--muted)';
-    }
-
-    btnLocal.addEventListener('click', () => setAppSource('local'));
-    btnVercel.addEventListener('click', () => setAppSource('vercel'));
-
-    // 접속 환경에 따라 기본 소스 자동 선택 (로컬이면 8081, 배포 환경이면 Vercel)
-    const isLocalHost =
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1' ||
-      window.location.protocol === 'file:';
-    setAppSource(isLocalHost ? 'local' : 'vercel');
-
     // FAQ 아코디언 토글
     document.querySelectorAll('.faq-q').forEach((btn) => {
       btn.addEventListener('click', () => {
