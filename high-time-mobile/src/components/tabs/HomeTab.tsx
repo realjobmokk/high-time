@@ -234,13 +234,20 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: activeBlock ? COLORS.accent : COLORS.success },
+                {
+                  backgroundColor:
+                    !isWeekend && (activeBlock || nextBlock) ? '#dc2626' : COLORS.success,
+                },
               ]}
             />
             <Text style={styles.schoolLifeTitle} numberOfLines={1}>
               {!isWeekend && activeBlock ? (
                 <>
                   지금은 <Text style={styles.activeSubjectHighlight}>{activeBlock.subject}</Text> 수업 중
+                </>
+              ) : !isWeekend && nextBlock ? (
+                <>
+                  다음 수업은 <Text style={styles.activeSubjectHighlight}>{nextBlock.subject}</Text>예요
                 </>
               ) : (
                 classStatusHeadline
