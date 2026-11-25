@@ -238,7 +238,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({
               ]}
             />
             <Text style={styles.schoolLifeTitle} numberOfLines={1}>
-              {classStatusHeadline}
+              {!isWeekend && activeBlock ? (
+                <>
+                  지금은 <Text style={styles.activeSubjectHighlight}>{activeBlock.subject}</Text> 수업 중
+                </>
+              ) : (
+                classStatusHeadline
+              )}
             </Text>
           </View>
           <View style={styles.weekdayChip}>
@@ -612,6 +618,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.ink,
     letterSpacing: -0.34,
+  },
+  activeSubjectHighlight: {
+    color: '#dc2626',
+    fontWeight: '900',
   },
   weekdayChip: {
     backgroundColor: COLORS.surface,
