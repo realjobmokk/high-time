@@ -32,7 +32,6 @@ interface ProfileTabProps {
     phone: string;
     profileImage?: string;
   }) => void;
-  onOpenReAuthModal: () => void;
   onOpenAdmissionConsult?: () => void;
   onLogout: () => void;
 }
@@ -45,7 +44,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   myCommentCount = 0,
   chatRoomCount = 0,
   onUpdateProfile,
-  onOpenReAuthModal,
   onOpenAdmissionConsult,
   onLogout,
 }) => {
@@ -352,16 +350,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         >
           <Ionicons name="pencil-outline" size={19} color={COLORS.ink} />
           <Text style={styles.menuText}>프로필 및 희망 전공 수정</Text>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuRow}
-          onPress={onOpenReAuthModal}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="shield-checkmark-outline" size={19} color={COLORS.ink} />
-          <Text style={styles.menuText}>학교 재인증 관리</Text>
           <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
         </TouchableOpacity>
 

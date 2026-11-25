@@ -1349,7 +1349,6 @@ export default function App() {
             myCommentCount={majorPosts.reduce((acc, p) => acc + p.commentCount, 0)}
             chatRoomCount={chatRooms.length}
             onUpdateProfile={handleUpdateProfile}
-            onOpenReAuthModal={() => setIsAuthModalOpen(true)}
             onOpenAdmissionConsult={() => {
               setCounselingSubTab('admission');
               setBoardSubTab('counseling');
