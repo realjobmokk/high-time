@@ -53,14 +53,14 @@ const BLOCK_COLORS: string[] = [
 const ROW_HEIGHT = 54; // 1시간당 그리드 높이(px)
 
 export function formatHourLabel(hour24: number): string {
-  const displayHour = hour24 > 12 ? hour24 - 12 : hour24;
-  return String(displayHour);
+  return `${Math.max(1, hour24 - 8)}교시`;
 }
 
-// 수업 종료 시간은 시작 시간으로부터 50분 뒤 (1교시 = 09:00 ~ 09:50, 연강 시 마지막 교시 50분)
+// 교시 범위 포맷 (예: 1교시)
 export function formatTimeRange(startHour: number, endHour: number): string {
-  const finalEndHour = Math.max(startHour, endHour - 1);
-  return `${String(startHour).padStart(2, '0')}:00 ~ ${String(finalEndHour).padStart(2, '0')}:50`;
+  const startPeriod = Math.max(1, startHour - 8);
+  const endPeriod = Math.max(startPeriod, endHour - 9);
+  return startPeriod === endPeriod ? `${startPeriod}교시` : `${startPeriod}~${endPeriod}교시`;
 }
 
 export const TimetableModal: React.FC<TimetableModalProps> = ({
@@ -340,14 +340,14 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                 ))}
               </View>
 
-              {/* 4. 시작 시간 선택 (종료 시간은 시작 시간으로부터 50분 뒤로 자동 설정) */}
+              {/* 4. 교시 선택 */}
               <Text style={styles.inputLabel}>
-                수업 시간 ({formatTimeRange(startHour, endHour)})
+                교시 선택 ({formatTimeRange(startHour, endHour)})
               </Text>
               <View style={styles.timeSelectContainer}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.timeSubLabel}>
-                    시작 시각 선택 (수업 종료: {String(startHour).padStart(2, '0')}:50 · 50분 수업)
+                    수업 교시를 선택하세요 (1교시 ~ 11교시)
                   </Text>
                   <ScrollView
                     horizontal
@@ -372,7 +372,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                             startHour === h && styles.hourChipTextActive,
                           ]}
                         >
-                          {String(h).padStart(2, '0')}:00 ~ {String(h).padStart(2, '0')}:50
+                          {h - 8}교시
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timeAxisHeaderCell: {
-    width: 34,
+    width: 44,
     height: '100%',
     borderRightWidth: 1,
     borderRightColor: COLORS.border,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   timeAxisColumn: {
-    width: 34,
+    width: 44,
     borderRightWidth: 1,
     borderRightColor: COLORS.border,
     backgroundColor: COLORS.sageCard,
