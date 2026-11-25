@@ -1312,7 +1312,7 @@ export default function App() {
     // 실제 모바일 브라우저(<=520px)로 접속한 경우 가짜 폰 프레임 없이 화면 전체를 100% 채움
     if (isSmallMobileWeb) {
       return (
-        <View style={{ flex: 1, width: '100%', minHeight: '100dvh' as any, backgroundColor: '#ffffff' }}>
+        <View style={{ flex: 1, width: '100%', minHeight: '100dvh' as any, backgroundColor: COLORS.bg }}>
           {content}
         </View>
       );
@@ -1320,10 +1320,12 @@ export default function App() {
     return (
       <View style={styles.webRoot}>
         <View style={styles.webPhoneFrame}>
-          <View style={styles.webNotchWrap}>
+          <View style={{ flex: 1, overflow: 'hidden', paddingTop: 22, backgroundColor: COLORS.bg }}>
+            {content}
+          </View>
+          <View style={styles.webNotchWrap} pointerEvents="none">
             <View style={styles.webNotch} />
           </View>
-          <View style={{ flex: 1, overflow: 'hidden' }}>{content}</View>
         </View>
       </View>
     );
@@ -1523,12 +1525,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   webPhoneFrame: {
+    position: 'relative',
     width: '100%',
     maxWidth: 430,
     height: '90dvh' as any,
     maxHeight: 860,
-    backgroundColor: '#ffffff',
-    borderRadius: 36,
+    backgroundColor: COLORS.bg,
+    borderRadius: 42,
     borderWidth: 6,
     borderColor: '#1e293b',
     overflow: 'hidden',
@@ -1538,16 +1541,19 @@ const styles = StyleSheet.create({
     shadowRadius: 30,
   },
   webNotchWrap: {
+    position: 'absolute',
+    top: 8,
+    left: 0,
+    right: 0,
+    zIndex: 999,
     alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 4,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
   },
   webNotch: {
-    width: 80,
-    height: 14,
-    borderRadius: 99,
-    backgroundColor: '#0f172a',
+    width: 90,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#111315',
   },
   safeArea: {
     flex: 1,
