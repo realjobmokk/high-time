@@ -57,9 +57,10 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
   });
 
   const isMyPost = (post: MajorPost) =>
-    post.author.school === currentSchool.name &&
-    (post.author.nickname === currentUser.name ||
-      (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname));
+    Boolean(post.isMine) ||
+    (post.author.school === currentSchool.name &&
+      (post.author.nickname === currentUser.name ||
+        (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname)));
 
   const renderPostList = () => {
     if (filteredPosts.length === 0) {

@@ -52,11 +52,12 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
 
   if (!post) return null;
 
-  // 이름과 소속 학교가 모두 일치해야만 내 게시글로 판별 (동명이인 타 학교 사용자 차단)
+  // 작성자 본인 여부(isMine) 또는 이름·소속 학교 일치로 내 게시글 판별 (익명 글 포함, 동명이인 타 학교 사용자 차단)
   const isPostMine =
-    post.author.school === currentSchool.name &&
-    (post.author.nickname === currentUser.name ||
-      (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname));
+    Boolean(post.isMine) ||
+    (post.author.school === currentSchool.name &&
+      (post.author.nickname === currentUser.name ||
+        (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname)));
 
   // 댓글 등록 핸들러 (현재 로그인한 사용자의 이름/학교/학년 사용)
   const handleCommentSubmit = () => {

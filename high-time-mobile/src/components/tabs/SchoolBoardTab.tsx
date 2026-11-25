@@ -139,6 +139,7 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
           <View style={styles.postList}>
             {filteredPosts.map((post) => {
               const isMine =
+                Boolean(post.isMine) ||
                 post.author === currentUser.name ||
                 (Boolean(currentUser.nickname) && post.author === currentUser.nickname);
               return (

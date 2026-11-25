@@ -331,6 +331,35 @@ export default function App() {
     } catch {}
   };
 
+  // 본인이 작성한 게시글 ID(익명 글 포함)를 사용자별로 저장/조회
+  const getMyPostIdsStorageKey = (userKey: string) => `hightime_my_post_ids_${userKey}`;
+
+  const loadMyPostIds = (userKey: string): Set<string> => {
+    try {
+      if (typeof localStorage !== 'undefined' && userKey) {
+        const raw = localStorage.getItem(getMyPostIdsStorageKey(userKey));
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return new Set(parsed.map(String));
+        }
+      }
+    } catch {}
+    return new Set();
+  };
+
+  const addMyPostId = (userKey: string, postId: string) => {
+    try {
+      if (typeof localStorage !== 'undefined' && userKey && postId) {
+        const ids = loadMyPostIds(userKey);
+        ids.add(postId);
+        localStorage.setItem(
+          getMyPostIdsStorageKey(userKey),
+          JSON.stringify(Array.from(ids))
+        );
+      }
+    } catch {}
+  };
+
   // 카카오톡 스타일 실시간 1:1 채팅방 동기화 (Supabase Realtime + 2.5초 주기 갱신)
   const refreshChatRooms = React.useCallback(async () => {
     if (!isLoggedIn || !currentUser.name || !isSupabaseConfigured()) return;
@@ -408,8 +437,12 @@ export default function App() {
   // Supabase (AWS PostgreSQL) 연결 시 DB 데이터 로드 + 내 글 댓글 실시간 알림 감지
   const syncMajorPostsAndCommentNotis = React.useCallback(async () => {
     if (!isSupabaseConfigured()) return;
-    const dbMajor = await fetchMajorPostsFromDb();
-    if (!dbMajor) return;
+    const dbMajorRaw = await fetchMajorPostsFromDb();
+    if (!dbMajorRaw) return;
+    const myPostIds = loadMyPostIds(myChatKey);
+    const dbMajor = dbMajorRaw.map((post) =>
+      myPostIds.has(post.id) ? { ...post, isMine: true } : post
+    );
     setMajorPosts(dbMajor);
 
     if (!isLoggedIn || !currentUser.name) return;
@@ -421,9 +454,10 @@ export default function App() {
     let addedSeen = false;
     for (const post of dbMajor) {
       const isMyPost =
-        post.author.school === currentSchool.name &&
-        (post.author.nickname === currentUser.name ||
-          (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname));
+        Boolean(post.isMine) ||
+        (post.author.school === currentSchool.name &&
+          (post.author.nickname === currentUser.name ||
+            (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname)));
       if (!isMyPost) continue;
 
       for (const c of post.comments || []) {
@@ -470,9 +504,16 @@ export default function App() {
   React.useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
+    const markMySchoolPosts = (posts: SchoolPost[]) => {
+      const myPostIds = loadMyPostIds(myChatKey);
+      return posts.map((post) =>
+        myPostIds.has(post.id) ? { ...post, isMine: true } : post
+      );
+    };
+
     const refreshSchoolPosts = async () => {
       const dbSchool = await fetchSchoolPostsFromDb(currentSchool.id);
-      if (dbSchool) setSchoolPosts(dbSchool);
+      if (dbSchool) setSchoolPosts(markMySchoolPosts(dbSchool));
     };
 
     (async () => {
@@ -483,7 +524,7 @@ export default function App() {
         fetchAdmissionConsultsFromDb(),
       ]);
 
-      if (dbSchool) setSchoolPosts(dbSchool);
+      if (dbSchool) setSchoolPosts(markMySchoolPosts(dbSchool));
       if (dbQuestions) setDirectQuestions(dbQuestions);
       if (dbConsults) setAdmissionConsults(dbConsults);
     })();
@@ -748,13 +789,15 @@ export default function App() {
 
   /** 전공게시판 글 등록 */
   const handleSubmitMajorPost = (post: MajorPost) => {
-    setMajorPosts((prev) => [post, ...prev]);
+    addMyPostId(myChatKey, post.id);
+    setMajorPosts((prev) => [{ ...post, isMine: true }, ...prev]);
     insertMajorPostToDb(post);
   };
 
   /** 우리학교 글 등록 */
   const handleSubmitSchoolPost = (post: SchoolPost) => {
-    setSchoolPosts((prev) => [post, ...prev]);
+    addMyPostId(myChatKey, post.id);
+    setSchoolPosts((prev) => [{ ...post, isMine: true }, ...prev]);
     insertSchoolPostToDb(post, currentSchool.id);
   };
 
@@ -950,6 +993,17 @@ export default function App() {
 
   /** 전공게시판 게시글에서 작성자에게 [1:1 채팅 신청] 클릭 시 메시지 작성 모달 오픈 */
   const handleStartDirectChatFromPost = (post: MajorPost) => {
+    // 본인이 작성한 게시글(익명 포함)에는 1:1 채팅 신청 차단
+    const isMine =
+      Boolean(post.isMine) ||
+      loadMyPostIds(myChatKey).has(post.id) ||
+      (post.author.school === currentSchool.name &&
+        (post.author.nickname === currentUser.name ||
+          (Boolean(currentUser.nickname) && post.author.nickname === currentUser.nickname)));
+    if (isMine) {
+      Alert.alert('안내', '본인이 작성한 글에는 1:1 채팅을 보낼 수 없습니다.');
+      return;
+    }
     setIsPostDetailOpen(false);
     setSelectedPost(null);
     setChatRequestPost(post);
