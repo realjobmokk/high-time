@@ -54,11 +54,16 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 우측 학교 선택(홈 전용) 및 알림/설정 아이콘 */}
       <View style={styles.headerRight}>
         {isHome && (
-          <View style={styles.schoolButton}>
+          <TouchableOpacity
+            style={styles.schoolButton}
+            onPress={onPressSchoolBadge}
+            activeOpacity={0.7}
+          >
             <Text style={styles.schoolName} numberOfLines={1}>
               {currentSchool.name}
             </Text>
-          </View>
+            <Ionicons name="chevron-forward" size={14} color={COLORS.ink} />
+          </TouchableOpacity>
         )}
 
         {isProfile ? (
