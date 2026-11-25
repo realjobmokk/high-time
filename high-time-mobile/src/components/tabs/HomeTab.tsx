@@ -278,45 +278,91 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       {/* 3. 내 시간표 */}
       <View style={styles.sectionBlock}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>내 시간표</Text>
+          <View style={styles.timetableTitleRow}>
+            <Text style={styles.sectionTitle}>내 시간표</Text>
+            <View style={styles.timetableDayBadge}>
+              <Text style={styles.timetableDayBadgeText}>
+                {todayBlocks.length > 0 ? `오늘 (${todayDayKey})` : `총 ${displayedBlocks.length}과목`}
+              </Text>
+            </View>
+          </View>
           <TouchableOpacity
+            style={styles.timetableEditPill}
             onPress={() => setIsTimetableModalOpen(true)}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
-            <Text style={styles.sectionAction}>시간표 편집  ›</Text>
+            <Text style={styles.timetableEditPillText}>시간표 편집 ›</Text>
           </TouchableOpacity>
         </View>
 
         {displayedBlocks.length > 0 ? (
-          <View style={styles.timetableList}>
-            {displayedBlocks.slice(0, 5).map((block, index) => (
-              <TouchableOpacity
-                key={block.id}
-                style={styles.timetableRow}
-                onPress={() => setIsTimetableModalOpen(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.timetableIndex}>
-                  {String(index + 1).padStart(2, '0')}
-                </Text>
-                <Text style={styles.timetableSubject} numberOfLines={1}>
-                  {block.subject}
-                </Text>
-                <Text style={styles.timetableRoom} numberOfLines={1}>
-                  {block.room || `${block.day} ${block.startHour}시`}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.timetableCardWrap}>
+            {displayedBlocks.slice(0, 5).map((block, index) => {
+              const isCurrent = activeBlock?.id === block.id;
+              const isLast = index === Math.min(displayedBlocks.length, 5) - 1;
+              return (
+                <TouchableOpacity
+                  key={block.id}
+                  style={[
+                    styles.timetableRow,
+                    !isLast && styles.timetableRowBorder,
+                    isCurrent && styles.timetableRowActive,
+                  ]}
+                  onPress={() => setIsTimetableModalOpen(true)}
+                  activeOpacity={0.75}
+                >
+                  <View
+                    style={[
+                      styles.timetableColorBar,
+                      { backgroundColor: block.color || COLORS.accent },
+                    ]}
+                  />
+                  <View style={styles.timetableTimeCol}>
+                    <Text style={styles.timetableTimeText}>
+                      {String(block.startHour).padStart(2, '0')}:00
+                    </Text>
+                    <Text style={styles.timetableDaySub}>{block.day}요일</Text>
+                  </View>
+                  <View style={styles.timetableSubjectCol}>
+                    <View style={styles.timetableSubjectRow}>
+                      <Text style={styles.timetableSubject} numberOfLines={1}>
+                        {block.subject}
+                      </Text>
+                      {isCurrent && (
+                        <View style={styles.liveClassBadge}>
+                          <Text style={styles.liveClassBadgeText}>수업 중</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.timetableDuration}>
+                      {String(block.startHour).padStart(2, '0')}:00 ~{' '}
+                      {String(Math.max(block.startHour, block.endHour - 1)).padStart(2, '0')}:50
+                    </Text>
+                  </View>
+                  <View style={styles.timetableRoomPill}>
+                    <Text style={styles.timetableRoomText} numberOfLines={1}>
+                      {block.room || '교실 미정'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.emptyTimetableBtn}
+            style={styles.emptyTimetableCard}
             onPress={() => setIsTimetableModalOpen(true)}
-            activeOpacity={0.75}
+            activeOpacity={0.8}
           >
-            <Text style={styles.emptyTimetableText}>
-              등록된 수업이 없어요. 시간표 편집에서 과목을 추가해 보세요.
-            </Text>
+            <View style={styles.emptyTimetableLeft}>
+              <Text style={styles.emptyTimetableTitle}>아직 등록된 수업이 없어요</Text>
+              <Text style={styles.emptyTimetableText}>
+                시간표 편집에서 내 과목과 교실 위치를 추가해 보세요.
+              </Text>
+            </View>
+            <View style={styles.emptyTimetableCta}>
+              <Text style={styles.emptyTimetableCtaText}>+ 추가</Text>
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -604,41 +650,148 @@ const styles = StyleSheet.create({
   },
 
   // 3. 내 시간표
-  timetableList: {
-    gap: 10,
-  },
-  timetableRow: {
+  timetableTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  timetableIndex: {
-    fontSize: 12,
+  timetableDayBadge: {
+    backgroundColor: COLORS.sageCard,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  timetableDayBadgeText: {
+    fontSize: 11,
     fontWeight: '600',
     color: COLORS.muted,
-    width: 22,
+  },
+  timetableEditPill: {
+    backgroundColor: COLORS.sageButton,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  timetableEditPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.ink,
+  },
+  timetableCardWrap: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  timetableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 12,
+  },
+  timetableRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  timetableRowActive: {
+    backgroundColor: COLORS.accentSoft,
+  },
+  timetableColorBar: {
+    width: 4,
+    height: 32,
+    borderRadius: 2,
+  },
+  timetableTimeCol: {
+    width: 48,
+    gap: 1,
+  },
+  timetableTimeText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.ink,
+  },
+  timetableDaySub: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: COLORS.muted,
+  },
+  timetableSubjectCol: {
+    flex: 1,
+    gap: 2,
+  },
+  timetableSubjectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   timetableSubject: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '700',
     color: COLORS.ink,
-    letterSpacing: -0.28,
+    letterSpacing: -0.3,
   },
-  timetableRoom: {
-    fontSize: 12,
-    fontWeight: '400',
+  liveClassBadge: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  liveClassBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  timetableDuration: {
+    fontSize: 11,
     color: COLORS.muted,
-    letterSpacing: -0.24,
   },
-  emptyTimetableBtn: {
+  timetableRoomPill: {
     backgroundColor: COLORS.sageCard,
-    borderRadius: 10,
-    padding: 14,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 7,
+  },
+  timetableRoomText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.ink,
+  },
+  emptyTimetableCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    padding: 16,
+    gap: 12,
+  },
+  emptyTimetableLeft: {
+    flex: 1,
+    gap: 3,
+  },
+  emptyTimetableTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.ink,
   },
   emptyTimetableText: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.muted,
+  },
+  emptyTimetableCta: {
+    backgroundColor: COLORS.ink,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  emptyTimetableCtaText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 
   divider: {
