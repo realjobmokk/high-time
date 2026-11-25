@@ -215,7 +215,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
               </View>
             )}
             <Text style={styles.greetingTitle} numberOfLines={1}>
-              {displayName}님, 반가워요.
+              <Text style={styles.greetingNameHighlight}>{displayName}</Text>님, 반가워요.
             </Text>
           </TouchableOpacity>
           <View style={styles.suneungBadge}>
@@ -230,18 +230,33 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       {/* 2. 오늘의 학교생활 (세이지 그린 카드 + 오늘의 급식 내부 카드) */}
       <View style={styles.schoolLifeCard}>
         <View style={styles.schoolLifeHeader}>
-          <Text style={styles.schoolLifeTitle} numberOfLines={1}>
-            {classStatusHeadline}
-          </Text>
-          <Text style={styles.schoolLifeWeekday}>{todayWeekdayLabel}</Text>
+          <View style={styles.schoolLifeStatusRow}>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: activeBlock ? COLORS.accent : COLORS.success },
+              ]}
+            />
+            <Text style={styles.schoolLifeTitle} numberOfLines={1}>
+              {classStatusHeadline}
+            </Text>
+          </View>
+          <View style={styles.weekdayChip}>
+            <Text style={styles.schoolLifeWeekday}>{todayWeekdayLabel}</Text>
+          </View>
         </View>
 
         <View style={styles.mealCard}>
           <View style={styles.mealHeader}>
             <Text style={styles.mealTitle}>오늘의 급식</Text>
-            <Text style={styles.mealMeta}>
-              {shortSchoolName} 중식 · {displayCalorie}
-            </Text>
+            <View style={styles.mealMetaRow}>
+              <Text style={styles.mealMeta}>{shortSchoolName} 중식</Text>
+              {displayCalorie !== '-' && (
+                <View style={styles.calorieChip}>
+                  <Text style={styles.calorieChipText}>{displayCalorie}</Text>
+                </View>
+              )}
+            </View>
           </View>
 
           {isMealLoading ? (
@@ -262,16 +277,24 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             </Text>
           )}
 
-          <TouchableOpacity
-            style={styles.mealVoteRow}
-            onPress={handleVoteMeal}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.mealVoteHeart}>
-              {hasVotedMeal ? '♥  대존맛' : '♡  대존맛'}
-            </Text>
-            <Text style={styles.mealVoteCount}>{mealVoteCount}표</Text>
-          </TouchableOpacity>
+          <View style={styles.mealFooterRow}>
+            <TouchableOpacity
+              style={[styles.mealVotePill, hasVotedMeal && styles.mealVotePillActive]}
+              onPress={handleVoteMeal}
+              activeOpacity={0.75}
+            >
+              <Text
+                style={[styles.mealVoteHeart, hasVotedMeal && styles.mealVoteHeartActive]}
+              >
+                {hasVotedMeal ? '♥  대존맛' : '♡  대존맛'}
+              </Text>
+              <Text
+                style={[styles.mealVoteCount, hasVotedMeal && styles.mealVoteCountActive]}
+              >
+                {mealVoteCount}표
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -383,19 +406,27 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         </View>
 
         <View style={styles.scheduleGrid}>
-          {visibleSchedules.map((item, idx) => (
-            <TouchableOpacity
-              key={`${item.title}-${item.targetDate}-${idx}`}
-              style={styles.scheduleCard}
-              onPress={() => setIsCalendarModalOpen(true)}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.scheduleDday}>{item.dDay}</Text>
-              <Text style={styles.scheduleTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {visibleSchedules.map((item, idx) => {
+            const isPrimary = idx === 0;
+            return (
+              <TouchableOpacity
+                key={`${item.title}-${item.targetDate}-${idx}`}
+                style={[styles.scheduleCard, isPrimary && styles.scheduleCardPrimary]}
+                onPress={() => setIsCalendarModalOpen(true)}
+                activeOpacity={0.75}
+              >
+                <View style={styles.scheduleTopRow}>
+                  <Text style={[styles.scheduleDday, isPrimary && styles.scheduleDdayPrimary]}>
+                    {item.dDay}
+                  </Text>
+                  <Text style={styles.scheduleDateText}>{item.targetDate}</Text>
+                </View>
+                <Text style={styles.scheduleTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -404,30 +435,39 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>지금, 친구들의 이야기</Text>
           <TouchableOpacity
+            style={styles.timetableEditPill}
             onPress={() => onNavigateTab('board')}
             activeOpacity={0.7}
           >
-            <Text style={styles.sectionAction}>전체보기  ›</Text>
+            <Text style={styles.timetableEditPillText}>전체보기 ›</Text>
           </TouchableOpacity>
         </View>
 
         {topHotPost ? (
           <TouchableOpacity
-            style={styles.hotPostBox}
+            style={styles.hotPostCard}
             onPress={() => onSelectPost(topHotPost)}
             activeOpacity={0.75}
           >
+            <View style={styles.hotPostBadgeRow}>
+              <View style={styles.hotBadge}>
+                <Text style={styles.hotBadgeText}>실시간 인기</Text>
+              </View>
+              <Text style={styles.hotPostCategory}>{topHotPost.majorName}</Text>
+            </View>
             <Text style={styles.hotPostTitle} numberOfLines={2}>
               {topHotPost.title}
             </Text>
             <Text style={styles.hotPostMeta}>
-              전공게시판  ·  좋아요 {topHotPost.likes}  ·  댓글 {topHotPost.commentCount}
+              좋아요 {topHotPost.likes}  ·  댓글 {topHotPost.commentCount}
             </Text>
           </TouchableOpacity>
         ) : (
-          <Text style={styles.hotPostEmpty}>
-            아직 등록된 인기 글이 없습니다. 첫 이야기를 남겨보세요!
-          </Text>
+          <View style={styles.hotPostCard}>
+            <Text style={styles.hotPostEmpty}>
+              아직 등록된 인기 글이 없습니다. 첫 이야기를 남겨보세요!
+            </Text>
+          </View>
         )}
 
         <TouchableOpacity
@@ -520,6 +560,9 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     letterSpacing: -0.44,
   },
+  greetingNameHighlight: {
+    color: COLORS.accent,
+  },
   suneungBadge: {
     backgroundColor: COLORS.accentSoft,
     paddingHorizontal: 10,
@@ -552,24 +595,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
+  schoolLifeStatusRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   schoolLifeTitle: {
     flex: 1,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.ink,
     letterSpacing: -0.34,
   },
+  weekdayChip: {
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
   schoolLifeWeekday: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '700',
     color: COLORS.muted,
-    letterSpacing: -0.24,
+    letterSpacing: -0.22,
   },
   mealCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    padding: 14,
-    gap: 7,
+    borderRadius: 12,
+    padding: 15,
+    gap: 8,
   },
   mealHeader: {
     flexDirection: 'row',
@@ -579,28 +639,45 @@ const styles = StyleSheet.create({
   },
   mealTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.ink,
     letterSpacing: -0.28,
   },
+  mealMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   mealMeta: {
     fontSize: 11,
-    fontWeight: '400',
+    fontWeight: '500',
     color: COLORS.muted,
     letterSpacing: -0.22,
+  },
+  calorieChip: {
+    backgroundColor: COLORS.sageCard,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  calorieChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.ink,
   },
   mealLoading: {
     paddingVertical: 12,
     alignItems: 'center',
   },
   mealMenuBox: {
-    gap: 2,
+    gap: 3,
+    paddingVertical: 2,
   },
   mealMenuLine: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '600',
     color: COLORS.ink,
-    lineHeight: 22,
+    lineHeight: 23,
     letterSpacing: -0.3,
   },
   mealEmptyText: {
@@ -608,22 +685,38 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     paddingVertical: 4,
   },
-  mealVoteRow: {
+  mealFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingTop: 4,
+  },
+  mealVotePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
     gap: 6,
-    paddingTop: 2,
+    backgroundColor: COLORS.accentSoft,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  mealVotePillActive: {
+    backgroundColor: COLORS.accent,
   },
   mealVoteHeart: {
     fontSize: 12,
     fontWeight: '700',
     color: COLORS.accent,
   },
+  mealVoteHeartActive: {
+    color: '#ffffff',
+  },
   mealVoteCount: {
     fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.muted,
+    fontWeight: '600',
+    color: COLORS.ink,
+  },
+  mealVoteCountActive: {
+    color: '#ffffff',
   },
 
   // 공통 섹션 블록
@@ -802,43 +895,90 @@ const styles = StyleSheet.create({
   // 4. 다가오는 일정
   scheduleGrid: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   scheduleCard: {
     flex: 1,
-    backgroundColor: COLORS.sageCard,
-    borderRadius: 10,
-    padding: 14,
-    gap: 5,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 15,
+    gap: 6,
+  },
+  scheduleCardPrimary: {
+    backgroundColor: COLORS.accentSoft,
+    borderColor: '#edd2c5',
+  },
+  scheduleTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
   },
   scheduleDday: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.ink,
+    letterSpacing: -0.32,
+  },
+  scheduleDdayPrimary: {
     color: COLORS.accent,
-    letterSpacing: -0.24,
+  },
+  scheduleDateText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.muted,
   },
   scheduleTitle: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     color: COLORS.ink,
     letterSpacing: -0.28,
   },
 
   // 5. 지금, 친구들의 이야기
-  hotPostBox: {
-    gap: 6,
+  hotPostCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    padding: 16,
+    gap: 8,
+  },
+  hotPostBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  hotBadge: {
+    backgroundColor: COLORS.accentSoft,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  hotBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.accent,
+  },
+  hotPostCategory: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.muted,
   },
   hotPostTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: COLORS.ink,
+    lineHeight: 21,
     letterSpacing: -0.3,
   },
   hotPostMeta: {
-    fontSize: 12,
-    fontWeight: '400',
+    fontSize: 11,
+    fontWeight: '500',
     color: COLORS.muted,
-    letterSpacing: -0.24,
+    letterSpacing: -0.22,
   },
   hotPostEmpty: {
     fontSize: 13,
