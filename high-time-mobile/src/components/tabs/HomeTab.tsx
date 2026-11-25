@@ -25,7 +25,7 @@ import {
   fetchNeisMealInfo,
   fetchNeisSchedule,
 } from '../../services/neisService';
-import { TimetableModal } from '../../modals/TimetableModal';
+import { TimetableModal, getPeriodSchedule } from '../../modals/TimetableModal';
 import { ScheduleCalendarModal } from '../../modals/ScheduleCalendarModal';
 import { COLORS } from '../../theme/colors';
 
@@ -128,13 +128,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   );
   const displayedBlocks = todayBlocks.length > 0 ? todayBlocks : allSortedBlocks;
 
-  const currentHourFloat = nowTime.getHours() + nowTime.getMinutes() / 60;
-  const activeBlock = todayBlocks.find(
-    (b) =>
-      currentHourFloat >= b.startHour &&
-      currentHourFloat <= Math.max(b.startHour, b.endHour - 1) + 50 / 60
-  );
-  const nextBlock = todayBlocks.find((b) => b.startHour > currentHourFloat);
+  const nowMinutes = nowTime.getHours() * 60 + nowTime.getMinutes();
+
+  const activeBlock = todayBlocks.find((b) => {
+    const sched = getPeriodSchedule(b.startHour);
+    return nowMinutes >= sched.startMin && nowMinutes <= sched.endMin;
+  });
+  const nextBlock = todayBlocks.find((b) => {
+    const sched = getPeriodSchedule(b.startHour);
+    return sched.startMin > nowMinutes;
+  });
 
   const classStatusHeadline = isWeekend
     ? '오늘은 수업이 없어요'
@@ -336,6 +339,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             {displayedBlocks.map((block, index) => {
               const isCurrent = activeBlock?.id === block.id;
               const isLast = index === displayedBlocks.length - 1;
+              const sched = getPeriodSchedule(block.startHour);
               return (
                 <TouchableOpacity
                   key={block.id}
@@ -354,9 +358,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                     ]}
                   />
                   <View style={styles.timetableTimeCol}>
-                    <Text style={styles.timetableTimeText}>
-                      {Math.max(1, block.startHour - 8)}교시
-                    </Text>
+                    <Text style={styles.timetableTimeText}>{sched.label}</Text>
                     <Text style={styles.timetableDaySub}>{block.day}요일</Text>
                   </View>
                   <View style={styles.timetableSubjectCol}>
@@ -371,9 +373,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                       )}
                     </View>
                     <Text style={styles.timetableDuration}>
-                      {Math.max(1, block.startHour - 8)}교시 ·{' '}
-                      {String(block.startHour).padStart(2, '0')}:00 ~{' '}
-                      {String(Math.max(block.startHour, block.endHour - 1)).padStart(2, '0')}:50
+                      {sched.label} · {sched.timeRange}
                     </Text>
                   </View>
                   <View style={styles.timetableRoomPill}>

@@ -35,8 +35,40 @@ interface TimetableModalProps {
 
 const DAYS: WeekdayKey[] = ['월', '화', '수', '목', '금'];
 
-// 9시부터 19시(오후 7시)까지 1시간 단위 슬롯 (화면 표시는 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7)
-const HOURS: number[] = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+// 1교시 ~ 7교시 실제 고등학교 일과표 (조례 08:30~08:40, 점심 12:30~13:30, 종례 16:20~16:40)
+export interface PeriodScheduleItem {
+  hourKey: number;
+  period: number;
+  label: string;
+  timeRange: string;
+  startMin: number;
+  endMin: number;
+}
+
+export const HIGH_SCHOOL_PERIODS: PeriodScheduleItem[] = [
+  { hourKey: 9, period: 1, label: '1교시', timeRange: '08:40 ~ 09:30', startMin: 8 * 60 + 40, endMin: 9 * 60 + 30 },
+  { hourKey: 10, period: 2, label: '2교시', timeRange: '09:40 ~ 10:30', startMin: 9 * 60 + 40, endMin: 10 * 60 + 30 },
+  { hourKey: 11, period: 3, label: '3교시', timeRange: '10:40 ~ 11:30', startMin: 10 * 60 + 40, endMin: 11 * 60 + 30 },
+  { hourKey: 12, period: 4, label: '4교시', timeRange: '11:40 ~ 12:30', startMin: 11 * 60 + 40, endMin: 12 * 60 + 30 },
+  { hourKey: 13, period: 5, label: '5교시', timeRange: '13:30 ~ 14:20', startMin: 13 * 60 + 30, endMin: 14 * 60 + 20 },
+  { hourKey: 14, period: 6, label: '6교시', timeRange: '14:30 ~ 15:20', startMin: 14 * 60 + 30, endMin: 15 * 60 + 20 },
+  { hourKey: 15, period: 7, label: '7교시', timeRange: '15:30 ~ 16:20', startMin: 15 * 60 + 30, endMin: 16 * 60 + 20 },
+];
+
+export function getPeriodSchedule(hourKey: number): PeriodScheduleItem {
+  return (
+    HIGH_SCHOOL_PERIODS.find((p) => p.hourKey === hourKey) || {
+      hourKey,
+      period: Math.max(1, hourKey - 8),
+      label: `${Math.max(1, hourKey - 8)}교시`,
+      timeRange: `${String(hourKey).padStart(2, '0')}:00 ~ ${String(hourKey).padStart(2, '0')}:50`,
+      startMin: hourKey * 60,
+      endMin: hourKey * 60 + 50,
+    }
+  );
+}
+
+const HOURS: number[] = HIGH_SCHOOL_PERIODS.map((p) => p.hourKey);
 
 // 에브리타임 감성 파스텔/비비드 블록 컬러 팔레트
 const BLOCK_COLORS: string[] = [
@@ -53,14 +85,13 @@ const BLOCK_COLORS: string[] = [
 const ROW_HEIGHT = 54; // 1시간당 그리드 높이(px)
 
 export function formatHourLabel(hour24: number): string {
-  return `${Math.max(1, hour24 - 8)}교시`;
+  return getPeriodSchedule(hour24).label;
 }
 
-// 교시 범위 포맷 (예: 1교시)
-export function formatTimeRange(startHour: number, endHour: number): string {
-  const startPeriod = Math.max(1, startHour - 8);
-  const endPeriod = Math.max(startPeriod, endHour - 9);
-  return startPeriod === endPeriod ? `${startPeriod}교시` : `${startPeriod}~${endPeriod}교시`;
+// 교시 및 실제 수업 시간 포맷 (예: 1교시 · 08:40 ~ 09:30)
+export function formatTimeRange(startHour: number, _endHour: number): string {
+  const sched = getPeriodSchedule(startHour);
+  return `${sched.label} · ${sched.timeRange}`;
 }
 
 export const TimetableModal: React.FC<TimetableModalProps> = ({
@@ -347,7 +378,7 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
               <View style={styles.timeSelectContainer}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.timeSubLabel}>
-                    수업 교시를 선택하세요 (1교시 ~ 11교시)
+                    수업 교시를 선택하세요 (1교시 ~ 7교시)
                   </Text>
                   <ScrollView
                     horizontal
