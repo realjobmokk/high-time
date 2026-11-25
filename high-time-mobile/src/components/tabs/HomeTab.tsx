@@ -236,7 +236,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                 styles.statusDot,
                 {
                   backgroundColor:
-                    !isWeekend && (activeBlock || nextBlock) ? '#dc2626' : COLORS.success,
+                    !isWeekend && (activeBlock || nextBlock) ? COLORS.accent : COLORS.success,
                 },
               ]}
             />
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.34,
   },
   activeSubjectHighlight: {
-    color: '#dc2626',
+    color: COLORS.accent,
     fontWeight: '900',
   },
   weekdayChip: {
