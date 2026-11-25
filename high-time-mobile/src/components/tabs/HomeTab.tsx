@@ -333,9 +333,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
         {displayedBlocks.length > 0 ? (
           <View style={styles.timetableCardWrap}>
-            {displayedBlocks.slice(0, 5).map((block, index) => {
+            {displayedBlocks.map((block, index) => {
               const isCurrent = activeBlock?.id === block.id;
-              const isLast = index === Math.min(displayedBlocks.length, 5) - 1;
+              const isLast = index === displayedBlocks.length - 1;
               return (
                 <TouchableOpacity
                   key={block.id}
