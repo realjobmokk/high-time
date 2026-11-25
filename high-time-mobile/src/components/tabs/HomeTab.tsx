@@ -371,7 +371,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                       )}
                     </View>
                     <Text style={styles.timetableDuration}>
-                      {block.day}요일 · {Math.max(1, block.startHour - 8)}교시
+                      {Math.max(1, block.startHour - 8)}교시 ·{' '}
+                      {String(block.startHour).padStart(2, '0')}:00 ~{' '}
+                      {String(Math.max(block.startHour, block.endHour - 1)).padStart(2, '0')}:50
                     </Text>
                   </View>
                   <View style={styles.timetableRoomPill}>
