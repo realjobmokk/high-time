@@ -158,8 +158,8 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                 </Text>
               </View>
 
-              {/* 본인 글에는 1:1 채팅 신청 버튼 숨김 */}
-              {!isPostMine && (
+              {/* 본인 글 및 익명 글에는 1:1 채팅 신청 버튼 숨김 */}
+              {!isPostMine && !post.author.isAnonymous && post.author.nickname !== '익명' && (
                 <TouchableOpacity
                   style={styles.directAskBtn}
                   onPress={() => onQuickAsk(post)}

@@ -134,7 +134,8 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
                     {shortSchool} {post.author.grade}
                   </Text>
                 </View>
-                {!mine && (
+                {/* 본인 글 및 익명 글에는 1:1 채팅 버튼 숨김 */}
+                {!mine && !post.author.isAnonymous && post.author.nickname !== '익명' && (
                   <TouchableOpacity
                     style={styles.chatBtn}
                     onPress={(e: any) => {

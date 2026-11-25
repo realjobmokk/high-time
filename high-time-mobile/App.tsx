@@ -993,6 +993,11 @@ export default function App() {
 
   /** 전공게시판 게시글에서 작성자에게 [1:1 채팅 신청] 클릭 시 메시지 작성 모달 오픈 */
   const handleStartDirectChatFromPost = (post: MajorPost) => {
+    // 익명 게시글에는 1:1 채팅 신청 차단
+    if (post.author.isAnonymous || post.author.nickname === '익명') {
+      Alert.alert('안내', '익명 게시글에는 1:1 채팅을 보낼 수 없습니다.');
+      return;
+    }
     // 본인이 작성한 게시글(익명 포함)에는 1:1 채팅 신청 차단
     const isMine =
       Boolean(post.isMine) ||
