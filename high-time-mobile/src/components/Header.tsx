@@ -27,12 +27,9 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab = 'home',
   currentSchool,
   unreadNotiCount,
-  onPressSchoolBadge,
   onPressNotification,
-  onPressSettings,
 }) => {
   const isHome = activeTab === 'home';
-  const isProfile = activeTab === 'profile';
 
   return (
     <View style={styles.header}>
@@ -61,30 +58,21 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
         )}
 
-        {isProfile ? (
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={onPressSettings || onPressSchoolBadge}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="settings-outline" size={22} color={COLORS.ink} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={onPressNotification}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="notifications-outline" size={22} color={COLORS.ink} />
-            {unreadNotiCount > 0 && (
-              <View style={styles.notiBadge}>
-                <Text style={styles.notiBadgeText}>
-                  {unreadNotiCount > 99 ? '99+' : unreadNotiCount}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
+        {/* 알림 아이콘 (프로필 탭 톱니바퀴·재인증 모달 진입 제거) */}
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={onPressNotification}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="notifications-outline" size={22} color={COLORS.ink} />
+          {unreadNotiCount > 0 && (
+            <View style={styles.notiBadge}>
+              <Text style={styles.notiBadgeText}>
+                {unreadNotiCount > 99 ? '99+' : unreadNotiCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
