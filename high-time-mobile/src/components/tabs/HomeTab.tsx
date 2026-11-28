@@ -115,18 +115,14 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     4: '목',
     5: '금',
   };
-  const dayOrder: Record<WeekdayKey, number> = { 월: 1, 화: 2, 수: 3, 목: 4, 금: 5 };
   const todayDayKey: WeekdayKey = dayNames[nowTime.getDay()] || '월';
   const isWeekend = nowTime.getDay() === 0 || nowTime.getDay() === 6;
 
+  // 홈 화면 [내 시간표]에는 오늘 요일의 수업만 표시 (주말에는 전체 요일 시간표가 쏟아지지 않도록 비움)
   const todayBlocks = [...customTimetable]
     .filter((b) => !isWeekend && b.day === todayDayKey)
     .sort((a, b) => a.startHour - b.startHour);
-
-  const allSortedBlocks = [...customTimetable].sort(
-    (a, b) => dayOrder[a.day] - dayOrder[b.day] || a.startHour - b.startHour
-  );
-  const displayedBlocks = todayBlocks.length > 0 ? todayBlocks : allSortedBlocks;
+  const displayedBlocks = todayBlocks;
 
   const nowMinutes = nowTime.getHours() * 60 + nowTime.getMinutes();
 
@@ -321,7 +317,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             <Text style={styles.sectionTitle}>내 시간표</Text>
             <View style={styles.timetableDayBadge}>
               <Text style={styles.timetableDayBadgeText}>
-                {todayBlocks.length > 0 ? `오늘 (${todayDayKey})` : `총 ${displayedBlocks.length}과목`}
+                {isWeekend ? '주말' : `오늘 (${todayDayKey})`}
               </Text>
             </View>
           </View>
@@ -392,13 +388,23 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             activeOpacity={0.8}
           >
             <View style={styles.emptyTimetableLeft}>
-              <Text style={styles.emptyTimetableTitle}>아직 등록된 수업이 없어요</Text>
+              <Text style={styles.emptyTimetableTitle}>
+                {isWeekend
+                  ? '주말에는 수업이 없어요'
+                  : customTimetable.length === 0
+                    ? '아직 등록된 수업이 없어요'
+                    : '오늘은 등록된 수업이 없어요'}
+              </Text>
               <Text style={styles.emptyTimetableText}>
-                시간표 편집에서 내 과목과 교실 위치를 추가해 보세요.
+                {isWeekend || customTimetable.length > 0
+                  ? '전체 주간 시간표는 시간표 편집에서 확인할 수 있어요.'
+                  : '시간표 편집에서 내 과목과 교실 위치를 추가해 보세요.'}
               </Text>
             </View>
             <View style={styles.emptyTimetableCta}>
-              <Text style={styles.emptyTimetableCtaText}>+ 추가</Text>
+              <Text style={styles.emptyTimetableCtaText}>
+                {isWeekend || customTimetable.length > 0 ? '전체 보기' : '+ 추가'}
+              </Text>
             </View>
           </TouchableOpacity>
         )}
