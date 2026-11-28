@@ -158,59 +158,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           ? '오늘 수업이 모두 끝났어요'
           : '오늘 등록된 수업이 없어요';
 
-  // 연속 출석 스트릭 계산 (매일 접속 동기 부여)
-  const [streakDays, setStreakDays] = useState<number>(isPreviewMode ? 3 : 1);
-  useEffect(() => {
-    if (isPreviewMode || typeof localStorage === 'undefined' || !currentUser.name) return;
-    try {
-      const key = `hightime_streak_${encodeURIComponent(currentUser.username || currentUser.name)}`;
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const raw = localStorage.getItem(key);
-      if (!raw) {
-        localStorage.setItem(key, JSON.stringify({ lastDate: todayStr, count: 1 }));
-        setStreakDays(1);
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      if (parsed.lastDate === todayStr) {
-        setStreakDays(Math.max(1, Number(parsed.count) || 1));
-        return;
-      }
-      const prev = new Date(parsed.lastDate);
-      const curr = new Date(todayStr);
-      const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86400000);
-      const nextCount = diffDays === 1 ? (Number(parsed.count) || 1) + 1 : 1;
-      localStorage.setItem(key, JSON.stringify({ lastDate: todayStr, count: nextCount }));
-      setStreakDays(nextCount);
-    } catch {}
-  }, [isPreviewMode, currentUser.username, currentUser.name]);
-
-  // 실시간 교시 카운트다운 (수업 진행률 바 및 남은 시간)
-  const classCountdown = (() => {
-    if (isWeekend) return null;
-    if (activeBlock) {
-      const sched = getPeriodSchedule(activeBlock.startHour);
-      const total = Math.max(1, sched.endMin - sched.startMin);
-      const elapsed = Math.max(0, Math.min(total, nowMinutes - sched.startMin));
-      const remain = Math.max(1, sched.endMin - nowMinutes);
-      return {
-        label: `${remain}분 뒤 종료`,
-        progressPct: Math.round((elapsed / total) * 100),
-      };
-    }
-    if (nextBlock) {
-      const sched = getPeriodSchedule(nextBlock.startHour);
-      const remain = Math.max(1, sched.startMin - nowMinutes);
-      if (remain <= 60) {
-        return {
-          label: `${remain}분 뒤 시작`,
-          progressPct: Math.max(8, Math.round(((60 - remain) / 60) * 100)),
-        };
-      }
-    }
-    return null;
-  })();
-
   // 수능 D-Day 자동 계산
   const getSuneungDate = (year: number) => {
     const nov1 = new Date(year, 10, 1);
@@ -283,14 +230,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({
               <Text style={styles.greetingNameHighlight}>{displayName}</Text>님, 반가워요.
             </Text>
           </TouchableOpacity>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={styles.streakBadge}>
-              <Ionicons name="flame" size={12} color={COLORS.accent} />
-              <Text style={styles.streakBadgeText}>{streakDays}일</Text>
-            </View>
-            <View style={styles.suneungBadge}>
-              <Text style={styles.suneungBadgeText}>{suneungDDayLabel}</Text>
-            </View>
+          <View style={styles.suneungBadge}>
+            <Text style={styles.suneungBadgeText}>{suneungDDayLabel}</Text>
           </View>
         </View>
       </View>
@@ -327,20 +268,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           </View>
         </View>
 
-        {classCountdown && (
-          <View style={styles.countdownRow}>
-            <View style={styles.countdownTrack}>
-              <View
-                style={[
-                  styles.countdownFill,
-                  { width: `${classCountdown.progressPct}%` as any },
-                ]}
-              />
-            </View>
-            <Text style={styles.countdownText}>{classCountdown.label}</Text>
-          </View>
-        )}
-
         <View style={styles.mealCard}>
           <View style={styles.mealHeader}>
             <Text style={styles.mealTitle}>오늘의 급식</Text>
@@ -373,16 +300,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           )}
 
           <View style={styles.mealFooterRow}>
-            <View style={styles.mealSatisfactionPill}>
-              <Ionicons
-                name={hasVotedMeal ? 'checkmark-circle' : 'lock-closed-outline'}
-                size={12}
-                color={hasVotedMeal ? COLORS.success : COLORS.muted}
-              />
-              <Text style={styles.mealSatisfactionText}>
-                {hasVotedMeal ? '87% 만족' : '?%'}
-              </Text>
-            </View>
             <TouchableOpacity
               style={[styles.mealVotePill, hasVotedMeal && styles.mealVotePillActive]}
               onPress={handleVoteMeal}
@@ -744,59 +661,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.muted,
     letterSpacing: -0.22,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#fdf1ee',
-    borderWidth: 1,
-    borderColor: '#f3d1c9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 99,
-  },
-  streakBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: COLORS.accent,
-  },
-  countdownRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  countdownTrack: {
-    flex: 1,
-    height: 4,
-    borderRadius: 99,
-    backgroundColor: '#dde2d5',
-    overflow: 'hidden',
-  },
-  countdownFill: {
-    height: '100%',
-    borderRadius: 99,
-    backgroundColor: COLORS.accent,
-  },
-  countdownText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.accent,
-  },
-  mealSatisfactionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.sageCard,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 99,
-    marginRight: 'auto' as any,
-  },
-  mealSatisfactionText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.muted,
   },
   mealCard: {
     backgroundColor: COLORS.surface,

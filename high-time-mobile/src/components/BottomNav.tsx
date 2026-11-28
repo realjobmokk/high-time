@@ -10,7 +10,6 @@ interface BottomNavProps {
   activeTab: TabType;
   onChangeTab: (tab: TabType) => void;
   unreadChatCount?: number;
-  hasUnreadBoard?: boolean;
 }
 
 const TABS: {
@@ -49,7 +48,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
   onChangeTab,
   unreadChatCount = 0,
-  hasUnreadBoard = false,
 }) => {
   return (
     <View style={styles.bottomNav}>
@@ -69,9 +67,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 size={23}
                 color={isActive ? COLORS.accent : COLORS.navMuted}
               />
-              {tab.id === 'board' && hasUnreadBoard && (
-                <View style={styles.boardDot} />
-              )}
               {tab.id === 'chat' && unreadChatCount > 0 && (
                 <View style={styles.chatBadge}>
                   <Text style={styles.chatBadgeText}>
@@ -114,17 +109,6 @@ const styles = StyleSheet.create({
   },
   iconPillActive: {
     backgroundColor: COLORS.accentNavPill,
-  },
-  boardDot: {
-    position: 'absolute',
-    top: 4,
-    right: 11,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: COLORS.accent,
-    borderWidth: 1.5,
-    borderColor: COLORS.surface,
   },
   chatBadge: {
     position: 'absolute',

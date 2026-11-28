@@ -184,7 +184,6 @@ export default function App() {
   //  2. 탭 & UI 상태
   // =========================================================
   const [activeTab, setActiveTab] = useState<TabType>('home');
-  const [hasUnreadBoard, setHasUnreadBoard] = useState(true);
   const [boardSubTab, setBoardSubTab] = useState<'major' | 'school' | 'counseling'>('major');
   const [counselingSubTab, setCounselingSubTab] = useState<'direct' | 'admission'>('direct');
 
@@ -195,9 +194,7 @@ export default function App() {
     if (tab === 'major' || tab === 'school' || tab === 'counseling') {
       setBoardSubTab(tab);
       setActiveTab('board');
-      setHasUnreadBoard(false);
     } else {
-      if (tab === 'board') setHasUnreadBoard(false);
       setActiveTab(tab);
     }
   };
@@ -1478,14 +1475,8 @@ export default function App() {
       {!(activeTab === 'chat' && isChatRoomFullOpen) && (
         <BottomNav
           activeTab={activeTab}
-          onChangeTab={(tab) => {
-            if (tab === 'board') setHasUnreadBoard(false);
-            setActiveTab(tab);
-          }}
+          onChangeTab={setActiveTab}
           unreadChatCount={unreadChatCount}
-          hasUnreadBoard={
-            hasUnreadBoard && activeTab !== 'board' && (majorPosts.length > 0 || schoolPosts.length > 0)
-          }
         />
       )}
 
