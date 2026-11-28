@@ -18,26 +18,31 @@ const TABS: {
   activeIcon: keyof typeof Ionicons.glyphMap;
   inactiveIcon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { id: 'home', label: '홈', activeIcon: 'home-outline', inactiveIcon: 'home-outline' },
-  {
-    id: 'board',
-    label: '게시판',
-    activeIcon: 'reader-outline',
-    inactiveIcon: 'reader-outline',
-  },
-  {
-    id: 'chat',
-    label: '채팅',
-    activeIcon: 'chatbubble-ellipses-outline',
-    inactiveIcon: 'chatbubble-ellipses-outline',
-  },
-  {
-    id: 'profile',
-    label: '내 정보',
-    activeIcon: 'person-outline',
-    inactiveIcon: 'person-outline',
-  },
-];
+    {
+      id: 'home',
+      label: '홈',
+      activeIcon: 'home',
+      inactiveIcon: 'home-outline',
+    },
+    {
+      id: 'board',
+      label: '게시판',
+      activeIcon: 'reader',
+      inactiveIcon: 'reader-outline',
+    },
+    {
+      id: 'chat',
+      label: '채팅',
+      activeIcon: 'chatbubble-ellipses',
+      inactiveIcon: 'chatbubble-ellipses-outline',
+    },
+    {
+      id: 'profile',
+      label: '내 정보',
+      activeIcon: 'person',
+      inactiveIcon: 'person-outline',
+    },
+  ];
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
@@ -54,11 +59,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             style={styles.navItem}
             onPress={() => onChangeTab(tab.id)}
             activeOpacity={0.75}
+            accessibilityLabel={tab.label}
           >
             <View style={[styles.iconPill, isActive && styles.iconPillActive]}>
               <Ionicons
                 name={isActive ? tab.activeIcon : tab.inactiveIcon}
-                size={21}
+                size={23}
                 color={isActive ? COLORS.accent : COLORS.navMuted}
               />
               {tab.id === 'chat' && unreadChatCount > 0 && (
@@ -69,9 +75,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 </View>
               )}
             </View>
-            <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-              {tab.label}
-            </Text>
           </TouchableOpacity>
         );
       })}
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.navBorder,
     paddingTop: 10,
-    paddingBottom: 14,
+    paddingBottom: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -95,27 +98,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
   },
   iconPill: {
-    width: 48,
-    height: 27,
-    borderRadius: 10,
+    width: 52,
+    height: 34,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   iconPillActive: {
     backgroundColor: COLORS.accentNavPill,
-  },
-  navLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: COLORS.navMuted,
-  },
-  navLabelActive: {
-    color: COLORS.accent,
-    fontWeight: '700',
   },
   chatBadge: {
     position: 'absolute',
