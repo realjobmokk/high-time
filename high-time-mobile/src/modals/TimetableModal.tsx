@@ -297,17 +297,17 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                           style={[
                             styles.classBlock,
                             {
-                              top: topOffset,
-                              height: blockHeight,
+                              top: topOffset + 2,
+                              height: Math.max(20, blockHeight - 5),
                               backgroundColor: block.color,
                             },
                           ]}
                         >
-                          <Text style={styles.classBlockTitle} numberOfLines={3}>
+                          <Text style={styles.classBlockTitle} numberOfLines={2} ellipsizeMode="tail">
                             {block.subject}
                           </Text>
                           {Boolean(block.room) && (
-                            <Text style={styles.classBlockRoom} numberOfLines={1}>
+                            <Text style={styles.classBlockRoom} numberOfLines={1} ellipsizeMode="tail">
                               {block.room}
                             </Text>
                           )}
@@ -584,22 +584,24 @@ const styles = StyleSheet.create({
   },
   classBlock: {
     position: 'absolute',
-    left: 1,
-    right: 1,
-    padding: 5,
-    borderRadius: 4,
+    left: 2,
+    right: 2,
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+    borderRadius: 7,
+    justifyContent: 'space-between',
     overflow: 'hidden',
   },
   classBlockTitle: {
-    fontSize: 11,
-    fontWeight: '900',
+    fontSize: 10.5,
+    fontWeight: '800',
     color: '#ffffff',
-    lineHeight: 14,
+    lineHeight: 13,
   },
   classBlockRoom: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(255,255,255,0.88)',
     marginTop: 2,
   },
   formOverlay: {
