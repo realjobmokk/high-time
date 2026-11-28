@@ -42,6 +42,30 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured()
 // 1. 전공게시판 (major_posts) DB 조회 / 저장 / 수정 / 삭제
 // =============================================================================
 
+/** DB의 ISO 타임스탬프(created_at)를 상대 시간(방금 전, N분 전, N시간 전 등)으로 변환 */
+export function formatRelativeTime(isoDate?: string | null, fallbackLabel?: string): string {
+  if (!isoDate) return fallbackLabel || '방금 전';
+  const parsed = new Date(isoDate);
+  const timeMs = parsed.getTime();
+  if (Number.isNaN(timeMs)) return fallbackLabel || '방금 전';
+
+  const diffSec = Math.floor((Date.now() - timeMs) / 1000);
+  if (diffSec < 60) return '방금 전';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}일 전`;
+
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  if (parsed.getFullYear() === new Date().getFullYear()) {
+    return `${month}/${day}`;
+  }
+  return `${parsed.getFullYear()}.${month}.${day}`;
+}
+
 /** DB에서 전공게시판 글 목록 불러오기 */
 export async function fetchMajorPostsFromDb(): Promise<MajorPost[] | null> {
   if (!supabase) return null;
@@ -85,7 +109,7 @@ export async function fetchMajorPostsFromDb(): Promise<MajorPost[] | null> {
     scraps: row.scraps,
     commentCount: row.comment_count,
     isMine: false, // 로그인한 사용자(이름+학교) 기준으로 클라이언트에서 동적 판별
-    createdAt: row.created_at_label,
+    createdAt: formatRelativeTime(row.created_at, row.created_at_label),
     comments: Array.isArray(row.comments) ? row.comments : [],
   }));
 }
@@ -206,7 +230,7 @@ export async function fetchSchoolPostsFromDb(schoolId = 'daehyeon'): Promise<Sch
         likes: row.likes,
         commentCount: Math.max(row.comment_count || 0, comments.length),
         comments,
-        createdAt: row.created_at_label,
+        createdAt: formatRelativeTime(row.created_at, row.created_at_label),
       };
     });
 }
@@ -310,7 +334,7 @@ export async function fetchDirectQuestionsFromDb(): Promise<DirectQuestion[] | n
     question: row.question,
     answer: row.answer,
     status: row.status,
-    createdAt: row.created_at_label,
+    createdAt: formatRelativeTime(row.created_at, row.created_at_label),
     answeredAt: row.answered_at_label,
     isPublic: row.is_public,
   }));
@@ -376,7 +400,7 @@ export async function fetchAdmissionConsultsFromDb(): Promise<AdmissionConsult[]
       expertAdvice: row.expert_advice,
       expertName: row.expert_name,
       status: row.status,
-      createdAt: row.created_at_label,
+      createdAt: formatRelativeTime(row.created_at, row.created_at_label),
     }));
   }
 
