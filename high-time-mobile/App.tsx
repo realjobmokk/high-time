@@ -31,7 +31,7 @@ import {
   CustomTimetableBlock,
 } from './src/types';
 
-// 초기 빈 데이터
+// 초기 빈 데이터 및 랜딩페이지 체험 모드(?preview=1) 고정 데이터
 import {
   INITIAL_MAJOR_POSTS,
   INITIAL_SCHOOL_POSTS,
@@ -40,6 +40,13 @@ import {
   INITIAL_CHAT_ROOMS,
   INITIAL_NOTIFICATIONS,
 } from './src/data/mockData';
+import {
+  PREVIEW_MAJOR_POSTS,
+  PREVIEW_SCHOOL_POSTS,
+  PREVIEW_CHAT_ROOMS,
+  PREVIEW_NOTIFICATIONS,
+  PREVIEW_TIMETABLE,
+} from './src/data/previewData';
 
 // 컴포넌트 임포트
 import { Header } from './src/components/Header';
@@ -210,13 +217,22 @@ export default function App() {
 
   // =========================================================
   //  3. 콘텐츠 상태 (전공게시판 / 우리학교 / 상담 / 채팅 / 알림)
+  //  - 랜딩페이지 체험 모드(?preview=1)에서는 고정 데모 데이터로 시작
   // =========================================================
-  const [majorPosts, setMajorPosts] = useState<MajorPost[]>(INITIAL_MAJOR_POSTS);
-  const [schoolPosts, setSchoolPosts] = useState<SchoolPost[]>(INITIAL_SCHOOL_POSTS);
+  const [majorPosts, setMajorPosts] = useState<MajorPost[]>(
+    isPreviewMode ? PREVIEW_MAJOR_POSTS : INITIAL_MAJOR_POSTS
+  );
+  const [schoolPosts, setSchoolPosts] = useState<SchoolPost[]>(
+    isPreviewMode ? PREVIEW_SCHOOL_POSTS : INITIAL_SCHOOL_POSTS
+  );
   const [directQuestions, setDirectQuestions] = useState<DirectQuestion[]>(INITIAL_DIRECT_QUESTIONS);
   const [admissionConsults, setAdmissionConsults] = useState<AdmissionConsult[]>(INITIAL_ADMISSION_CONSULTS);
-  const [chatRooms, setChatRooms] = useState<ChatRoom[]>(INITIAL_CHAT_ROOMS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>(
+    isPreviewMode ? PREVIEW_CHAT_ROOMS : INITIAL_CHAT_ROOMS
+  );
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    isPreviewMode ? PREVIEW_NOTIFICATIONS : INITIAL_NOTIFICATIONS
+  );
 
   // 로그인한 사용자별 고유 시간표 스토리지 키 생성 (다른 사용자와 절대 공유되지 않음)
   const getUserTimetableStorageKey = (
@@ -231,10 +247,16 @@ export default function App() {
         )}`;
 
   // 현재 로그인한 사용자가 직접 추가/편집하는 주간 시간표 블록 목록
-  const [customTimetable, setCustomTimetable] = useState<CustomTimetableBlock[]>([]);
+  const [customTimetable, setCustomTimetable] = useState<CustomTimetableBlock[]>(
+    isPreviewMode ? PREVIEW_TIMETABLE : []
+  );
 
   // 로그인한 학생(이름 + 학교)이 바뀔 때마다 해당 학생 전용 시간표만 불러오기
   React.useEffect(() => {
+    if (isPreviewMode) {
+      setCustomTimetable(PREVIEW_TIMETABLE);
+      return;
+    }
     if (!isLoggedIn || !currentUser.name) {
       setCustomTimetable([]);
       return;
@@ -362,7 +384,7 @@ export default function App() {
 
   // 카카오톡 스타일 실시간 1:1 채팅방 동기화 (Supabase Realtime + 2.5초 주기 갱신)
   const refreshChatRooms = React.useCallback(async () => {
-    if (!isLoggedIn || !currentUser.name || !isSupabaseConfigured()) return;
+    if (isPreviewMode || !isLoggedIn || !currentUser.name || !isSupabaseConfigured()) return;
     const rooms = await fetchChatRoomsFromDb(myChatKey, currentUser.name, currentSchool.name);
     if (rooms) {
       setChatRooms(rooms);
@@ -436,7 +458,7 @@ export default function App() {
 
   // Supabase (AWS PostgreSQL) 연결 시 DB 데이터 로드 + 내 글 댓글 실시간 알림 감지
   const syncMajorPostsAndCommentNotis = React.useCallback(async () => {
-    if (!isSupabaseConfigured()) return;
+    if (isPreviewMode || !isSupabaseConfigured()) return;
     const dbMajorRaw = await fetchMajorPostsFromDb();
     if (!dbMajorRaw) return;
     const myPostIds = loadMyPostIds(myChatKey);
@@ -502,7 +524,7 @@ export default function App() {
   }, [syncMajorPostsAndCommentNotis]);
 
   React.useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    if (isPreviewMode || !isSupabaseConfigured()) return;
 
     const markMySchoolPosts = (posts: SchoolPost[]) => {
       const myPostIds = loadMyPostIds(myChatKey);
@@ -791,14 +813,14 @@ export default function App() {
   const handleSubmitMajorPost = (post: MajorPost) => {
     addMyPostId(myChatKey, post.id);
     setMajorPosts((prev) => [{ ...post, isMine: true }, ...prev]);
-    insertMajorPostToDb(post);
+    if (!isPreviewMode) insertMajorPostToDb(post);
   };
 
   /** 우리학교 글 등록 */
   const handleSubmitSchoolPost = (post: SchoolPost) => {
     addMyPostId(myChatKey, post.id);
     setSchoolPosts((prev) => [{ ...post, isMine: true }, ...prev]);
-    insertSchoolPostToDb(post, currentSchool.id);
+    if (!isPreviewMode) insertSchoolPostToDb(post, currentSchool.id);
   };
 
   /** 우리학교 글 좋아요 토글 */
@@ -808,12 +830,14 @@ export default function App() {
         if (post.id !== postId) return post;
         const nextLiked = !post.isLikedByUser;
         const nextLikes = Math.max(0, post.likes + (nextLiked ? 1 : -1));
-        updateSchoolPostInteractionInDb(
-          postId,
-          nextLikes,
-          (post.comments || []).length || post.commentCount,
-          post.comments
-        );
+        if (!isPreviewMode) {
+          updateSchoolPostInteractionInDb(
+            postId,
+            nextLikes,
+            (post.comments || []).length || post.commentCount,
+            post.comments
+          );
+        }
         return { ...post, isLikedByUser: nextLiked, likes: nextLikes };
       })
     );
@@ -833,7 +857,9 @@ export default function App() {
       prev.map((post) => {
         if (post.id !== postId) return post;
         const nextComments = [...(post.comments || []), newComment];
-        updateSchoolPostInteractionInDb(postId, post.likes, nextComments.length, nextComments);
+        if (!isPreviewMode) {
+          updateSchoolPostInteractionInDb(postId, post.likes, nextComments.length, nextComments);
+        }
         return {
           ...post,
           comments: nextComments,
@@ -849,7 +875,9 @@ export default function App() {
       prev.map((post) => {
         if (post.id !== postId) return post;
         const nextComments = (post.comments || []).filter((c) => c.id !== commentId);
-        updateSchoolPostInteractionInDb(postId, post.likes, nextComments.length, nextComments);
+        if (!isPreviewMode) {
+          updateSchoolPostInteractionInDb(postId, post.likes, nextComments.length, nextComments);
+        }
         return {
           ...post,
           comments: nextComments,
@@ -877,7 +905,7 @@ export default function App() {
 
     const executeDelete = () => {
       setMajorPosts((prev) => prev.filter((p) => p.id !== postId));
-      deleteMajorPostFromDb(postId);
+      if (!isPreviewMode) deleteMajorPostFromDb(postId);
       if (selectedPost?.id === postId) {
         setSelectedPost(null);
         setIsPostDetailOpen(false);
@@ -915,7 +943,7 @@ export default function App() {
       message: '삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
       onConfirm: () => {
         setSchoolPosts((prev) => prev.filter((p) => p.id !== postId));
-        deleteSchoolPostFromDb(postId);
+        if (!isPreviewMode) deleteSchoolPostFromDb(postId);
       },
     });
   };
@@ -927,7 +955,7 @@ export default function App() {
         if (post.id !== postId) return post;
         const liked = post.isLikedByUser;
         const nextLikes = liked ? post.likes - 1 : post.likes + 1;
-        updateMajorPostInDb(postId, { likes: nextLikes });
+        if (!isPreviewMode) updateMajorPostInDb(postId, { likes: nextLikes });
         return {
           ...post,
           likes: nextLikes,
@@ -950,7 +978,9 @@ export default function App() {
       prev.map((post) => {
         if (post.id !== postId) return post;
         const updated = [...(post.comments || []), comment];
-        updateMajorPostInDb(postId, { comments: updated, commentCount: updated.length });
+        if (!isPreviewMode) {
+          updateMajorPostInDb(postId, { comments: updated, commentCount: updated.length });
+        }
         return { ...post, comments: updated, commentCount: updated.length };
       })
     );
@@ -969,7 +999,9 @@ export default function App() {
       prev.map((post) => {
         if (post.id !== postId) return post;
         const updated = (post.comments || []).filter((c) => c.id !== commentId);
-        updateMajorPostInDb(postId, { comments: updated, commentCount: updated.length });
+        if (!isPreviewMode) {
+          updateMajorPostInDb(postId, { comments: updated, commentCount: updated.length });
+        }
         return { ...post, comments: updated, commentCount: updated.length };
       })
     );
@@ -1073,17 +1105,19 @@ export default function App() {
       return [newRoom, ...prev];
     });
 
-    upsertChatMessageToDb({
-      roomId,
-      myKey: myChatKey,
-      myName: currentUser.name,
-      mySchool: currentSchool.name,
-      peerKey,
-      peerName: peerDisplayName,
-      peerSchool: post.author.school,
-      avatarBg: post.author.avatarColor || '#dc2626',
-      newMessage: { id: userMessage.id, text: messageText, time: nowTimeStr },
-    });
+    if (!isPreviewMode) {
+      upsertChatMessageToDb({
+        roomId,
+        myKey: myChatKey,
+        myName: currentUser.name,
+        mySchool: currentSchool.name,
+        peerKey,
+        peerName: peerDisplayName,
+        peerSchool: post.author.school,
+        avatarBg: post.author.avatarColor || '#dc2626',
+        newMessage: { id: userMessage.id, text: messageText, time: nowTimeStr },
+      });
+    }
 
     setChatRequestPost(null);
     setActiveChatRoomId(roomId);
@@ -1160,7 +1194,7 @@ export default function App() {
       })
     );
 
-    if (targetRoom && lastMsg && lastMsg.sender === 'me') {
+    if (!isPreviewMode && targetRoom && lastMsg && lastMsg.sender === 'me') {
       upsertChatMessageToDb({
         roomId,
         myKey: myChatKey,
@@ -1183,7 +1217,7 @@ export default function App() {
       prev.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r))
     );
     setNotifications((prev) => prev.filter((n) => n.roomId !== roomId));
-    markChatRoomReadInDb(roomId, myChatKey);
+    if (!isPreviewMode) markChatRoomReadInDb(roomId, myChatKey);
   };
 
   /** 새 채팅 상대 선택 시 1:1 카톡방 생성/이동 */
@@ -1228,6 +1262,7 @@ export default function App() {
       case 'home':
         return (
           <HomeTab
+            isPreviewMode={isPreviewMode}
             currentUser={currentUser}
             currentSchool={currentSchool}
             hotPosts={[...majorPosts].sort((a, b) => b.likes - a.likes)}

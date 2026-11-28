@@ -21,6 +21,7 @@ import {
   WeekdayKey,
 } from '../../types';
 import { INITIAL_DDAY_LIST } from '../../data/mockData';
+import { PREVIEW_MEAL, PREVIEW_SCHEDULE } from '../../data/previewData';
 import {
   fetchNeisMealInfo,
   fetchNeisSchedule,
@@ -30,6 +31,7 @@ import { ScheduleCalendarModal } from '../../modals/ScheduleCalendarModal';
 import { COLORS } from '../../theme/colors';
 
 interface HomeTabProps {
+  isPreviewMode?: boolean;
   currentUser: CurrentUser;
   currentSchool: School;
   hotPosts: MajorPost[];
@@ -46,6 +48,7 @@ interface HomeTabProps {
 const FULL_WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 
 export const HomeTab: React.FC<HomeTabProps> = ({
+  isPreviewMode = false,
   currentUser,
   currentSchool,
   hotPosts,
@@ -76,8 +79,15 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // 실시간 교육부 나이스(NEIS) 오픈 API 호출
+  // 실시간 교육부 나이스(NEIS) 오픈 API 호출 (랜딩페이지 체험 모드에서는 고정 급식/학사일정 사용)
   useEffect(() => {
+    if (isPreviewMode) {
+      setMealInfo(PREVIEW_MEAL);
+      setDDayList(PREVIEW_SCHEDULE);
+      setIsMealLoading(false);
+      return;
+    }
+
     let isMounted = true;
     const loadNeisAll = async () => {
       setIsMealLoading(true);
@@ -98,7 +108,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [currentSchool]);
+  }, [currentSchool, isPreviewMode]);
 
   const displayMenu = mealInfo?.menu || [];
   const displayCalorie = mealInfo?.calorie || '-';
@@ -116,11 +126,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     5: '금',
   };
   const todayDayKey: WeekdayKey = dayNames[nowTime.getDay()] || '월';
-  const isWeekend = nowTime.getDay() === 0 || nowTime.getDay() === 6;
+  const isWeekend = !isPreviewMode && (nowTime.getDay() === 0 || nowTime.getDay() === 6);
+  const previewDayKey: WeekdayKey =
+    nowTime.getDay() === 0 || nowTime.getDay() === 6 ? '월' : todayDayKey;
 
-  // 홈 화면 [내 시간표]에는 오늘 요일의 수업만 표시 (주말에는 전체 요일 시간표가 쏟아지지 않도록 비움)
+  // 홈 화면 [내 시간표]에는 오늘 요일의 수업만 표시 (체험 모드에서는 주말에도 월요일 고정 시간표 표시)
   const todayBlocks = [...customTimetable]
-    .filter((b) => !isWeekend && b.day === todayDayKey)
+    .filter((b) => !isWeekend && b.day === (isPreviewMode ? previewDayKey : todayDayKey))
     .sort((a, b) => a.startHour - b.startHour);
   const displayedBlocks = todayBlocks;
 
@@ -317,7 +329,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             <Text style={styles.sectionTitle}>내 시간표</Text>
             <View style={styles.timetableDayBadge}>
               <Text style={styles.timetableDayBadgeText}>
-                {isWeekend ? '주말' : `오늘 (${todayDayKey})`}
+                {isWeekend
+                  ? '주말'
+                  : isPreviewMode
+                    ? `고정 (${previewDayKey})`
+                    : `오늘 (${todayDayKey})`}
               </Text>
             </View>
           </View>

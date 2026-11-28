@@ -699,6 +699,12 @@
   </main>
 
   <script>
+    // 로컬 개발 서버(localhost)에서는 로컬 ?preview=1 화면을 바로 임베드
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const liveFrame = document.getElementById('live-app-frame');
+      if (liveFrame) liveFrame.src = '/?preview=1';
+    }
+
     // FAQ 아코디언 토글
     document.querySelectorAll('.faq-q').forEach((btn) => {
       btn.addEventListener('click', () => {
