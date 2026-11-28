@@ -5,6 +5,8 @@
 // =============================================================================
 
 import {
+  CurrentUser,
+  School,
   CustomTimetableBlock,
   MealInfo,
   DDayItem,
@@ -13,6 +15,32 @@ import {
   ChatRoom,
   NotificationItem,
 } from '../types';
+
+// 0. 랜딩페이지 체험 모드 전용 가상 계정 & 학교 (실제 사용자/DB와 완전 분리)
+export const PREVIEW_USER: CurrentUser = {
+  username: 'preview_demo',
+  socialProvider: 'kakao',
+  email: 'preview@hightime.app',
+  name: '김고교',
+  nickname: '체험학생',
+  bio: 'HighTime 체험용 계정입니다. 자유롭게 구경하고 댓글·채팅을 보내보세요!',
+  targetMajor: '컴퓨터·IT·인공지능',
+  birthDate: '2009-03-15',
+  telecom: 'SKT',
+  phone: '',
+  grade: '고2',
+  certFileName: 'preview_cert.pdf',
+  isVerified: true,
+  passVerified: true,
+  certVerified: true,
+  verifiedAt: '2026. 11. 28',
+};
+
+export const PREVIEW_SCHOOL: School = {
+  id: 'preview-hanbit',
+  name: '한빛고등학교',
+  region: '서울',
+};
 
 // 1. 고정 시간표 (월~금 1~6교시)
 export const PREVIEW_TIMETABLE: CustomTimetableBlock[] = [
@@ -60,7 +88,7 @@ export const PREVIEW_TIMETABLE: CustomTimetableBlock[] = [
 // 2. 고정 급식 데이터
 export const PREVIEW_MEAL: MealInfo = {
   isSuccess: true,
-  schoolName: '대현고등학교',
+  schoolName: '한빛고등학교',
   date: '오늘 중식',
   calorie: '865.3 Kcal',
   menu: [

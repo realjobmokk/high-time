@@ -41,6 +41,8 @@ import {
   INITIAL_NOTIFICATIONS,
 } from './src/data/mockData';
 import {
+  PREVIEW_USER,
+  PREVIEW_SCHOOL,
   PREVIEW_MAJOR_POSTS,
   PREVIEW_SCHOOL_POSTS,
   PREVIEW_CHAT_ROOMS,
@@ -146,31 +148,37 @@ export default function App() {
     }
   }, [isSmallMobileWeb]);
 
-  const [currentUser, setCurrentUser] = useState<CurrentUser>({
-    socialProvider: 'kakao',
-    email: '',
-    name: isPreviewMode ? '서정윤' : '',
-    nickname: isPreviewMode ? '서정윤학생' : '',
-    bio: isPreviewMode ? '대현고등학교 재학 중인 고2 학생입니다.' : '',
-    targetMajor: '컴퓨터·IT·인공지능',
-    birthDate: '',
-    telecom: 'SKT',
-    phone: '',
-    grade: '고2',
-    certFileName: '',
-    isVerified: isPreviewMode,
-    passVerified: isPreviewMode,
-    certVerified: isPreviewMode,
-    verifiedAt: isPreviewMode ? '2026. 11. 24' : '',
-  });
+  const [currentUser, setCurrentUser] = useState<CurrentUser>(
+    isPreviewMode
+      ? PREVIEW_USER
+      : {
+          socialProvider: 'kakao',
+          email: '',
+          name: '',
+          nickname: '',
+          bio: '',
+          targetMajor: '컴퓨터·IT·인공지능',
+          birthDate: '',
+          telecom: 'SKT',
+          phone: '',
+          grade: '고2',
+          certFileName: '',
+          isVerified: false,
+          passVerified: false,
+          certVerified: false,
+          verifiedAt: '',
+        }
+  );
 
-  const [currentSchool, setCurrentSchool] = useState<School>({
-    id: isPreviewMode ? 'daehyeon' : '',
-    name: isPreviewMode ? '대현고등학교' : '',
-    region: isPreviewMode ? '울산' : '',
-    officeCode: isPreviewMode ? 'H10' : undefined,
-    schoolCode: isPreviewMode ? '7480034' : undefined,
-  });
+  const [currentSchool, setCurrentSchool] = useState<School>(
+    isPreviewMode
+      ? PREVIEW_SCHOOL
+      : {
+          id: '',
+          name: '',
+          region: '',
+        }
+  );
 
   // =========================================================
   //  2. 탭 & UI 상태
@@ -438,6 +446,7 @@ export default function App() {
   }, [refreshChatRooms]);
 
   React.useEffect(() => {
+    if (isPreviewMode) return;
     if (!isLoggedIn) {
       setChatRooms([]);
       return;
@@ -675,8 +684,9 @@ export default function App() {
     await saveVerifiedUserToDb(nextUser, currentSchool);
   };
 
-  // Google OAuth 로그인 후 리디렉션 복귀 시 자동으로 세션 감지하여 로그인 처리
+  // Google OAuth 로그인 후 리디렉션 복귀 시 자동으로 세션 감지하여 로그인 처리 (체험 모드에서는 차단)
   useEffect(() => {
+    if (isPreviewMode) return;
     let isMounted = true;
     let isSyncing = false;
 
