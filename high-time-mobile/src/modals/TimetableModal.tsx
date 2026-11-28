@@ -202,47 +202,47 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
     <PhoneModal visible={visible} animationType="none" transparent>
       <Animated.View style={{ flex: 1, transform: [{ translateX: slideAnim }] }}>
       <SafeAreaView style={styles.safeArea}>
-        {/* 상단 화이트 헤더 */}
-        <View style={styles.topHeader}>
-          <View>
-            <Text style={styles.semesterText}>2026년 2학기</Text>
-            <View style={styles.titleRow}>
-              <Text style={styles.mainTitle}>시간표</Text>
-              <Ionicons name="chevron-down" size={18} color="#0f172a" />
-            </View>
-          </View>
-
-          <View style={styles.headerIcons}>
-            {/* [+] 수업 추가 버튼 */}
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => handleOpenNewForm('월', 9)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add" size={26} color="#0f172a" />
-            </TouchableOpacity>
-
-            {/* 닫기 버튼 */}
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={onClose}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="close" size={24} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <Text style={styles.helperSubText}>
-          💡 우측 상단 [+] 버튼을 누르거나 시간표의 빈 칸을 직접 터치해서 수업을 추가하세요.
-        </Text>
-
-        {/* 주간 시간표 그리드 (월~금 × 1교시~7교시, 화면 세로 중앙 정렬) */}
+        {/* 헤더 + 안내문구 + 주간 시간표 그리드 전체를 화면 세로 중앙에 배치 */}
         <ScrollView
           style={styles.gridScroll}
           contentContainerStyle={styles.gridScrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* 상단 화이트 헤더 */}
+          <View style={styles.topHeader}>
+            <View>
+              <Text style={styles.semesterText}>2026년 2학기</Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.mainTitle}>시간표</Text>
+                <Ionicons name="chevron-down" size={18} color="#0f172a" />
+              </View>
+            </View>
+
+            <View style={styles.headerIcons}>
+              {/* [+] 수업 추가 버튼 */}
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => handleOpenNewForm('월', 9)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="add" size={26} color="#0f172a" />
+              </TouchableOpacity>
+
+              {/* 닫기 버튼 */}
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={onClose}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={styles.helperSubText}>
+            💡 우측 상단 [+] 버튼을 누르거나 시간표의 빈 칸을 직접 터치해서 수업을 추가하세요.
+          </Text>
+
           <View style={styles.gridWrapper}>
             {/* 요일 헤더 행 */}
             <View style={styles.dayHeaderRow}>
@@ -508,7 +508,6 @@ const styles = StyleSheet.create({
   },
   gridScroll: {
     flex: 1,
-    paddingHorizontal: 14,
   },
   gridScrollContent: {
     flexGrow: 1,
@@ -516,6 +515,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   gridWrapper: {
+    marginHorizontal: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 14,
