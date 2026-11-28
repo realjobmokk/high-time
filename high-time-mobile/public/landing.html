@@ -483,7 +483,7 @@
       background: linear-gradient(90deg, #e0654d, #f3a695);
     }
 
-    .story-step.active .story-progress-fill {
+    #showcase.in-view .story-step.active .story-progress-fill {
       animation: storyFill 5.2s linear infinite;
     }
 
@@ -1314,11 +1314,14 @@
       }, 3200);
     }
 
-    // 쇼케이스 자동 재생 + 클릭 전환
+    // 쇼케이스: 사용자가 스크롤해서 동작 예시(#showcase) 영역에 들어왔을 때만 카운팅/자동 재생 시작
+    const showcaseSection = document.getElementById('showcase');
     const steps = Array.from(document.querySelectorAll('.story-step'));
     const panels = Array.from(document.querySelectorAll('.stage-scene'));
     const indicator = document.getElementById('stage-indicator');
     let currentScene = 0;
+    let sceneTimer = null;
+    let isShowcaseInView = false;
 
     function setScene(index) {
       currentScene = index;
@@ -1329,22 +1332,46 @@
       }
     }
 
-    steps.forEach((step, idx) => {
-      step.addEventListener('click', () => {
-        setScene(idx);
-        resetAutoPlay();
-      });
-    });
-
-    let sceneTimer = setInterval(() => {
-      setScene((currentScene + 1) % steps.length);
-    }, 5200);
-
-    function resetAutoPlay() {
-      clearInterval(sceneTimer);
+    function startAutoPlay() {
+      if (sceneTimer) clearInterval(sceneTimer);
       sceneTimer = setInterval(() => {
         setScene((currentScene + 1) % steps.length);
       }, 5200);
+    }
+
+    function stopAutoPlay() {
+      if (sceneTimer) {
+        clearInterval(sceneTimer);
+        sceneTimer = null;
+      }
+    }
+
+    steps.forEach((step, idx) => {
+      step.addEventListener('click', () => {
+        setScene(idx);
+        if (isShowcaseInView) startAutoPlay();
+      });
+    });
+
+    if (showcaseSection) {
+      const showcaseObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              isShowcaseInView = true;
+              showcaseSection.classList.add('in-view');
+              setScene(currentScene);
+              startAutoPlay();
+            } else {
+              isShowcaseInView = false;
+              showcaseSection.classList.remove('in-view');
+              stopAutoPlay();
+            }
+          });
+        },
+        { threshold: 0.25 }
+      );
+      showcaseObserver.observe(showcaseSection);
     }
   </script>
 </body>
