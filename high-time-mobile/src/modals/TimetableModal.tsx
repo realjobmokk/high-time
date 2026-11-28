@@ -297,8 +297,8 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
                           style={[
                             styles.classBlock,
                             {
-                              top: topOffset + 2,
-                              height: Math.max(20, blockHeight - 5),
+                              top: topOffset,
+                              height: blockHeight,
                               backgroundColor: block.color,
                             },
                           ]}
@@ -584,11 +584,13 @@ const styles = StyleSheet.create({
   },
   classBlock: {
     position: 'absolute',
-    left: 2,
-    right: 2,
+    left: 0,
+    right: 0,
     paddingHorizontal: 5,
     paddingVertical: 5,
-    borderRadius: 7,
+    borderRadius: 0,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
