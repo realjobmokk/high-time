@@ -155,7 +155,10 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
                       <Text style={styles.postTime}>{post.createdAt}</Text>
                       {isMine && (
                         <TouchableOpacity
-                          onPress={() => handleDelete(post.id)}
+                          onPress={(e: any) => {
+                            e?.stopPropagation?.();
+                            handleDelete(post.id);
+                          }}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                           <Ionicons name="trash-outline" size={14} color={COLORS.accent} />

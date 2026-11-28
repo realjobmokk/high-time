@@ -859,14 +859,16 @@ export default function App() {
     );
   };
 
-  /** 전공게시판 글 삭제 (이름 + 소속 학교가 모두 일치하는 내 글만 삭제 가능) */
+  /** 전공게시판 글 삭제 (익명 글 포함 본인 글만 삭제 가능) */
   const handleDeleteMajorPost = (postId: string, skipConfirm = false) => {
     const target = majorPosts.find((p) => p.id === postId);
     const isActuallyMine =
       target &&
-      target.author.school === currentSchool.name &&
-      (target.author.nickname === currentUser.name ||
-        (Boolean(currentUser.nickname) && target.author.nickname === currentUser.nickname));
+      (Boolean(target.isMine) ||
+        loadMyPostIds(myChatKey).has(target.id) ||
+        (target.author.school === currentSchool.name &&
+          (target.author.nickname === currentUser.name ||
+            (Boolean(currentUser.nickname) && target.author.nickname === currentUser.nickname))));
 
     if (!isActuallyMine) {
       Alert.alert('권한 없음', '본인이 작성한 글만 삭제할 수 있습니다.');
@@ -894,12 +896,14 @@ export default function App() {
     });
   };
 
-  /** 우리학교 글 삭제 (본인 글만 삭제 가능) */
+  /** 우리학교 글 삭제 (익명 글 포함 본인 글만 삭제 가능) */
   const handleDeleteSchoolPost = (postId: string) => {
     const target = schoolPosts.find((p) => p.id === postId);
     const isActuallyMine =
       target &&
-      (target.author === currentUser.name ||
+      (Boolean(target.isMine) ||
+        loadMyPostIds(myChatKey).has(target.id) ||
+        target.author === currentUser.name ||
         (Boolean(currentUser.nickname) && target.author === currentUser.nickname));
     if (!isActuallyMine) {
       Alert.alert('권한 없음', '본인이 작성한 글만 삭제할 수 있습니다.');
