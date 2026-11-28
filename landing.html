@@ -483,8 +483,13 @@
       background: linear-gradient(90deg, #e0654d, #f3a695);
     }
 
-    #showcase.in-view .story-step.active .story-progress-fill {
+    .story-step.active .story-progress-fill {
       animation: storyFill 5.2s linear infinite;
+      animation-play-state: paused;
+    }
+
+    #showcase.in-view .story-step.active .story-progress-fill {
+      animation-play-state: running;
     }
 
     @keyframes storyFill {
@@ -1314,17 +1319,21 @@
       }, 3200);
     }
 
-    // 쇼케이스: 사용자가 스크롤해서 동작 예시(#showcase) 영역에 들어왔을 때만 카운팅/자동 재생 시작
+    // 쇼케이스: 화면에 보일 때만 카운팅 진행, 벗어나면 현재 지점에서 일시정지(다시 시작하지 않음)
     const showcaseSection = document.getElementById('showcase');
     const steps = Array.from(document.querySelectorAll('.story-step'));
     const panels = Array.from(document.querySelectorAll('.stage-scene'));
     const indicator = document.getElementById('stage-indicator');
+    const SCENE_DURATION = 5200;
     let currentScene = 0;
     let sceneTimer = null;
+    let remainingMs = SCENE_DURATION;
+    let lastStartTime = 0;
     let isShowcaseInView = false;
 
     function setScene(index) {
       currentScene = index;
+      remainingMs = SCENE_DURATION;
       steps.forEach((s, i) => s.classList.toggle('active', i === index));
       panels.forEach((p, i) => p.classList.toggle('active', i === index));
       if (indicator) {
@@ -1332,24 +1341,30 @@
       }
     }
 
-    function startAutoPlay() {
-      if (sceneTimer) clearInterval(sceneTimer);
-      sceneTimer = setInterval(() => {
+    function scheduleNextScene() {
+      if (sceneTimer) clearTimeout(sceneTimer);
+      lastStartTime = Date.now();
+      sceneTimer = setTimeout(() => {
         setScene((currentScene + 1) % steps.length);
-      }, 5200);
+        if (isShowcaseInView) {
+          scheduleNextScene();
+        }
+      }, remainingMs);
     }
 
-    function stopAutoPlay() {
+    function pauseAutoPlay() {
       if (sceneTimer) {
-        clearInterval(sceneTimer);
+        clearTimeout(sceneTimer);
         sceneTimer = null;
+        const elapsed = Date.now() - lastStartTime;
+        remainingMs = Math.max(50, remainingMs - elapsed);
       }
     }
 
     steps.forEach((step, idx) => {
       step.addEventListener('click', () => {
         setScene(idx);
-        if (isShowcaseInView) startAutoPlay();
+        if (isShowcaseInView) scheduleNextScene();
       });
     });
 
@@ -1360,12 +1375,11 @@
             if (entry.isIntersecting) {
               isShowcaseInView = true;
               showcaseSection.classList.add('in-view');
-              setScene(currentScene);
-              startAutoPlay();
+              scheduleNextScene();
             } else {
               isShowcaseInView = false;
               showcaseSection.classList.remove('in-view');
-              stopAutoPlay();
+              pauseAutoPlay();
             }
           });
         },
