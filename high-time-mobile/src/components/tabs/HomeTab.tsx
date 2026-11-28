@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   CurrentUser,
   School,
@@ -233,9 +234,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             <Text style={styles.suneungBadgeText}>{suneungDDayLabel}</Text>
           </View>
         </View>
-        <Text style={styles.greetingSub}>
-          학교생활부터 진로 고민까지, 여기서 함께해요.
-        </Text>
       </View>
 
       {/* 2. 오늘의 학교생활 (세이지 그린 카드 + 오늘의 급식 내부 카드) */}
@@ -341,8 +339,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             style={styles.timetableEditPill}
             onPress={() => setIsTimetableModalOpen(true)}
             activeOpacity={0.75}
+            accessibilityLabel="시간표 편집"
           >
-            <Text style={styles.timetableEditPillText}>시간표 편집 ›</Text>
+            <Ionicons name="create-outline" size={16} color={COLORS.accent} />
           </TouchableOpacity>
         </View>
 
@@ -408,19 +407,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                 {isWeekend
                   ? '주말에는 수업이 없어요'
                   : customTimetable.length === 0
-                    ? '아직 등록된 수업이 없어요'
-                    : '오늘은 등록된 수업이 없어요'}
-              </Text>
-              <Text style={styles.emptyTimetableText}>
-                {isWeekend || customTimetable.length > 0
-                  ? '전체 주간 시간표는 시간표 편집에서 확인할 수 있어요.'
-                  : '시간표 편집에서 내 과목과 교실 위치를 추가해 보세요.'}
+                    ? '등록된 수업이 없어요'
+                    : '오늘은 수업이 없어요'}
               </Text>
             </View>
             <View style={styles.emptyTimetableCta}>
-              <Text style={styles.emptyTimetableCtaText}>
-                {isWeekend || customTimetable.length > 0 ? '전체 보기' : '+ 추가'}
-              </Text>
+              <Ionicons
+                name={isWeekend || customTimetable.length > 0 ? 'calendar-outline' : 'add'}
+                size={18}
+                color="#ffffff"
+              />
             </View>
           </TouchableOpacity>
         )}
@@ -436,8 +432,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           <TouchableOpacity
             onPress={() => setIsCalendarModalOpen(true)}
             activeOpacity={0.7}
+            accessibilityLabel="달력 보기"
           >
-            <Text style={styles.sectionAction}>달력 보기  ›</Text>
+            <Ionicons name="calendar-outline" size={19} color={COLORS.muted} />
           </TouchableOpacity>
         </View>
 

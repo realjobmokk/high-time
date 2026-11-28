@@ -115,13 +115,11 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
           })}
         </ScrollView>
 
-        {/* 소속 학교 인증 배너 (세이지 카드) */}
+        {/* 소속 학교 인증 배너 (세이지 카드, 아이콘으로 간결 표시) */}
         <View style={styles.schoolBanner}>
-          <View style={styles.schoolBannerLeft}>
+          <View style={[styles.schoolBannerLeft, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+            <Ionicons name="shield-checkmark" size={16} color={COLORS.success} />
             <Text style={styles.schoolName}>{currentSchool.name}</Text>
-            <Text style={styles.schoolSub}>
-              재학증명서 인증 완료 · 외부 열람 차단
-            </Text>
           </View>
         </View>
 
@@ -180,23 +178,30 @@ export const SchoolBoardTab: React.FC<SchoolBoardTabProps> = ({
                     </Text>
                     <View style={styles.interactionRow}>
                       <TouchableOpacity
-                        style={styles.interactionItem}
+                        style={[styles.interactionItem, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                         onPress={() => onToggleLike(post.id)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
+                        <Ionicons
+                          name={post.isLikedByUser ? 'heart' : 'heart-outline'}
+                          size={14}
+                          color={post.isLikedByUser ? COLORS.accent : COLORS.muted}
+                        />
                         <Text
                           style={[
                             styles.interactionText,
                             post.isLikedByUser && { color: COLORS.accent, fontWeight: '700' },
                           ]}
                         >
-                          좋아요 {post.likes}
+                          {post.likes}
                         </Text>
                       </TouchableOpacity>
-                      <Text style={styles.footerDot}>·</Text>
-                      <Text style={styles.interactionText}>
-                        댓글 {post.comments ? post.comments.length : post.commentCount}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Ionicons name="chatbubble-outline" size={13} color={COLORS.muted} />
+                        <Text style={styles.interactionText}>
+                          {post.comments ? post.comments.length : post.commentCount}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </TouchableOpacity>

@@ -236,10 +236,6 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
           </View>
         </View>
 
-        <Text style={styles.helperSubText}>
-          💡 우측 상단 [+] 버튼을 누르거나 시간표의 빈 칸을 직접 터치해서 수업을 추가하세요.
-        </Text>
-
         {/* 주간 시간표 그리드 (월~금 × 1교시~10교시) */}
         <ScrollView
           style={styles.gridScroll}

@@ -143,31 +143,40 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
                       onStartDirectChat(post);
                     }}
                     activeOpacity={0.75}
+                    accessibilityLabel="1:1 채팅"
                   >
-                    <Text style={styles.chatBtnText}>1:1 채팅 ↗</Text>
+                    <Ionicons name="chatbubble-ellipses-outline" size={14} color={COLORS.ink} />
                   </TouchableOpacity>
                 )}
               </View>
 
               <View style={styles.metaRow}>
                 <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                   onPress={(e: any) => {
                     e?.stopPropagation?.();
                     onToggleLike(post.id);
                   }}
                   activeOpacity={0.7}
                 >
+                  <Ionicons
+                    name={post.isLikedByUser ? 'heart' : 'heart-outline'}
+                    size={14}
+                    color={post.isLikedByUser ? COLORS.accent : COLORS.muted}
+                  />
                   <Text
                     style={[
                       styles.metaText,
                       post.isLikedByUser && styles.metaTextLiked,
                     ]}
                   >
-                    좋아요 {post.likes}
+                    {post.likes}
                   </Text>
                 </TouchableOpacity>
-                <Text style={styles.metaDot}>·</Text>
-                <Text style={styles.metaText}>댓글 {post.commentCount}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="chatbubble-outline" size={13} color={COLORS.muted} />
+                  <Text style={styles.metaText}>{post.commentCount}</Text>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -213,15 +222,6 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
             </>
           ) : (
             <>
-              <View style={styles.gridTopRow}>
-                <View>
-                  <Text style={styles.introTitle}>전공을 선택해 보세요</Text>
-                  <Text style={styles.introSub}>
-                    관심 있는 계열을 누르면 해당 전공 게시글로 바로 들어갑니다.
-                  </Text>
-                </View>
-              </View>
-
               {/* 전체 글 보기 빠른 카드 */}
               <TouchableOpacity
                 style={styles.allMajorsBanner}
@@ -230,9 +230,12 @@ export const MajorBoardTab: React.FC<MajorBoardTabProps> = ({
               >
                 <View style={styles.allMajorsLeft}>
                   <Ionicons name="sparkles-outline" size={18} color={COLORS.accent} />
-                  <Text style={styles.allMajorsTitle}>전체 전공 글 모아보기</Text>
+                  <Text style={styles.allMajorsTitle}>전체 글</Text>
                 </View>
-                <Text style={styles.allMajorsCount}>{posts.length}개  ›</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={styles.allMajorsCount}>{posts.length}</Text>
+                  <Ionicons name="chevron-forward" size={15} color={COLORS.muted} />
+                </View>
               </TouchableOpacity>
 
               {/* 2열 전공 카드 그리드 */}
