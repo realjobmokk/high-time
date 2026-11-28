@@ -237,8 +237,12 @@ export const TimetableModal: React.FC<TimetableModalProps> = ({
           💡 우측 상단 [+] 버튼을 누르거나 시간표의 빈 칸을 직접 터치해서 수업을 추가하세요.
         </Text>
 
-        {/* 주간 시간표 그리드 (월~금 × 9시~7시) */}
-        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
+        {/* 주간 시간표 그리드 (월~금 × 1교시~7교시, 화면 세로 중앙 정렬) */}
+        <ScrollView
+          style={styles.gridScroll}
+          contentContainerStyle={styles.gridScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.gridWrapper}>
             {/* 요일 헤더 행 */}
             <View style={styles.dayHeaderRow}>
@@ -506,13 +510,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 14,
   },
+  gridScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
   gridWrapper: {
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,
-    marginBottom: 28,
   },
   dayHeaderRow: {
     flexDirection: 'row',
