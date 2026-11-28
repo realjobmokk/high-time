@@ -42,47 +42,47 @@ export const PREVIEW_SCHOOL: School = {
   region: '서울',
 };
 
-// 1. 고정 시간표 (월~금 1~6교시, 과목별 다양한 교실 배정)
+// 1. 고정 시간표 (월~금 1~6교시, 고등학교 반·실습실 표기)
 export const PREVIEW_TIMETABLE: CustomTimetableBlock[] = [
   // 월요일
-  { id: 'pv-mon-1', day: '월', subject: '문학', room: '인문관 201', startHour: 9, endHour: 10, color: '#a3c96c' },
-  { id: 'pv-mon-2', day: '월', subject: '수학 I', room: '수리관 302', startHour: 10, endHour: 11, color: '#8b78cd' },
-  { id: 'pv-mon-3', day: '월', subject: '물리학 I', room: '과학실 2', startHour: 11, endHour: 12, color: '#d27365' },
-  { id: 'pv-mon-4', day: '월', subject: '영어 독해와 작문', room: '어학실 1', startHour: 12, endHour: 13, color: '#6c8cc7' },
+  { id: 'pv-mon-1', day: '월', subject: '문학', room: '2-1', startHour: 9, endHour: 10, color: '#a3c96c' },
+  { id: 'pv-mon-2', day: '월', subject: '수학 I', room: '2-2', startHour: 10, endHour: 11, color: '#8b78cd' },
+  { id: 'pv-mon-3', day: '월', subject: '물리학 I', room: '과학실', startHour: 11, endHour: 12, color: '#d27365' },
+  { id: 'pv-mon-4', day: '월', subject: '영어 독해와 작문', room: '2-4', startHour: 12, endHour: 13, color: '#6c8cc7' },
   { id: 'pv-mon-5', day: '월', subject: '정보(파이썬)', room: '컴퓨터실', startHour: 13, endHour: 14, color: '#63b0a3' },
-  { id: 'pv-mon-6', day: '월', subject: '한국사', room: '역사탐구실', startHour: 14, endHour: 15, color: '#cca958' },
+  { id: 'pv-mon-6', day: '월', subject: '한국사', room: '2-5', startHour: 14, endHour: 15, color: '#cca958' },
 
   // 화요일
-  { id: 'pv-tue-1', day: '화', subject: '수학 I', room: '수리관 302', startHour: 9, endHour: 10, color: '#8b78cd' },
+  { id: 'pv-tue-1', day: '화', subject: '수학 I', room: '2-2', startHour: 9, endHour: 10, color: '#8b78cd' },
   { id: 'pv-tue-2', day: '화', subject: '화학 I', room: '화학실', startHour: 10, endHour: 11, color: '#61a877' },
-  { id: 'pv-tue-3', day: '화', subject: '영어 독해와 작문', room: '어학실 1', startHour: 11, endHour: 12, color: '#6c8cc7' },
-  { id: 'pv-tue-4', day: '화', subject: '문학', room: '인문관 201', startHour: 12, endHour: 13, color: '#a3c96c' },
-  { id: 'pv-tue-5', day: '화', subject: '체육', room: '대강당', startHour: 13, endHour: 14, color: '#d88c51' },
-  { id: 'pv-tue-6', day: '화', subject: '진로와 직업', room: '진로상담실', startHour: 14, endHour: 15, color: '#63b0a3' },
+  { id: 'pv-tue-3', day: '화', subject: '영어 독해와 작문', room: '2-4', startHour: 11, endHour: 12, color: '#6c8cc7' },
+  { id: 'pv-tue-4', day: '화', subject: '문학', room: '2-1', startHour: 12, endHour: 13, color: '#a3c96c' },
+  { id: 'pv-tue-5', day: '화', subject: '체육', room: '체육관', startHour: 13, endHour: 14, color: '#d88c51' },
+  { id: 'pv-tue-6', day: '화', subject: '진로와 직업', room: '2-6', startHour: 14, endHour: 15, color: '#63b0a3' },
 
   // 수요일
-  { id: 'pv-wed-1', day: '수', subject: '물리학 I', room: '과학실 2', startHour: 9, endHour: 10, color: '#d27365' },
+  { id: 'pv-wed-1', day: '수', subject: '물리학 I', room: '과학실', startHour: 9, endHour: 10, color: '#d27365' },
   { id: 'pv-wed-2', day: '수', subject: '정보(파이썬)', room: '컴퓨터실', startHour: 10, endHour: 11, color: '#63b0a3' },
-  { id: 'pv-wed-3', day: '수', subject: '수학 I', room: '수리관 302', startHour: 11, endHour: 12, color: '#8b78cd' },
-  { id: 'pv-wed-4', day: '수', subject: '한국사', room: '역사탐구실', startHour: 12, endHour: 13, color: '#cca958' },
-  { id: 'pv-wed-5', day: '수', subject: '창의적 체험활동', room: '세미나실', startHour: 13, endHour: 14, color: '#a3c96c' },
-  { id: 'pv-wed-6', day: '수', subject: '동아리(AI코딩)', room: '정보실 1', startHour: 14, endHour: 15, color: '#6c8cc7' },
+  { id: 'pv-wed-3', day: '수', subject: '수학 I', room: '2-2', startHour: 11, endHour: 12, color: '#8b78cd' },
+  { id: 'pv-wed-4', day: '수', subject: '한국사', room: '2-5', startHour: 12, endHour: 13, color: '#cca958' },
+  { id: 'pv-wed-5', day: '수', subject: '창의적 체험활동', room: '2-3', startHour: 13, endHour: 14, color: '#a3c96c' },
+  { id: 'pv-wed-6', day: '수', subject: '동아리(AI코딩)', room: '정보실', startHour: 14, endHour: 15, color: '#6c8cc7' },
 
   // 목요일
-  { id: 'pv-thu-1', day: '목', subject: '영어 독해와 작문', room: '어학실 1', startHour: 9, endHour: 10, color: '#6c8cc7' },
-  { id: 'pv-thu-2', day: '목', subject: '문학', room: '인문관 201', startHour: 10, endHour: 11, color: '#a3c96c' },
-  { id: 'pv-thu-3', day: '목', subject: '수학 I', room: '수리관 302', startHour: 11, endHour: 12, color: '#8b78cd' },
+  { id: 'pv-thu-1', day: '목', subject: '영어 독해와 작문', room: '2-4', startHour: 9, endHour: 10, color: '#6c8cc7' },
+  { id: 'pv-thu-2', day: '목', subject: '문학', room: '2-1', startHour: 10, endHour: 11, color: '#a3c96c' },
+  { id: 'pv-thu-3', day: '목', subject: '수학 I', room: '2-2', startHour: 11, endHour: 12, color: '#8b78cd' },
   { id: 'pv-thu-4', day: '목', subject: '화학 I', room: '화학실', startHour: 12, endHour: 13, color: '#61a877' },
-  { id: 'pv-thu-5', day: '목', subject: '물리학 I', room: '과학실 2', startHour: 13, endHour: 14, color: '#d27365' },
+  { id: 'pv-thu-5', day: '목', subject: '물리학 I', room: '과학실', startHour: 13, endHour: 14, color: '#d27365' },
   { id: 'pv-thu-6', day: '목', subject: '미술 창작', room: '미술실', startHour: 14, endHour: 15, color: '#d88c51' },
 
   // 금요일
-  { id: 'pv-fri-1', day: '금', subject: '한국사', room: '역사탐구실', startHour: 9, endHour: 10, color: '#cca958' },
-  { id: 'pv-fri-2', day: '금', subject: '물리학 I', room: '과학실 2', startHour: 10, endHour: 11, color: '#d27365' },
+  { id: 'pv-fri-1', day: '금', subject: '한국사', room: '2-5', startHour: 9, endHour: 10, color: '#cca958' },
+  { id: 'pv-fri-2', day: '금', subject: '물리학 I', room: '과학실', startHour: 10, endHour: 11, color: '#d27365' },
   { id: 'pv-fri-3', day: '금', subject: '정보(파이썬)', room: '컴퓨터실', startHour: 11, endHour: 12, color: '#63b0a3' },
-  { id: 'pv-fri-4', day: '금', subject: '수학 I', room: '수리관 302', startHour: 12, endHour: 13, color: '#8b78cd' },
-  { id: 'pv-fri-5', day: '금', subject: '영어 독해와 작문', room: '어학실 1', startHour: 13, endHour: 14, color: '#6c8cc7' },
-  { id: 'pv-fri-6', day: '금', subject: '자율활동', room: '다목적실', startHour: 14, endHour: 15, color: '#61a877' },
+  { id: 'pv-fri-4', day: '금', subject: '수학 I', room: '2-2', startHour: 12, endHour: 13, color: '#8b78cd' },
+  { id: 'pv-fri-5', day: '금', subject: '영어 독해와 작문', room: '2-4', startHour: 13, endHour: 14, color: '#6c8cc7' },
+  { id: 'pv-fri-6', day: '금', subject: '자율활동', room: '2-7', startHour: 14, endHour: 15, color: '#61a877' },
 ];
 
 // 2. 고정 급식 데이터
