@@ -235,11 +235,11 @@ export const PREVIEW_MAJOR_POSTS: MajorPost[] = [
   },
 ];
 
-// 5. 임의 우리학교(대현고등학교) 게시글 + 댓글
+// 5. 임의 우리학교(한빛고등학교) 게시글 + 댓글
 export const PREVIEW_SCHOOL_POSTS: SchoolPost[] = [
   {
     id: 'pv-school-1',
-    category: '급식·시간표',
+    category: '자유게시판',
     title: '오늘 점심 매콤돼지갈비찜 미쳤는데??',
     content: '진짜 오랜만에 급식 레전드 나왔다 ㅋㅋ 2층 급식실 줄 긴데 빨리 내려가세요!',
     author: '익명',
@@ -271,7 +271,7 @@ export const PREVIEW_SCHOOL_POSTS: SchoolPost[] = [
   },
   {
     id: 'pv-school-2',
-    category: '내신·수행',
+    category: '정보/세특',
     title: '2학년 물리학 I 수행평가 보고서 양식 어디 올라왔나요?',
     content: '학교 클래스룸에 아직 안 올라온 것 같은데 혹시 받으신 분 있나요?',
     author: '한예진',
